@@ -81,7 +81,7 @@ func makeColorMessageOfLoggerId(logId string, message string) string {
 	return zutils.Color.MakeColorText(color, message)
 }
 
-func (l *logger) NewMirror(tag ...string) core.ILogger {
+func (l *logger) NewMirrorLogger(tag ...string) core.ILogger {
 	log, _ := zlog.WrapZapFieldsWithLoger(l.Loger, zap.String(logIdKey, l.nextLoggerId()), zap.Strings("logTag", tag))
 	return &logger{Loger: log}
 }

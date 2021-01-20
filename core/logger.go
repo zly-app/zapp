@@ -14,8 +14,8 @@ import (
 
 // 记录器
 type ILogger interface {
-	// 创建一个镜像
-	NewMirror(tag ...string) ILogger
+	// 创建一个镜像log
+	NewMirrorLogger(tag ...string) ILogger
 
 	zlog.Loger
 }
