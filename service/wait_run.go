@@ -38,7 +38,7 @@ func WaitRun(app core.IApp, opt *WaitRunOption) error {
 		errChan <- opt.RunServiceFn()
 	}(errChan)
 
-	wait := time.NewTimer(time.Duration(app.GetConfig().Config().WaitServiceRunTime) * time.Millisecond) // 等待启动提前返回
+	wait := time.NewTimer(time.Duration(app.GetConfig().Config().Frame.WaitServiceRunTime) * time.Millisecond) // 等待启动提前返回
 	select {
 	case <-wait.C:
 	case <-app.BaseContext().Done():
@@ -56,7 +56,7 @@ func WaitRun(app core.IApp, opt *WaitRunOption) error {
 
 	// 开始等待服务启动阶段2
 	go func(errChan chan error) {
-		wait = time.NewTimer(time.Duration(app.GetConfig().Config().ServiceUnstableObserveTime) * time.Millisecond)
+		wait = time.NewTimer(time.Duration(app.GetConfig().Config().Frame.ServiceUnstableObserveTime) * time.Millisecond)
 		select {
 		case <-wait.C:
 		case <-app.BaseContext().Done():

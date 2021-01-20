@@ -15,18 +15,14 @@ import (
 
 // 配置结构
 type Config struct {
-	// debug标志
-	Debug bool
-	// 主动清理内存间隔时间(毫秒), <= 0 表示禁用
-	FreeMemoryInterval int
-	// 默认等待服务启动阶段, 等待时间(毫秒), 如果时间到未收到服务启动成功信号则将服务标记为不稳定状态然后继续开始工作(我们总不能一直等着吧)
-	WaitServiceRunTime int
-	// 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功
-	ServiceUnstableObserveTime int
-	// 标签列表, 注意: 标签名是忽略大小写的
-	Labels map[string]interface{}
-	// log配置
-	Log LogConfig
+	// 框架配置
+	Frame FrameConfig
+
+	// 服务配置
+	Services ServicesConfig
+
+	// 组件配置
+	Components ComponentsConfig
 }
 
 // 配置
@@ -46,4 +42,26 @@ type IConfig interface {
 	GetLabel(name string) interface{}
 }
 
+// frame配置
+type FrameConfig struct {
+	// debug标志
+	Debug bool
+	// 主动清理内存间隔时间(毫秒), <= 0 表示禁用
+	FreeMemoryInterval int
+	// 默认等待服务启动阶段, 等待时间(毫秒), 如果时间到未收到服务启动成功信号则将服务标记为不稳定状态然后继续开始工作(我们总不能一直等着吧)
+	WaitServiceRunTime int
+	// 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功
+	ServiceUnstableObserveTime int
+	// 标签列表, 注意: 标签名是忽略大小写的
+	Labels map[string]interface{}
+	// log配置
+	Log LogConfig
+}
+
 type LogConfig = zlog.LogConfig
+
+// 服务配置
+type ServicesConfig map[string]interface{}
+
+// 组件配置
+type ComponentsConfig map[string]map[string]interface{}

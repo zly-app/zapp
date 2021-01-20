@@ -87,20 +87,20 @@ func (l *logger) NewMirrorLogger(tag ...string) core.ILogger {
 }
 
 func NewLogger(appName string, c core.IConfig) core.ILogger {
-	conf := c.Config()
-	if zutils.Reflect.IsZero(conf.Log) {
-		conf.Log = zlog.DefaultConfig
-		conf.Log.Name = appName
+	conf := c.Config().Frame.Log
+	if zutils.Reflect.IsZero(conf) {
+		conf = zlog.DefaultConfig
+		conf.Name = appName
 	}
-	if conf.Log.Name == "" {
-		conf.Log.Name = appName
+	if conf.Name == "" {
+		conf.Name = appName
 	}
-	c.Config().Log = conf.Log
+	c.Config().Frame.Log = conf
 
 	opts := []zap.Option{}
-	if conf.Log.IsTerminal {
+	if conf.IsTerminal {
 		opts = append(opts, withColoursMessageOfLoggerId())
 	}
-	log := zlog.New(conf.Log, opts...)
+	log := zlog.New(conf, opts...)
 	return &logger{Loger: log}
 }

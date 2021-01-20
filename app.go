@@ -217,7 +217,7 @@ func (app *appCli) GetLogger() core.ILogger {
 }
 
 func (app *appCli) freeMemory() {
-	interval := app.config.Config().FreeMemoryInterval
+	interval := app.config.Config().Frame.FreeMemoryInterval
 	if interval <= 0 {
 		return
 	}
