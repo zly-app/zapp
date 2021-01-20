@@ -30,6 +30,3 @@ const (
 
 // 默认组件名
 const DefaultComponentName = "default"
-
-// log储存字段
-const LoggerSaveFieldKey = "_app_logger"

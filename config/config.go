@@ -193,6 +193,7 @@ func (c *configCli) ParseServiceConfig(serviceType string, outPtr interface{}) e
 }
 
 func (c *configCli) ParseComponentConfig(componentType, componentName string, outPtr interface{}) error {
+	componentName = zutils.Ternary.Or(componentName, consts.DefaultComponentName).(string)
 	key := "components." + componentType + "." + componentName
 	if !c.vi.IsSet(key) {
 		return fmt.Errorf("组件配置<%s.%s>不存在", componentType, componentName)

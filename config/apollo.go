@@ -160,7 +160,7 @@ func analyseApolloConfig(namespace string, raw map[string]interface{}, level int
 		}
 
 		var doc interface{}
-		err := jsoniter.Unmarshal(zstr.ToBytes(zstr.GetString(value)), &doc)
+		err := jsoniter.UnmarshalFromString(zstr.GetString(value), &doc)
 		if err != nil {
 			logger.Log.Fatal("apollo的value无法转为json", zap.String("namespace", namespace), zap.String("key", key), zap.Error(err))
 		}
