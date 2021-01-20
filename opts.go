@@ -28,6 +28,8 @@ type option struct {
 	Services map[core.ServiceType]bool
 	// 自定义启用服务函数
 	customEnableServicesFn func(c core.IComponent) (servers map[core.ServiceType]bool)
+	// 自定义组件建造者
+	CustomComponentCreator func(c core.IComponent) core.IComponent
 }
 
 func newOption() *option {
@@ -37,11 +39,6 @@ func newOption() *option {
 		IgnoreInjectOfDisableServer: false,
 		Services:                    make(map[core.ServiceType]bool),
 	}
-}
-
-// 启用服务
-func (o *option) EnableService(serviceType core.ServiceType, enable ...bool) {
-	o.Services[serviceType] = len(enable) == 0 || enable[0]
 }
 
 // 检查自定义启用服务
@@ -92,7 +89,7 @@ func WithIgnoreInjectOfDisableServer(ignore ...bool) Option {
 // 启动服务
 func WithService(serviceType core.ServiceType, enable ...bool) Option {
 	return func(opt *option) {
-		opt.EnableService(serviceType, enable...)
+		opt.Services[serviceType] = len(enable) == 0 || enable[0]
 	}
 }
 
@@ -108,5 +105,12 @@ func WithService(serviceType core.ServiceType, enable ...bool) Option {
 func WithCustomEnableService(fn func(c core.IComponent) (servers map[core.ServiceType]bool)) Option {
 	return func(opt *option) {
 		opt.customEnableServicesFn = fn
+	}
+}
+
+// 自定义组件
+func WithCustomComponent(creator func(c core.IComponent) core.IComponent) Option {
+	return func(opt *option) {
+		opt.CustomComponentCreator = creator
 	}
 }
