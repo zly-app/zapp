@@ -27,11 +27,14 @@ func (c *ComponentCli) Config() *core.Config { return c.config }
 func (c *ComponentCli) Close() {
 }
 
-func NewComponent(app core.IApp) core.IComponent {
-	c := &ComponentCli{
+func NewComponent(app core.IApp, creator func(c core.IComponent) core.IComponent) core.IComponent {
+	var c core.IComponent = &ComponentCli{
 		app:     app,
 		config:  app.GetConfig().Config(),
 		ILogger: app.GetLogger(),
+	}
+	if creator != nil {
+		c = creator(c)
 	}
 	defaultComponent = c
 	return c
