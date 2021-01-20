@@ -50,9 +50,9 @@ func (l *logger) nextLoggerId() string {
 	}
 }
 
-func withColoursMessageOfLoggerId(enable *bool) zap.Option {
+func withColoursMessageOfLoggerId() zap.Option {
 	return zlog.WithHook(func(ent *zapcore.Entry, fields []zapcore.Field) (cancel bool) {
-		if !*enable || ent.Message == "" {
+		if ent.Message == "" {
 			return
 		}
 
@@ -87,7 +87,7 @@ func (l *logger) NewMirror(tag ...string) core.ILogger {
 }
 
 func NewLogger(appName string, c core.IConfig) core.ILogger {
-	conf := c.Config().Frame
+	conf := c.Config()
 	if zutils.Reflect.IsZero(conf.Log) {
 		conf.Log = zlog.DefaultConfig
 		conf.Log.Name = appName
@@ -95,8 +95,12 @@ func NewLogger(appName string, c core.IConfig) core.ILogger {
 	if conf.Log.Name == "" {
 		conf.Log.Name = appName
 	}
-	c.Config().Frame.Log = conf.Log
+	c.Config().Log = conf.Log
 
-	log := zlog.New(conf.Log, withColoursMessageOfLoggerId(&c.Config().Frame.Log.IsTerminal))
+	opts := []zap.Option{}
+	if conf.Log.IsTerminal {
+		opts = append(opts, withColoursMessageOfLoggerId())
+	}
+	log := zlog.New(conf.Log, opts...)
 	return &logger{Loger: log}
 }

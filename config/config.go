@@ -35,10 +35,9 @@ type configCli struct {
 
 func newConfig() *core.Config {
 	conf := &core.Config{
-		Frame: core.FrameConfig{
-			Debug:              true,
-			FreeMemoryInterval: consts.DefaultFreeMemoryInterval,
-		},
+		Debug:              true,
+		FreeMemoryInterval: consts.DefaultFreeMemoryInterval,
+		Labels:             make(map[string]interface{}),
 	}
 	return conf
 }
@@ -110,7 +109,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		vi: vi,
 		c:  newConfig(),
 	}
-	if err = vi.Unmarshal(c.c); err != nil {
+	if err = vi.UnmarshalKey(consts.FrameConfigKey, c.c); err != nil {
 		logger.Log.Fatal("配置解析失败", zap.Error(err))
 	}
 
@@ -127,8 +126,8 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 }
 
 func (c *configCli) makeTags() {
-	c.labels = make(map[string]interface{}, len(c.c.Frame.Labels))
-	for k, v := range c.c.Frame.Labels {
+	c.labels = make(map[string]interface{}, len(c.c.Labels))
+	for k, v := range c.c.Labels {
 		c.labels[strings.ToLower(k)] = v
 	}
 }
@@ -166,8 +165,8 @@ func makeViperFromStruct(a interface{}) (*viper.Viper, error) {
 }
 
 func (c *configCli) checkDefaultConfig(conf *core.Config) {
-	conf.Frame.WaitServiceRunTime = zutils.Ternary.Or(conf.Frame.WaitServiceRunTime, consts.DefaultWaitServiceRunTime).(int)
-	conf.Frame.ServiceUnstableObserveTime = zutils.Ternary.Or(conf.Frame.ServiceUnstableObserveTime, consts.DefaultServiceUnstableObserveTime).(int)
+	conf.WaitServiceRunTime = zutils.Ternary.Or(conf.WaitServiceRunTime, consts.DefaultWaitServiceRunTime).(int)
+	conf.ServiceUnstableObserveTime = zutils.Ternary.Or(conf.ServiceUnstableObserveTime, consts.DefaultServiceUnstableObserveTime).(int)
 }
 
 func (c *configCli) Config() *core.Config {

@@ -10,6 +10,8 @@ package consts
 
 // 框架
 const (
+	// 配置key
+	FrameConfigKey = "frame"
 	// 默认清理内存间隔时间(毫秒)
 	DefaultFreeMemoryInterval int = 120000
 	// 默认等待服务启动阶段, 等待时间(毫秒)
