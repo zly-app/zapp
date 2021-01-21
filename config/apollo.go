@@ -47,7 +47,7 @@ const (
 
 // 分析apollo配置各命名空间的key前缀
 const (
-	analyseApolloConfigFrameKeyPrefixes      = "Log" // frame
+	analyseApolloConfigFrameKeyPrefixes      = "Log,Labels" // frame
 	analyseApolloConfigServicesKeyPrefixes   = "*"   // services
 	analyseApolloConfigComponentsKeyPrefixes = "*"   // components
 )

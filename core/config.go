@@ -52,7 +52,7 @@ type FrameConfig struct {
 	WaitServiceRunTime int
 	// 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功
 	ServiceUnstableObserveTime int
-	// 标签列表, 注意: 标签名是忽略大小写的
+	// 标签, 注意: 标签名是忽略大小写的
 	Labels map[string]interface{}
 	// log配置
 	Log LogConfig
