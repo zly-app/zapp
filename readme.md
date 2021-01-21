@@ -44,8 +44,6 @@ type Component struct {
 
 // 重写Close()
 func (c *Component) Close() {
-	defer c.IComponent.Close()
-
 	c.IXormComponent.Close()
 	// ... 关闭其他组件
 }
