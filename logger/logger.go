@@ -12,11 +12,11 @@ import (
 	"sync/atomic"
 
 	"github.com/zlyuancn/zlog"
-	"github.com/zlyuancn/zutils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 var Log core.ILogger = &logger{Loger: zlog.DefaultLogger}
@@ -77,8 +77,8 @@ func makeColorMessageOfLoggerId(logId string, message string) string {
 		}
 	}
 
-	color := zutils.ColorType(id&7) + zutils.Color.Default
-	return zutils.Color.MakeColorText(color, message)
+	color := ColorType(id&7) + defaultColor
+	return makeColorText(color, message)
 }
 
 func (l *logger) NewMirrorLogger(tag ...string) core.ILogger {
@@ -88,7 +88,7 @@ func (l *logger) NewMirrorLogger(tag ...string) core.ILogger {
 
 func NewLogger(appName string, c core.IConfig) core.ILogger {
 	conf := c.Config().Frame.Log
-	if zutils.Reflect.IsZero(conf) {
+	if utils.Reflect.IsZero(conf) {
 		conf = zlog.DefaultConfig
 		conf.Name = appName
 	}

@@ -11,11 +11,11 @@ package conn
 import (
 	"sync"
 
-	"github.com/zlyuancn/zutils"
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 type CreatorFunc = func(name string) (IInstance, error)
@@ -82,7 +82,7 @@ func (c *Conn) getInstance(creator CreatorFunc, name string) IInstance {
 	c.mx.Unlock()
 
 	var err error
-	err = zutils.Recover.WrapCall(func() error {
+	err = utils.Recover.WrapCall(func() error {
 		wg.instance, err = creator(name)
 		return err
 	})

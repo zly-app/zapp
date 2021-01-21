@@ -9,6 +9,7 @@
 package config
 
 import (
+	"encoding/base64"
 	"fmt"
 	"runtime"
 	"strings"
@@ -16,11 +17,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/shima-park/agollo"
 	"github.com/spf13/viper"
-	"github.com/zlyuancn/zutils"
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 // 命名空间定义
@@ -74,8 +75,8 @@ func makeApolloConfigFromViper(vi *viper.Viper) (*ApolloConfig, error) {
 func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 	// 构建选项
 	opts := []agollo.Option{
-		agollo.AutoFetchOnCacheMiss(),                                       // 当本地缓存中namespace不存在时，尝试去apollo缓存接口去获取
-		agollo.Cluster(zutils.Ternary.Or(conf.Cluster, "default").(string)), // 集群名
+		agollo.AutoFetchOnCacheMiss(),                                      // 当本地缓存中namespace不存在时，尝试去apollo缓存接口去获取
+		agollo.Cluster(utils.Ternary.Or(conf.Cluster, "default").(string)), // 集群名
 	}
 	if !conf.AlwaysLoadFromRemote {
 		opts = append(opts, agollo.FailTolerantOnBackupExists()) // 从服务获取数据失败时从备份文件加载
@@ -94,7 +95,7 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 	} else if conf.AuthBasicUser != "" {
 		opts = append(opts,
 			agollo.WithClientOptions(
-				agollo.WithAccessKey("basic "+zutils.Crypto.Base64Encode(conf.AuthBasicUser+":"+conf.AuthBasicPassword)),
+				agollo.WithAccessKey("basic "+base64.StdEncoding.EncodeToString([]byte(conf.AuthBasicUser+":"+conf.AuthBasicPassword))),
 				agollo.WithSignatureFunc(func(ctx *agollo.SignatureContext) agollo.Header {
 					return agollo.Header{"authorization": ctx.AccessKey}
 				}),

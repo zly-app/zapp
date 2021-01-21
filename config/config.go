@@ -17,12 +17,12 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
-	"github.com/zlyuancn/zutils"
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 var Conf core.IConfig
@@ -167,8 +167,8 @@ func makeViperFromStruct(a interface{}) (*viper.Viper, error) {
 }
 
 func (c *configCli) checkDefaultConfig(conf *core.Config) {
-	conf.Frame.WaitServiceRunTime = zutils.Ternary.Or(conf.Frame.WaitServiceRunTime, consts.DefaultWaitServiceRunTime).(int)
-	conf.Frame.ServiceUnstableObserveTime = zutils.Ternary.Or(conf.Frame.ServiceUnstableObserveTime, consts.DefaultServiceUnstableObserveTime).(int)
+	conf.Frame.WaitServiceRunTime = utils.Ternary.Or(conf.Frame.WaitServiceRunTime, consts.DefaultWaitServiceRunTime).(int)
+	conf.Frame.ServiceUnstableObserveTime = utils.Ternary.Or(conf.Frame.ServiceUnstableObserveTime, consts.DefaultServiceUnstableObserveTime).(int)
 }
 
 func (c *configCli) Config() *core.Config {
@@ -187,7 +187,7 @@ func (c *configCli) Parse(key string, outPtr interface{}) error {
 }
 
 func (c *configCli) ParseComponentConfig(componentType core.ComponentType, componentName string, outPtr interface{}) error {
-	componentName = zutils.Ternary.Or(componentName, consts.DefaultComponentName).(string)
+	componentName = utils.Ternary.Or(componentName, consts.DefaultComponentName).(string)
 	key := "components." + string(componentType) + "." + componentName
 	if !c.vi.IsSet(key) {
 		return fmt.Errorf("组件配置<%s.%s>不存在", componentType, componentName)
