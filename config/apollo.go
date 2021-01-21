@@ -16,7 +16,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/shima-park/agollo"
 	"github.com/spf13/viper"
-	"github.com/zlyuancn/zstr"
 	"github.com/zlyuancn/zutils"
 	"go.uber.org/zap"
 
@@ -48,8 +47,8 @@ const (
 // 分析apollo配置各命名空间的key前缀
 const (
 	analyseApolloConfigFrameKeyPrefixes      = "Log,Labels" // frame
-	analyseApolloConfigServicesKeyPrefixes   = "*"   // services
-	analyseApolloConfigComponentsKeyPrefixes = "*"   // components
+	analyseApolloConfigServicesKeyPrefixes   = "*"          // services
+	analyseApolloConfigComponentsKeyPrefixes = "*"          // components
 )
 
 type ApolloConfig struct {
@@ -160,7 +159,7 @@ func analyseApolloConfig(namespace string, raw map[string]interface{}, level int
 		}
 
 		var doc interface{}
-		err := jsoniter.UnmarshalFromString(zstr.GetString(value), &doc)
+		err := jsoniter.UnmarshalFromString(fmt.Sprint(value), &doc)
 		if err != nil {
 			logger.Log.Fatal("apollo的value无法转为json", zap.String("namespace", namespace), zap.String("key", key), zap.Error(err))
 		}
