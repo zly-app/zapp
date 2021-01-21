@@ -42,4 +42,6 @@ type IApp interface {
 
 	// 获取服务
 	GetService(serviceType ServiceType) (IService, bool)
+	// 注入服务
+	InjectService(serviceType ServiceType, a interface{})
 }

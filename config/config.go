@@ -25,7 +25,7 @@ import (
 	"github.com/zly-app/zapp/logger"
 )
 
-var Config core.IConfig
+var Conf core.IConfig
 
 type configCli struct {
 	vi     *viper.Viper
@@ -123,7 +123,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	}
 
 	c.makeTags()
-	Config = c
+	Conf = c
 	return c
 }
 

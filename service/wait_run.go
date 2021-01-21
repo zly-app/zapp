@@ -18,19 +18,19 @@ import (
 
 // 等待运行选项
 type WaitRunOption struct {
-	// 服务名
-	ServiceName string
+	// 服务类型
+	ServiceType core.ServiceType
 	// 如果错误是这些值则忽略
 	IgnoreErrs []error
-	// 如果等待阶段2返回错误是否在打印错误后退出
-	ExitOnErrOfWait2 bool
+	// 如果观察阶段返回错误是否在打印错误后退出
+	ExitOnErrOfObserve bool
 	// 启动服务函数
 	RunServiceFn func() error
 }
 
 func WaitRun(app core.IApp, opt *WaitRunOption) error {
-	if opt.ServiceName == "" {
-		app.Fatal("serverName must not empty")
+	if opt.ServiceType == "" {
+		app.Fatal("ServiceType must not empty")
 	}
 
 	errChan := make(chan error, 1)
@@ -72,10 +72,10 @@ func WaitRun(app core.IApp, opt *WaitRunOption) error {
 				}
 			}
 
-			if opt.ExitOnErrOfWait2 {
-				app.Fatal("服务启动失败", zap.String("serviceName", opt.ServiceName), zap.Error(err))
+			if opt.ExitOnErrOfObserve {
+				app.Fatal("服务在观察阶段检测到错误", zap.String("serviceType", string(opt.ServiceType)), zap.Error(err))
 			} else {
-				app.Error("服务启动失败", zap.String("serviceName", opt.ServiceName), zap.Error(err))
+				app.Error("服务在观察阶段检测到错误", zap.String("serviceType", string(opt.ServiceType)), zap.Error(err))
 			}
 		}
 	}(errChan)
