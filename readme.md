@@ -35,14 +35,6 @@ app.Run()
 ### 以 [xorm组件](https://github.com/zly-app/xorm-plugin) 为例
 
 ```go
-package main
-
-import (
-	xorm_plugin "github.com/zly-app/xorm-plugin"
-	"github.com/zly-app/zapp"
-	"github.com/zly-app/zapp/core"
-)
-
 // 定义自己的组件
 type Component struct {
 	core.IComponent
@@ -58,21 +50,19 @@ func (c *Component) Close() {
 	// ... 关闭其他组件
 }
 
-func main() {
-	app := zapp.NewApp("test",
-		zapp.WithCustomComponent(func(app core.IApp) core.IComponent { // 自定义返回自己的组件
-			return &Component{
-				IComponent:     app.GetComponent(),       // 设置原始组件
-				IXormComponent: xorm_plugin.NewXorm(app), //  设置xorm组件
-				// ... 设置其他组件
-			}
-		}),
-	)
+app := zapp.NewApp("test",
+    zapp.WithCustomComponent(func(app core.IApp) core.IComponent { // 自定义返回自己的组件
+        return &Component{
+            IComponent:     app.GetComponent(),       // 设置原始组件
+            IXormComponent: xorm_plugin.NewXorm(app), //  设置xorm组件
+            // ... 设置其他组件
+        }
+    }),
+)
 
-	c := app.GetComponent().(*Component) // 直接转换为自己的组件
-	c.GetXorm()                          // 获取 xorm 组件
-	c.GetXXX()                           // 获取其它组件
-}
+c := app.GetComponent().(*Component) // 直接转换为自己的组件
+c.GetXorm()                          // 获取 xorm 组件
+// c.GetXXX() 获取其它组件
 ```
 
 ## 服务插件
@@ -82,30 +72,26 @@ func main() {
 ### 以 [api服务](https://github.com/zly-app/api-service) 为例
 
 ```go
-package main
+// 注册api服务
+api_service.RegistryService()
+// ... 注册其他服务
 
-import (
-	"github.com/kataras/iris/v12"
-
-	api_service "github.com/zly-app/api-service"
-	"github.com/zly-app/zapp"
-	"github.com/zly-app/zapp/core"
+app := zapp.NewApp("test",
+    api_service.WithApiService(), // 启用api服务
+    // ... 启用其它服务
 )
 
-func main() {
-	// 注册api服务
-	api_service.RegistryService()
-	// 启用api服务
-	app := zapp.NewApp("test", api_service.WithApiService())
-	// 注册路由
-	api_service.RegistryApiRouter(app, func(c core.IComponent, router iris.Party) {
-		router.Get("/", api_service.Wrap(func(ctx *api_service.Context) interface{} {
-			return "hello"
-		}))
-	})
-	// 运行
-	app.Run()
-}
+// 注册路由
+api_service.RegistryApiRouter(app, func(c core.IComponent, router iris.Party) {
+    router.Get("/", api_service.Wrap(func(ctx *api_service.Context) interface{} {
+        return "hello"
+    }))
+})
+
+// ... 其它服务的注入
+
+// 运行
+app.Run()
 ```
 
 # 配置
@@ -114,7 +100,7 @@ func main() {
 
 # 依赖包说明
 
-> 作为一个基础库, 我们尽量减少了依赖包, 但是组件插件和服务插件并没有, 因为它们需要
+> 作为一个基础库, 我们尽量减少了依赖包, 但是组件插件和服务插件并没有, 因为它们需要.
 
 # 插件开发规范
 
