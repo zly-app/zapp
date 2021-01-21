@@ -27,7 +27,7 @@ func (c *ComponentCli) Config() *core.Config { return c.config }
 func (c *ComponentCli) Close() {
 }
 
-func NewComponent(app core.IApp, creator func(c core.IComponent) core.IComponent) core.IComponent {
+func NewComponent(app core.IApp, creator func(rawComponent core.IComponent) core.IComponent) core.IComponent {
 	var c core.IComponent = &ComponentCli{
 		app:     app,
 		config:  app.GetConfig().Config(),
