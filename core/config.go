@@ -33,10 +33,10 @@ type IConfig interface {
 	GetViper() *viper.Viper
 	// 解析指定key数据到结构中
 	Parse(key string, outPtr interface{}) error
-	// 解析服务配置
-	ParseServiceConfig(serviceType string, outPtr interface{}) error
 	// 解析组件配置
-	ParseComponentConfig(componentType, componentName string, outPtr interface{}) error
+	ParseComponentConfig(componentType ComponentType, componentName string, outPtr interface{}) error
+	// 解析服务配置
+	ParseServiceConfig(serviceType ServiceType, outPtr interface{}) error
 
 	// 获取标签的值, 标签名是忽略大小写的
 	GetLabel(name string) interface{}

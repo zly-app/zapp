@@ -186,19 +186,19 @@ func (c *configCli) Parse(key string, outPtr interface{}) error {
 	return c.vi.UnmarshalKey(key, outPtr)
 }
 
-func (c *configCli) ParseServiceConfig(serviceType string, outPtr interface{}) error {
-	key := "services." + serviceType
+func (c *configCli) ParseComponentConfig(componentType core.ComponentType, componentName string, outPtr interface{}) error {
+	componentName = zutils.Ternary.Or(componentName, consts.DefaultComponentName).(string)
+	key := "components." + string(componentType) + "." + componentName
 	if !c.vi.IsSet(key) {
-		return fmt.Errorf("服务配置<%s>不存在", serviceType)
+		return fmt.Errorf("组件配置<%s.%s>不存在", componentType, componentName)
 	}
 	return c.vi.UnmarshalKey(key, outPtr)
 }
 
-func (c *configCli) ParseComponentConfig(componentType, componentName string, outPtr interface{}) error {
-	componentName = zutils.Ternary.Or(componentName, consts.DefaultComponentName).(string)
-	key := "components." + componentType + "." + componentName
+func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr interface{}) error {
+	key := "services." + string(serviceType)
 	if !c.vi.IsSet(key) {
-		return fmt.Errorf("组件配置<%s.%s>不存在", componentType, componentName)
+		return fmt.Errorf("服务配置<%s>不存在", serviceType)
 	}
 	return c.vi.UnmarshalKey(key, outPtr)
 }
