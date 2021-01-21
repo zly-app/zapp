@@ -78,7 +78,11 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.handler(BeforeInitializeHandler)
 
 	// 初始化组件
-	app.component = component.NewComponent(app, app.opt.CustomComponentCreator)
+	app.component = component.NewComponent(app)
+	if app.opt.CustomComponentCreator != nil {
+		app.component = app.opt.CustomComponentCreator(app.component)
+		component.ResetGlobalComponent(app)
+	}
 
 	// 初始化服务
 	app.opt.CheckCustomEnableServices(app.component)

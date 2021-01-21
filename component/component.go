@@ -27,14 +27,11 @@ func (c *ComponentCli) Config() *core.Config { return c.config }
 func (c *ComponentCli) Close() {
 }
 
-func NewComponent(app core.IApp, creator func(rawComponent core.IComponent) core.IComponent) core.IComponent {
+func NewComponent(app core.IApp) core.IComponent {
 	var c core.IComponent = &ComponentCli{
 		app:     app,
 		config:  app.GetConfig().Config(),
 		ILogger: app.GetLogger(),
-	}
-	if creator != nil {
-		c = creator(c)
 	}
 	defaultComponent = c
 	return c
@@ -46,4 +43,9 @@ func GlobalComponent() core.IComponent {
 		logger.Log.Panic("GlobalComponent is uninitialized")
 	}
 	return defaultComponent
+}
+
+// 重置全局component
+func ResetGlobalComponent(app core.IApp) {
+	defaultComponent = app.GetComponent()
 }
