@@ -29,7 +29,7 @@ type option struct {
 	// 自定义启用服务函数
 	customEnableServicesFn func(c core.IComponent) (servers map[core.ServiceType]bool)
 	// 自定义组件建造者
-	CustomComponentCreator func(rawComponent core.IComponent) core.IComponent
+	CustomComponentCreator func(app core.IApp) core.IComponent
 }
 
 func newOption() *option {
@@ -109,7 +109,7 @@ func WithCustomEnableService(fn func(c core.IComponent) (servers map[core.Servic
 }
 
 // 自定义组件
-func WithCustomComponent(creator func(rawComponent core.IComponent) core.IComponent) Option {
+func WithCustomComponent(creator func(app core.IApp) core.IComponent) Option {
 	return func(opt *option) {
 		opt.CustomComponentCreator = creator
 	}

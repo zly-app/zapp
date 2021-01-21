@@ -80,7 +80,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	// 初始化组件
 	app.component = component.NewComponent(app)
 	if app.opt.CustomComponentCreator != nil {
-		app.component = app.opt.CustomComponentCreator(app.component)
+		app.component = app.opt.CustomComponentCreator(app)
 		component.ResetGlobalComponent(app)
 	}
 
