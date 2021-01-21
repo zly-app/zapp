@@ -214,8 +214,10 @@ github.com/zlyuancn/zlog v0.0.0-20210110090908-80015b727d59 h1:nvBx6z3eC5xN0Q01E
 github.com/zlyuancn/zlog v0.0.0-20210110090908-80015b727d59/go.mod h1:jaK1SVsG1OoKiSxf2BrbSbPJlq+NAdU8ed4EXqE9s84=
 github.com/zlyuancn/zstr v0.0.0-20201208035324-9c9af6935520 h1:13KqGnZSvra+4sG4Xu3p7pIua1UFq9mBye/ykDrPGQs=
 github.com/zlyuancn/zstr v0.0.0-20201208035324-9c9af6935520/go.mod h1:gcWCwemINH4jJeg+sXWMf45IAWc/fSn4rZ38eW2zqI8=
-github.com/zlyuancn/zutils v0.0.0-20210119085353-53ed075d171a h1:EVeRndKhMWTTZAFevyJIVafFj9DN+c5hqQBnsjBnP80=
-github.com/zlyuancn/zutils v0.0.0-20210119085353-53ed075d171a/go.mod h1:LLchQAzsmPgVT/pmMtaow4Bp3hJ5N7fP0SvMkNrNUx0=
+github.com/zlyuancn/zstr v0.0.0-20210121050244-daa622b5ac44 h1:Cy4axt5WJKPcQoxn8Gj1e/R5Eyzb6n8eEC3eynpeafw=
+github.com/zlyuancn/zstr v0.0.0-20210121050244-daa622b5ac44/go.mod h1:gcWCwemINH4jJeg+sXWMf45IAWc/fSn4rZ38eW2zqI8=
+github.com/zlyuancn/zutils v0.0.0-20210121050237-808b1a5b618e h1:A9mXw3xyebU0/QqX2/zbG/qULk2/4jgY+TG33fAPghw=
+github.com/zlyuancn/zutils v0.0.0-20210121050237-808b1a5b618e/go.mod h1:LLchQAzsmPgVT/pmMtaow4Bp3hJ5N7fP0SvMkNrNUx0=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
