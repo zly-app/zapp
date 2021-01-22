@@ -39,7 +39,7 @@ type IConfig interface {
 	ParseServiceConfig(serviceType ServiceType, outPtr interface{}) error
 
 	// 获取标签的值, 标签名是忽略大小写的
-	GetLabel(name string) interface{}
+	GetLabel(name string) string
 }
 
 // frame配置
@@ -53,7 +53,7 @@ type FrameConfig struct {
 	// 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功
 	ServiceUnstableObserveTime int
 	// 标签, 注意: 标签名是忽略大小写的
-	Labels map[string]interface{}
+	Labels map[string]string
 	// log配置
 	Log LogConfig
 }

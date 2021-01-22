@@ -30,7 +30,7 @@ var Conf core.IConfig
 type configCli struct {
 	vi     *viper.Viper
 	c      *core.Config
-	labels map[string]interface{}
+	labels map[string]string
 }
 
 func newConfig() *core.Config {
@@ -38,7 +38,7 @@ func newConfig() *core.Config {
 		Frame: core.FrameConfig{
 			Debug:              true,
 			FreeMemoryInterval: consts.DefaultFreeMemoryInterval,
-			Labels:             make(map[string]interface{}),
+			Labels:             make(map[string]string),
 		},
 	}
 	return conf
@@ -128,7 +128,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 }
 
 func (c *configCli) makeTags() {
-	c.labels = make(map[string]interface{}, len(c.c.Frame.Labels))
+	c.labels = make(map[string]string, len(c.c.Frame.Labels))
 	for k, v := range c.c.Frame.Labels {
 		c.labels[strings.ToLower(k)] = v
 	}
@@ -203,6 +203,6 @@ func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr inte
 	return c.vi.UnmarshalKey(key, outPtr)
 }
 
-func (c *configCli) GetLabel(name string) interface{} {
+func (c *configCli) GetLabel(name string) string {
 	return c.labels[strings.ToLower(name)]
 }
