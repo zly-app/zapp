@@ -10,12 +10,12 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
@@ -152,7 +152,7 @@ func makeViperFromFile(files []string) (*viper.Viper, error) {
 
 // 从结构体构建viper
 func makeViperFromStruct(a interface{}) (*viper.Viper, error) {
-	bs, err := jsoniter.Marshal(a)
+	bs, err := json.Marshal(a)
 	if err != nil {
 		return nil, fmt.Errorf("编码失败: %s", err)
 	}

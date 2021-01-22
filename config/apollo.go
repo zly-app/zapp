@@ -9,10 +9,10 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
@@ -94,7 +94,7 @@ func analyseApolloConfig(namespace string, raw map[string]interface{}, level int
 		}
 
 		var doc interface{}
-		err := jsoniter.UnmarshalFromString(fmt.Sprint(value), &doc)
+		err := json.Unmarshal([]byte(fmt.Sprint(value)), &doc)
 		if err != nil {
 			logger.Log.Fatal("apollo的value无法转为json", zap.String("namespace", namespace), zap.String("key", key), zap.Error(err))
 		}
