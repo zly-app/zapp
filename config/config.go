@@ -183,7 +183,10 @@ func (c *configCli) Parse(key string, outPtr interface{}) error {
 	if !c.vi.IsSet(key) {
 		return fmt.Errorf("key<%s>不存在", key)
 	}
-	return c.vi.UnmarshalKey(key, outPtr)
+	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
+		return fmt.Errorf("无法解析key<%s>配置: %s", key, err)
+	}
+	return nil
 }
 
 func (c *configCli) ParseComponentConfig(componentType core.ComponentType, componentName string, outPtr interface{}) error {
@@ -192,7 +195,10 @@ func (c *configCli) ParseComponentConfig(componentType core.ComponentType, compo
 	if !c.vi.IsSet(key) {
 		return fmt.Errorf("组件配置<%s.%s>不存在", componentType, componentName)
 	}
-	return c.vi.UnmarshalKey(key, outPtr)
+	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
+		return fmt.Errorf("无法解析<%s.%s>组件配置: %s", componentType, componentName, err)
+	}
+	return nil
 }
 
 func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr interface{}) error {
@@ -200,7 +206,10 @@ func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr inte
 	if !c.vi.IsSet(key) {
 		return fmt.Errorf("服务配置<%s>不存在", serviceType)
 	}
-	return c.vi.UnmarshalKey(key, outPtr)
+	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
+		return fmt.Errorf("无法解析<%s>服务配置: %s", serviceType, err)
+	}
+	return nil
 }
 
 func (c *configCli) GetLabel(name string) string {
