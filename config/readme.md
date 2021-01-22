@@ -60,6 +60,15 @@ MemoryCacheDB.CleanupInterval = 300000
 #[...]
 ```
 
++ 其它配置
+
+> 除了 frame; services; components 这三大类, 还可以添加自定义配置, 然后使用 Parse 方法将配置读取到变量中
+
+```toml
+[自定义分片名]
+key=value
+```
+
 + 更多配置说明参考 [core.Config](../core/config.go)
 
 # 从viper加载配置
@@ -81,6 +90,7 @@ apollo命名空间主要为三部分:
     frame: 框架配置
     services: 服务配置
     components: 组件配置
+    当然你也通过设置 ApolloConfig.Namespaces 以加载自定义命名空间
 apollo的配置是扁平化的, 多级的key应该用点连接起来, 所以配置应该类似于这样:
     frame:
         Debug                   true            debug标志
@@ -170,7 +180,7 @@ apollo的配置也可以使用json, 如下:
     Api = {
         ...
       }
-
+    
     [components]
     Xorm.default = {
         ...
