@@ -27,7 +27,7 @@ type option struct {
 	// 服务
 	Services map[core.ServiceType]bool
 	// 自定义启用服务函数
-	customEnableServicesFn func(c core.IComponent) (servers map[core.ServiceType]bool)
+	customEnableServicesFn func(app core.IApp) (servers map[core.ServiceType]bool)
 	// 自定义组件建造者
 	CustomComponentCreator func(app core.IApp) core.IComponent
 }
@@ -42,12 +42,12 @@ func newOption() *option {
 }
 
 // 检查自定义启用服务
-func (o *option) CheckCustomEnableServices(c core.IComponent) {
+func (o *option) CheckCustomEnableServices(app core.IApp) {
 	if o.customEnableServicesFn == nil {
 		return
 	}
 
-	customServices := o.customEnableServicesFn(c)
+	customServices := o.customEnableServicesFn(app)
 	for serviceType, enable := range customServices {
 		o.Services[serviceType] = enable
 	}
@@ -102,7 +102,7 @@ func WithService(serviceType core.ServiceType, enable ...bool) Option {
 //				core.CronService: true,
 //			}
 //		})
-func WithCustomEnableService(fn func(c core.IComponent) (servers map[core.ServiceType]bool)) Option {
+func WithCustomEnableService(fn func(app core.IApp) (servers map[core.ServiceType]bool)) Option {
 	return func(opt *option) {
 		opt.customEnableServicesFn = fn
 	}

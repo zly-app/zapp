@@ -85,7 +85,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	}
 
 	// 初始化服务
-	app.opt.CheckCustomEnableServices(app.component)
+	app.opt.CheckCustomEnableServices(app)
 	for serviceType, enable := range app.opt.Services {
 		if enable {
 			app.services[serviceType] = service.MakeService(app, serviceType)
