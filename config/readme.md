@@ -129,17 +129,17 @@ apollo的配置也可以使用json, 如下:
 
 > 从apollo拉取的配置会覆盖文件的配置
 
-1. 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo.go)
+1. 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo_sdk/sdk.go)
 
     ```toml
     [apollo]
     Address = "http://127.0.0.1:8080"
     AppId = "your-appid"
-    AccessKey = "" # 验证key, 优先级高于基础认证
-    AuthBasicUser = "" # 基础认证用户名
-    AuthBasicPassword = "" # 基础认证密码
-    Cluster = "default" # 集群名
-    AlwaysLoadFromRemote = false # 总是从远程获取, 在远程加载失败时不会从备份文件加载, 这将导致无法启动app
+    AccessKey = ""                  # 验证key, 优先级高于基础认证
+    AuthBasicUser = ""              # 基础认证用户名, 可用于nginx的基础认证扩展
+    AuthBasicPassword = ""          # 基础认证密码
+    Cluster = "default"             # 集群名, 默认default
+    AlwaysLoadFromRemote = false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
     BackupFile = "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
     ```
 

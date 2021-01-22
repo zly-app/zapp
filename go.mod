@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/json-iterator/go v1.1.6
-	github.com/shima-park/agollo v1.2.10
 	github.com/spf13/viper v1.7.1
 	github.com/takama/daemon v1.0.0
 	github.com/zlyuancn/zlog v0.0.0-20210110090908-80015b727d59
