@@ -24,6 +24,8 @@ type option struct {
 	Handlers map[HandlerType][]Handler
 	// 忽略未启用的服务注入
 	IgnoreInjectOfDisableServer bool
+	// 在服务不稳定观察阶段中出现错误则退出
+	ExitOnErrOfObserveServiceUnstable bool
 	// 服务
 	Services map[core.ServiceType]bool
 	// 自定义启用服务函数
@@ -34,10 +36,11 @@ type option struct {
 
 func newOption() *option {
 	return &option{
-		EnableDaemon:                false,
-		Handlers:                    make(map[HandlerType][]Handler),
-		IgnoreInjectOfDisableServer: false,
-		Services:                    make(map[core.ServiceType]bool),
+		EnableDaemon:                      false,
+		Handlers:                          make(map[HandlerType][]Handler),
+		IgnoreInjectOfDisableServer:       false,
+		ExitOnErrOfObserveServiceUnstable: true,
+		Services:                          make(map[core.ServiceType]bool),
 	}
 }
 
@@ -83,6 +86,13 @@ func WithHandler(t HandlerType, hs ...Handler) Option {
 func WithIgnoreInjectOfDisableServer(ignore ...bool) Option {
 	return func(opt *option) {
 		opt.IgnoreInjectOfDisableServer = len(ignore) == 0 || ignore[0]
+	}
+}
+
+// 在服务不稳定观察阶段中出现错误则退出, 默认true
+func WithExitOnErrOfObserveServiceUnstable(exit ...bool) Option {
+	return func(opt *option) {
+		opt.ExitOnErrOfObserveServiceUnstable = len(exit) == 0 || exit[0]
 	}
 }
 

@@ -20,8 +20,6 @@ import (
 type WaitRunOption struct {
 	// 服务类型
 	ServiceType core.ServiceType
-	// 如果错误是这些值则忽略
-	IgnoreErrs []error
 	// 如果观察阶段返回错误是否在打印错误后退出
 	ExitOnErrOfObserve bool
 	// 启动服务函数
@@ -46,11 +44,6 @@ func WaitRun(app core.IApp, opt *WaitRunOption) error {
 		return nil
 	case err := <-errChan:
 		wait.Stop()
-		for _, e := range opt.IgnoreErrs {
-			if err == e {
-				return nil
-			}
-		}
 		return err
 	}
 
@@ -65,11 +58,6 @@ func WaitRun(app core.IApp, opt *WaitRunOption) error {
 			wait.Stop()
 			if err == nil {
 				return
-			}
-			for _, e := range opt.IgnoreErrs {
-				if err == e {
-					return
-				}
 			}
 
 			if opt.ExitOnErrOfObserve {

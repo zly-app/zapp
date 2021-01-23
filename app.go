@@ -118,7 +118,12 @@ func (app *appCli) run() {
 func (app *appCli) startService() {
 	app.Debug("启动服务")
 	for serviceType, s := range app.services {
-		if err := s.Start(); err != nil {
+		err := service.WaitRun(app, &service.WaitRunOption{
+			ServiceType:        serviceType,
+			ExitOnErrOfObserve: app.opt.ExitOnErrOfObserveServiceUnstable,
+			RunServiceFn:       s.Start,
+		})
+		if err != nil {
 			app.Fatal("服务启动失败", zap.String("serviceType", string(serviceType)), zap.Error(err))
 		}
 	}
