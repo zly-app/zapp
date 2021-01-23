@@ -16,7 +16,8 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/zly-app/zapp/pkg/lumberjack"
 
 	"github.com/zly-app/zapp/core"
 )

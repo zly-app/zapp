@@ -103,7 +103,11 @@ app.Run()
 
 # 依赖包说明
 
-> 作为一个基础库, 我们尽量减少了依赖包, 但是组件插件和服务插件并没有, 因为它们需要.
+> 作为一个基础库, 我们尽量减少了依赖包, 只需要以下包依赖
+
++ github.com/spf13/viper
++ github.com/takama/daemon
++ go.uber.org/zap
 
 # 插件开发规范
 
