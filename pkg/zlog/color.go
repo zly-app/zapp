@@ -6,7 +6,7 @@
 -------------------------------------------------
 */
 
-package logger
+package zlog
 
 type ColorType byte
 
