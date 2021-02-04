@@ -5,14 +5,14 @@
 <!-- TOC -->
 
 - [开始](#%E5%BC%80%E5%A7%8B)
-- [插件使用](#%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8)
-    - [组件插件](#%E7%BB%84%E4%BB%B6%E6%8F%92%E4%BB%B6)
-    - [服务插件](#%E6%9C%8D%E5%8A%A1%E6%8F%92%E4%BB%B6)
+- [扩展性](#%E6%89%A9%E5%B1%95%E6%80%A7)
+    - [组件](#%E7%BB%84%E4%BB%B6)
+    - [服务](#%E6%9C%8D%E5%8A%A1)
 - [配置](#%E9%85%8D%E7%BD%AE)
 - [依赖包说明](#%E4%BE%9D%E8%B5%96%E5%8C%85%E8%AF%B4%E6%98%8E)
-- [插件开发规范](#%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
-    - [组件插件开发规范](#%E7%BB%84%E4%BB%B6%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
-    - [服务插件开发规范](#%E6%9C%8D%E5%8A%A1%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
+- [扩展开发规范](#%E6%89%A9%E5%B1%95%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
+    - [组件开发规范](#%E7%BB%84%E4%BB%B6%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
+    - [服务开发规范](#%E6%9C%8D%E5%8A%A1%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
 - [使用说明](#%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)
     - [守护进程](#%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B)
     - [Handler](#handler)
@@ -29,15 +29,15 @@ app := zapp.NewApp("test")
 app.Run()
 ```
 
-# 插件使用
+# 扩展性
 
-## 组件插件
+## 组件
 
-> 我们实现了一些组件插件, 可以在 [这里](https://github.com/zly-app/component) 找到
+> 我们实现了一些组件, 可以在 [这里](https://github.com/zly-app/component) 找到
 
-## 服务插件
+## 服务
 
-> 我们实现了一些服务插件, 可以在 [这里](https://github.com/zly-app/service) 找到
+> 我们实现了一些服务, 可以在 [这里](https://github.com/zly-app/service) 找到
 
 # 配置
 
@@ -51,15 +51,15 @@ app.Run()
 + [github.com/takama/daemon](https://github.com/takama/daemon) v1.0.0
 + [go.uber.org/zap](https://github.com/uber-go/zap) v1.16.0
 
-# 插件开发规范
+# 扩展开发规范
 
-## 组件插件开发规范
+## 组件开发规范
 
 > 我们提供了自定义组件创建选项 `zapp.WithCustomComponent`, 这个核心功能能让我们支持任何组件
 
 > ... 待完善
 
-## 服务插件开发规范
+## 服务开发规范
 
 > ... 待完善
 
