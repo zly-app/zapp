@@ -62,7 +62,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	var err error
 	if *confText != "" { // 命令行
 		files := strings.Split(*confText, ",")
-		vi, err = makeViperFromFile(files)
+		vi, err = makeViperFromFile(files, false)
 		if err != nil {
 			logger.Log.Fatal("从命令指定文件构建viper失败", zap.Strings("files", files), zap.Error(err))
 		}
@@ -74,7 +74,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 			logger.Log.Fatal("从配置结构构建viper失败", zap.Any("config", opt.conf), zap.Error(err))
 		}
 	} else if len(opt.files) > 0 { // WithFiles
-		vi, err = makeViperFromFile(opt.files)
+		vi, err = makeViperFromFile(opt.files, false)
 		if err != nil {
 			logger.Log.Fatal("从用户指定文件构建viper失败", zap.Strings("files", opt.files), zap.Error(err))
 		}
@@ -86,7 +86,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	} else { // 默认
 		files := strings.Split(consts.DefaultConfigFiles, ",")
 		logger.Log.Debug("使用默认配置文件", zap.Strings("files", files))
-		vi, err = makeViperFromFile(files)
+		vi, err = makeViperFromFile(files, true)
 		if err != nil {
 			logger.Log.Fatal("从默认配置文件构建viper失败", zap.Strings("files", files), zap.Error(err))
 		}
@@ -135,9 +135,18 @@ func (c *configCli) makeTags() {
 }
 
 // 从文件构建viper
-func makeViperFromFile(files []string) (*viper.Viper, error) {
+func makeViperFromFile(files []string, isDefault bool) (*viper.Viper, error) {
 	vi := viper.New()
 	for _, file := range files {
+		_, err := os.Stat(file)
+		if err != nil {
+			if isDefault && os.IsNotExist(err) { // 如果默认配置文件不存在则忽略
+				logger.Log.Warn("默认配置文件不存在", zap.String("file", file))
+				continue
+			}
+			return nil, fmt.Errorf("读取配置文件'%s'信息失败: %s", file, err)
+		}
+
 		vp := viper.New()
 		vp.SetConfigFile(file)
 		if err := vp.ReadInConfig(); err != nil {
