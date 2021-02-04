@@ -57,7 +57,7 @@ type ApolloConfig struct {
 	Cluster              string // 集群名, 默认default
 	AlwaysLoadFromRemote bool   // 总是从远程获取, 在远程加载失败时不会从备份文件加载
 	BackupFile           string // 备份文件名
-	Namespaces           string // 其他分片,多个分片名用英文逗号隔开
+	Namespaces           string // 其他自定义命名空间, 多个命名空间用英文逗号隔开
 }
 
 type (
