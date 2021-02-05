@@ -19,6 +19,10 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
+
+	"github.com/zly-app/zapp/logger"
 )
 
 // apollo获取配置api
@@ -151,6 +155,19 @@ func (a *ApolloConfig) getNamespaceDataFromRemote(namespace string) (NamespaceDa
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	// 404时尝试检查是否namespace不存在
+	if resp.StatusCode == http.StatusNotFound {
+		var result struct {
+			Error string `json:"error"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err == nil {
+			if result.Error == "Not Found" {
+				logger.Log.Warn("命名空间不存在", zap.String("namespace", namespace))
+				return NamespaceData{}, nil
+			}
+		}
+	}
 
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
