@@ -122,12 +122,12 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		os.Exit(0)
 	}
 
-	c.makeTags()
+	c.makeLabels()
 	Conf = c
 	return c
 }
 
-func (c *configCli) makeTags() {
+func (c *configCli) makeLabels() {
 	c.labels = make(map[string]string, len(c.c.Frame.Labels))
 	for k, v := range c.c.Frame.Labels {
 		c.labels[strings.ToLower(k)] = v
