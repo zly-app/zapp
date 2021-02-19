@@ -24,8 +24,7 @@ type ComponentCli struct {
 func (c *ComponentCli) App() core.IApp       { return c.app }
 func (c *ComponentCli) Config() *core.Config { return c.config }
 
-func (c *ComponentCli) Close() {
-}
+func (c *ComponentCli) Close() {}
 
 func NewComponent(app core.IApp) core.IComponent {
 	var c core.IComponent = &ComponentCli{
@@ -37,15 +36,15 @@ func NewComponent(app core.IApp) core.IComponent {
 	return c
 }
 
-// 获取全局component
-func GlobalComponent() core.IComponent {
+// 获取component
+func GetComponent() core.IComponent {
 	if defaultComponent == nil {
-		logger.Log.Panic("GlobalComponent is uninitialized")
+		logger.Log.Panic("Component is uninitialized")
 	}
 	return defaultComponent
 }
 
-// 重置全局component
-func ResetGlobalComponent(app core.IApp) {
-	defaultComponent = app.GetComponent()
+// 重置component
+func ResetComponent(component core.IComponent) {
+	defaultComponent = component
 }
