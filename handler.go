@@ -31,3 +31,9 @@ const (
 	// 在app退出后
 	AfterExitHandler
 )
+
+func (app *appCli) handler(t HandlerType) {
+	for _, h := range app.opt.Handlers[t] {
+		h(app, t)
+	}
+}

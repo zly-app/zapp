@@ -34,14 +34,18 @@ type option struct {
 	CustomComponentCreator func(app core.IApp) core.IComponent
 }
 
-func newOption() *option {
-	return &option{
+func newOption(opts ...Option) *option {
+	opt := &option{
 		EnableDaemon:                      false,
 		Handlers:                          make(map[HandlerType][]Handler),
 		IgnoreInjectOfDisableServer:       false,
 		ExitOnErrOfObserveServiceUnstable: true,
 		Services:                          make(map[core.ServiceType]bool),
 	}
+	for _, o := range opts {
+		o(opt)
+	}
+	return opt
 }
 
 // 检查自定义启用服务

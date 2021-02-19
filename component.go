@@ -9,12 +9,22 @@
 package zapp
 
 import (
+	"github.com/zly-app/zapp/component"
 	"github.com/zly-app/zapp/core"
 )
 
-// 关闭组件内加载的资源
-func (app *appCli) closeComponentResource() {
-	app.Debug("释放组件加载的资源")
+// 初始化组件
+func (app *appCli) initComponent() {
+	app.component = component.NewComponent(app)
+	if app.opt.CustomComponentCreator != nil {
+		app.component = app.opt.CustomComponentCreator(app)
+		component.ResetComponent(app.component)
+	}
+}
+
+// 释放组件资源
+func (app *appCli) releaseComponentResource() {
+	app.Debug("释放组件资源")
 	app.component.Close()
 }
 
