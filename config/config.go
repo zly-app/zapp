@@ -132,6 +132,7 @@ func (c *configCli) makeLabels() {
 	for k, v := range c.c.Frame.Labels {
 		c.labels[strings.ToLower(k)] = v
 	}
+	c.c.Frame.Labels = c.labels
 }
 
 // 从文件构建viper
@@ -223,4 +224,8 @@ func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr inte
 
 func (c *configCli) GetLabel(name string) string {
 	return c.labels[strings.ToLower(name)]
+}
+
+func (c *configCli) GetLabels() map[string]string {
+	return c.labels
 }

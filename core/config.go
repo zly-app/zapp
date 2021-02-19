@@ -39,6 +39,8 @@ type IConfig interface {
 
 	// 获取标签的值, 标签名是忽略大小写的
 	GetLabel(name string) string
+	// 获取标签数据
+	GetLabels() map[string]string
 }
 
 // frame配置
