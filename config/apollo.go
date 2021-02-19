@@ -19,26 +19,31 @@ import (
 	"github.com/zly-app/zapp/config/apollo_sdk"
 	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 type ApolloConfig = apollo_sdk.ApolloConfig
 
-// 将命名空间配置的指定等级及主key的value解析为json, *匹配任何主key
-var parseConfigToJsonOfPrimaryKeys = map[string]struct {
-	primaryKey string
-	keyLevel   int
+// 将命名空间配置的匹配key的value解析为json, 通配符语法, ? 表示一个字符, * 表示任意字符串或空字符串
+var parseConfigToJsonOfMatchKeys = map[string]struct {
+	matchKeys   string // 匹配key
+	noMatchKeys string // 不匹配key
 }{
-	apollo_sdk.FrameNamespace:      {"log,labels", 1},
-	apollo_sdk.ServicesNamespace:   {"*", 1},
-	apollo_sdk.ComponentsNamespace: {"*", 2},
+	apollo_sdk.FrameNamespace:      {"log,flags,labels", ""},
+	apollo_sdk.ServicesNamespace:   {"*", "*.*"},   // 忽略存在.的key
+	apollo_sdk.ComponentsNamespace: {"*", "*.*.*"}, // 忽略存在两个.以上的key
 }
 
-// 注册将命名空间配置的哪些key解析为json, *匹配任何主key
-func RegistryParseConfigToJsonOfPrimaryKey(namespace, primaryKey string, keyLevel int) {
-	parseConfigToJsonOfPrimaryKeys[namespace] = struct {
-		primaryKey string
-		keyLevel   int
-	}{primaryKey: primaryKey, keyLevel: keyLevel}
+// 注册将命名空间配置的匹配key的value解析为json, 通配符语法, ? 表示一个字符, * 表示任意字符串或空字符串
+//
+// matchKeys 表示匹配key的值作为json解析, 多个key用英文逗号连接, 多个key只要匹配其中一个则满足条件.
+// noMatchKeys 表示匹配key的值不作为json解析, 多个key用英文逗号连接, 多个key只要匹配其中一个则满足条件.
+// 如果设置了 noMatchKeys 但是没有设置 matchKeys, 表示如果没有满足 noMatchKeys 则将值作为json解析.
+func RegistryParseConfigToJsonOfMatchKeys(namespace string, matchKeys, noMatchKeys string) {
+	parseConfigToJsonOfMatchKeys[namespace] = struct {
+		matchKeys   string
+		noMatchKeys string
+	}{matchKeys, noMatchKeys}
 }
 
 // 从viper构建apollo配置
@@ -72,25 +77,24 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 
 // 分析apollo配置, 它会匹配key前缀且key的层级数值为level, 然后将value转为 map[string]interface{}
 func analyseApolloConfig(namespace string, raw map[string]interface{}) map[string]interface{} {
-	primaryKeys, ok := parseConfigToJsonOfPrimaryKeys[namespace]
-	if !ok {
+	matchKey, ok := parseConfigToJsonOfMatchKeys[namespace]
+	if !ok || (matchKey.matchKeys == "" && matchKey.noMatchKeys == "") { // 没有设置匹配key
 		return raw
 	}
 
-	prefixMap := make(map[string]bool)
-	for _, prefix := range strings.Split(strings.ToLower(primaryKeys.primaryKey), ",") {
-		prefixMap[prefix] = true
+	rawMatchKeys, rawNoMatchKeys := matchKey.matchKeys, matchKey.noMatchKeys
+	var matchKeys, noMatchKeys []string
+	if rawMatchKeys != "" {
+		matchKeys = strings.Split(rawMatchKeys, ",")
+	}
+	if rawNoMatchKeys != "" {
+		noMatchKeys = strings.Split(rawNoMatchKeys, ",")
 	}
 
 	data := make(map[string]interface{})
 	for key, value := range raw {
-		keys := strings.Split(key, ".")
-		if len(keys) != primaryKeys.keyLevel { // 不匹配等级
-			data[key] = value
-			continue
-		}
-
-		if primaryKeys.primaryKey != "*" && !prefixMap[strings.ToLower(keys[0])] { // 不匹配主key
+		if (len(matchKeys) > 0 && !utils.Text.IsMatchWildcardAny(strings.ToLower(key), matchKeys...)) ||
+			(len(noMatchKeys) > 0 && utils.Text.IsMatchWildcardAny(strings.ToLower(key), noMatchKeys...)) {
 			data[key] = value
 			continue
 		}
