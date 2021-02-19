@@ -36,7 +36,10 @@ type IConfig interface {
 	ParseComponentConfig(componentType ComponentType, componentName string, outPtr interface{}) error
 	// 解析服务配置
 	ParseServiceConfig(serviceType ServiceType, outPtr interface{}) error
-
+	// 检查是否存在flag, 注意: flag是忽略大小写的
+	HasFlag(flag string) bool
+	// 获取所有的flag, 注意: flag列表是无序的
+	GetFlags() []string
 	// 获取标签的值, 标签名是忽略大小写的
 	GetLabel(name string) string
 	// 获取标签数据
@@ -53,6 +56,8 @@ type FrameConfig struct {
 	WaitServiceRunTime int
 	// 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功
 	ServiceUnstableObserveTime int
+	// flag, 注意: flag是忽略大小写的
+	Flags []string
 	// 标签, 注意: 标签名是忽略大小写的
 	Labels map[string]string
 	// log配置

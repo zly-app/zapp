@@ -30,6 +30,7 @@ var Conf core.IConfig
 type configCli struct {
 	vi     *viper.Viper
 	c      *core.Config
+	flags  map[string]struct{}
 	labels map[string]string
 }
 
@@ -122,9 +123,24 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		os.Exit(0)
 	}
 
+	c.makeFlags()
 	c.makeLabels()
+
 	Conf = c
 	return c
+}
+
+func (c *configCli) makeFlags() {
+	c.flags = make(map[string]struct{}, len(c.c.Frame.Flags))
+	for _, flag := range c.c.Frame.Flags {
+		c.flags[strings.ToLower(flag)] = struct{}{}
+	}
+
+	flags := make([]string, 0, len(c.flags))
+	for flag := range c.flags {
+		flags = append(flags, flag)
+	}
+	c.c.Frame.Flags = flags
 }
 
 func (c *configCli) makeLabels() {
@@ -228,4 +244,13 @@ func (c *configCli) GetLabel(name string) string {
 
 func (c *configCli) GetLabels() map[string]string {
 	return c.labels
+}
+
+func (c *configCli) HasFlag(flag string) bool {
+	_, ok := c.flags[strings.ToLower(flag)]
+	return ok
+}
+
+func (c *configCli) GetFlags() []string {
+	return c.c.Frame.Flags
 }

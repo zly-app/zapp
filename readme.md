@@ -98,7 +98,7 @@ AfterExitHandler                在app退出后
 ```go
 zapp.WithCustomEnableService(func(app core.IApp) (servers map[core.ServiceType]bool) {
 	servers = make(map[core.ServiceType]bool)
-	if app.GetConfig().GetLabel("api") == "true" {
+	if app.GetConfig().HasFlag("api_service") {
 		servers["api"] = true
 	}
 	return servers
