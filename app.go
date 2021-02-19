@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"sync"
 	"syscall"
 	"time"
 
@@ -31,17 +32,16 @@ type appCli struct {
 
 	opt *option
 
-	interrupt     chan os.Signal
 	baseCtx       context.Context
 	baseCtxCancel context.CancelFunc
 
 	config core.IConfig
-
-	loggerId uint32
 	core.ILogger
-
 	component core.IComponent
 	services  map[core.ServiceType]core.IService
+
+	interrupt     chan os.Signal
+	onceExit sync.Once
 }
 
 // 创建一个app
@@ -74,8 +74,8 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.config = config.NewConfig(appName, app.opt.ConfigOpts...)
 	app.ILogger = logger.NewLogger(appName, app.config)
 
-	app.Debug("app初始化")
 	app.handler(BeforeInitializeHandler)
+	app.Debug("app初始化")
 
 	// 初始化组件
 	app.component = component.NewComponent(app)
@@ -92,27 +92,28 @@ func NewApp(appName string, opts ...Option) core.IApp {
 		}
 	}
 
-	app.handler(AfterInitializeHandler)
 	app.Debug("app初始化完毕")
+	app.handler(AfterInitializeHandler)
 
 	return app
 }
 
 func (app *appCli) run() {
-	app.Debug("启动app")
 	app.handler(BeforeStartHandler)
+	app.Debug("启动app")
 
 	// 启动服务
 	app.startService()
 
 	go app.freeMemory()
 
-	app.handler(AfterStartHandler)
 	app.Info("app已启动")
+	app.handler(AfterStartHandler)
 
 	signal.Notify(app.interrupt, os.Kill, os.Interrupt, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
-	<-app.interrupt
-	app.exit()
+	if sign := <-app.interrupt; sign != syscall.SIGQUIT {
+		app.exit()
+	}
 }
 
 func (app *appCli) startService() {
@@ -182,10 +183,9 @@ func (app *appCli) enableDaemon() {
 }
 
 func (app *appCli) exit() {
-	app.Debug("app准备退出")
-
 	// app退出前
 	app.handler(BeforeExitHandler)
+	app.Debug("app准备退出")
 
 	// 关闭基础上下文
 	app.baseCtxCancel()
@@ -195,8 +195,8 @@ func (app *appCli) exit() {
 	app.closeComponentResource()
 
 	// app退出后
-	app.handler(AfterExitHandler)
 	app.Warn("app已退出")
+	app.handler(AfterExitHandler)
 }
 
 func (app *appCli) Name() string {
@@ -210,7 +210,10 @@ func (app *appCli) Run() {
 
 // 退出
 func (app *appCli) Exit() {
-	app.interrupt <- syscall.SIGTERM
+	app.onceExit.Do(func() {
+		app.interrupt <- syscall.SIGQUIT
+		app.exit()
+	})
 }
 
 func (app *appCli) GetConfig() core.IConfig {
