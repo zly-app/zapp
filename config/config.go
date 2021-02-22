@@ -109,9 +109,14 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	}
 
 	c := &configCli{
-		vi: vi,
+		vi: viper.New(),
 		c:  newConfig(),
 	}
+	// 通过merge拆分所有节点
+	if err = c.vi.MergeConfigMap(vi.AllSettings()); err != nil {
+		logger.Log.Fatal("拆分配置节点失败", zap.Error(err))
+	}
+	// 解析配置
 	if err = vi.Unmarshal(c.c); err != nil {
 		logger.Log.Fatal("配置解析失败", zap.Error(err))
 	}
