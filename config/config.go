@@ -59,39 +59,42 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	testFlag := flag.Bool("t", false, "测试配置文件")
 	flag.Parse()
 
-	var vi *viper.Viper
+	var rawVi *viper.Viper
 	var err error
 	if *confText != "" { // 命令行
 		files := strings.Split(*confText, ",")
-		vi, err = makeViperFromFile(files, false)
+		rawVi, err = makeViperFromFile(files, false)
 		if err != nil {
 			logger.Log.Fatal("从命令指定文件构建viper失败", zap.Strings("files", files), zap.Error(err))
 		}
 	} else if opt.vi != nil { // WithViper
-		vi = opt.vi
+		rawVi = opt.vi
 	} else if opt.conf != nil { // WithConfig
-		vi, err = makeViperFromStruct(opt.conf)
+		rawVi, err = makeViperFromStruct(opt.conf)
 		if err != nil {
 			logger.Log.Fatal("从配置结构构建viper失败", zap.Any("config", opt.conf), zap.Error(err))
 		}
 	} else if len(opt.files) > 0 { // WithFiles
-		vi, err = makeViperFromFile(opt.files, false)
+		rawVi, err = makeViperFromFile(opt.files, false)
 		if err != nil {
 			logger.Log.Fatal("从用户指定文件构建viper失败", zap.Strings("files", opt.files), zap.Error(err))
 		}
 	} else if opt.apolloConfig != nil { // WithApollo
-		vi, err = makeViperFromApollo(opt.apolloConfig)
+		rawVi, err = makeViperFromApollo(opt.apolloConfig)
 		if err != nil {
 			logger.Log.Fatal("从apollo构建viper失败", zap.Any("apolloConfig", opt.apolloConfig), zap.Error(err))
 		}
 	} else { // 默认
 		files := strings.Split(consts.DefaultConfigFiles, ",")
 		logger.Log.Debug("使用默认配置文件", zap.Strings("files", files))
-		vi, err = makeViperFromFile(files, true)
+		rawVi, err = makeViperFromFile(files, true)
 		if err != nil {
 			logger.Log.Fatal("从默认配置文件构建viper失败", zap.Strings("files", files), zap.Error(err))
 		}
 	}
+
+	vi := viper.New()
+	vi.MergeConfigMap(rawVi.AllSettings())
 
 	// 如果从viper中发现了apollo配置
 	if vi.IsSet(consts.ApolloConfigKey) {
@@ -99,22 +102,18 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		if err != nil {
 			logger.Log.Fatal("解析apollo配置失败", zap.Error(err))
 		}
-		newVi, err := makeViperFromApollo(apolloConf)
+		rawVi, err = makeViperFromApollo(apolloConf)
 		if err != nil {
 			logger.Log.Fatal("从apollo构建viper失败", zap.Any("apolloConfig", apolloConf), zap.Error(err))
 		}
-		if err = vi.MergeConfigMap(newVi.AllSettings()); err != nil {
+		if err = vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
 			logger.Log.Fatal("合并apollo配置失败", zap.Error(err))
 		}
 	}
 
 	c := &configCli{
-		vi: viper.New(),
+		vi: vi,
 		c:  newConfig(),
-	}
-	// 通过merge拆分所有节点
-	if err = c.vi.MergeConfigMap(vi.AllSettings()); err != nil {
-		logger.Log.Fatal("拆分配置节点失败", zap.Error(err))
 	}
 	// 解析配置
 	if err = vi.Unmarshal(c.c); err != nil {
@@ -169,12 +168,8 @@ func makeViperFromFile(files []string, isDefault bool) (*viper.Viper, error) {
 			return nil, fmt.Errorf("读取配置文件'%s'信息失败: %s", file, err)
 		}
 
-		vp := viper.New()
-		vp.SetConfigFile(file)
-		if err := vp.ReadInConfig(); err != nil {
-			return nil, fmt.Errorf("配置文件'%s'加载失败: %s", file, err)
-		}
-		if err := vi.MergeConfigMap(vp.AllSettings()); err != nil {
+		vi.SetConfigFile(file)
+		if err = vi.MergeInConfig(); err != nil {
 			return nil, fmt.Errorf("合并配置文件'%s'失败: %s", file, err)
 		}
 	}
