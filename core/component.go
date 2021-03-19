@@ -20,6 +20,8 @@ type IComponent interface {
 	// 关闭所有组件
 	Close()
 
+	// 协程池
+	IGPoolManager
 	// 消息中心
 	IMsgbus
 }

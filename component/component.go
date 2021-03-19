@@ -9,6 +9,7 @@
 package component
 
 import (
+	"github.com/zly-app/zapp/component/gpool"
 	"github.com/zly-app/zapp/component/msgbus"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/logger"
@@ -20,6 +21,8 @@ type ComponentCli struct {
 	app    core.IApp
 	config *core.Config
 	core.ILogger
+
+	core.IGPoolManager
 	core.IMsgbus
 }
 
@@ -27,6 +30,7 @@ func (c *ComponentCli) App() core.IApp       { return c.app }
 func (c *ComponentCli) Config() *core.Config { return c.config }
 
 func (c *ComponentCli) Close() {
+	c.IGPoolManager.Close()
 	c.IMsgbus.Close()
 }
 
@@ -35,7 +39,9 @@ func NewComponent(app core.IApp) core.IComponent {
 		app:     app,
 		config:  app.GetConfig().Config(),
 		ILogger: app.GetLogger(),
-		IMsgbus: msgbus.NewMsgbus(),
+
+		IGPoolManager: gpool.NewGPoolManager(),
+		IMsgbus:       msgbus.NewMsgbus(),
 	}
 	defaultComponent = c
 	return c
