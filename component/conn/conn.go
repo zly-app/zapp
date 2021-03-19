@@ -101,6 +101,17 @@ func (c *Conn) getInstance(creator CreatorFunc, name string) IInstance {
 	return wg.instance
 }
 
+// 移除实例
+func (c *Conn) Remove(name string) {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	wg, ok := c.wgs[name]
+	if ok {
+		wg.instance.Close()
+		delete(c.wgs, name)
+	}
+}
+
 // 关闭所有实例的链接
 func (c *Conn) CloseAll() {
 	c.mx.Lock()
@@ -111,4 +122,5 @@ func (c *Conn) CloseAll() {
 			wg.instance.Close()
 		}
 	}
+	c.wgs = make(map[string]*connWaitGroup)
 }
