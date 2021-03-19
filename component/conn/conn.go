@@ -101,7 +101,7 @@ func (c *Conn) getInstance(creator CreatorFunc, name string) IInstance {
 	return wg.instance
 }
 
-// 移除实例
+// 移除实例, 移除时会关闭示例
 func (c *Conn) Remove(name string) {
 	c.mx.Lock()
 	defer c.mx.Unlock()
