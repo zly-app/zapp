@@ -19,4 +19,7 @@ type IComponent interface {
 	ILogger
 	// 关闭所有组件
 	Close()
+
+	// 消息中心
+	IMsgbus
 }
