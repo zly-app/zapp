@@ -190,7 +190,7 @@ func (a *ApolloConfig) saveDataToBackupFile(data MultiNamespaceData) error {
 		return nil
 	}
 
-	bs, err := json.Marshal(data)
+	bs, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
