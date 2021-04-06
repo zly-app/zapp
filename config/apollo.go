@@ -75,7 +75,7 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 	return vi, nil
 }
 
-// 分析apollo配置, 它会匹配key前缀且key的层级数值为level, 然后将value转为 map[string]interface{}
+// 分析apollo配置, 然后匹配key的value转为 map[string]interface{}
 func analyseApolloConfig(namespace string, raw map[string]interface{}) map[string]interface{} {
 	matchKey, ok := parseConfigToJsonOfMatchKeys[namespace]
 	if !ok || (matchKey.matchKeys == "" && matchKey.noMatchKeys == "") { // 没有设置匹配key
