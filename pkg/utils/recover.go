@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strings"
 )
 
 type Caller struct {
@@ -64,6 +65,7 @@ var Recover = new(recoverCli)
 
 type recoverCli struct{}
 
+// 包装函数, 捕获panic
 func (*recoverCli) WrapCall(fn func() error) (err error) {
 	// 包装执行, 拦截panic
 	defer func() {
@@ -84,4 +86,25 @@ func (*recoverCli) WrapCall(fn func() error) (err error) {
 
 	err = fn()
 	return
+}
+
+// 获取 recover 错误
+func (*recoverCli) GetRecoverError(err error) (RecoverError, bool) {
+	re, ok := err.(RecoverError)
+	return re, ok
+}
+
+// 获取 recover 错误的详情
+func (*recoverCli) GetRecoverErrorDetail(err error) string {
+	re, ok := err.(RecoverError)
+	if !ok {
+		return err.Error()
+	}
+
+	var callers []string
+	callers = make([]string, len(re.Callers()))
+	for i, c := range re.Callers() {
+		callers[i] = fmt.Sprintf("%s:%d", c.File, c.Line)
+	}
+	return strings.Join(callers, "\n")
 }
