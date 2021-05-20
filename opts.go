@@ -9,6 +9,8 @@
 package zapp
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/core"
 )
@@ -32,6 +34,8 @@ type option struct {
 	customEnableServicesFn func(app core.IApp) (servers map[core.ServiceType]bool)
 	// 自定义组件建造者
 	CustomComponentCreator func(app core.IApp) core.IComponent
+	// 日志选项
+	LogOpts []zap.Option
 }
 
 func newOption(opts ...Option) *option {
@@ -126,5 +130,12 @@ func WithCustomEnableService(fn func(app core.IApp) (servers map[core.ServiceTyp
 func WithCustomComponent(creator func(app core.IApp) core.IComponent) Option {
 	return func(opt *option) {
 		opt.CustomComponentCreator = creator
+	}
+}
+
+// 日志选项
+func WithLoggerOptions(opts ...zap.Option) Option {
+	return func(opt *option) {
+		opt.LogOpts = opts
 	}
 }

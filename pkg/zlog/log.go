@@ -31,14 +31,9 @@ func New(conf core.LogConfig, opts ...zap.Option) *logWrap {
 	var ws = makeWriteSyncer(&conf)  // 输出合成器
 	var level = makeLevel(&conf)     // 日志级别
 
-	core := zapcore.NewCore(encoder, ws, level)
 	opts = makeOpts(&conf, opts...)
-	if conf.IsTerminal {
-		opts = append(opts, withColoursMessageOfLoggerId())
-	}
-
-	log := newLogWrap(zap.New(core, opts...).Named(conf.Name), parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)), ws)
-
+	zapCore := zapcore.NewCore(encoder, ws, level)
+	log := newLogWrap(zap.New(zapCore, opts...).Named(conf.Name), parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)), ws)
 	return log
 }
 
@@ -107,18 +102,21 @@ func makeLevel(conf *core.LogConfig) zapcore.Level {
 	return parserLogLevel(level)
 }
 
-func makeOpts(conf *core.LogConfig, opts ...zap.Option) []zap.Option {
+func makeOpts(conf *core.LogConfig, o ...zap.Option) []zap.Option {
 	const callerSkipOffset = 2
 
-	opts = append(([]zap.Option)(nil), opts...)
+	opts := []zap.Option{zap.AddCallerSkip(callerSkipOffset)}
 	if conf.DevelopmentMode {
 		opts = append(opts, zap.Development())
 	}
 	if conf.ShowFileAndLinenum {
 		opts = append(opts, zap.AddCaller())
 	}
+	if conf.IsTerminal {
+		opts = append(opts, withColoursMessageOfLoggerId())
+	}
 
-	opts = append(opts, zap.AddCallerSkip(callerSkipOffset))
+	opts = append(opts, o...)
 	return opts
 }
 
