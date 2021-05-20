@@ -102,9 +102,10 @@ func (*recoverCli) GetRecoverErrorDetail(err error) string {
 	}
 
 	var callers []string
-	callers = make([]string, len(re.Callers()))
+	callers = make([]string, len(re.Callers())+1)
+	callers[0] = err.Error()
 	for i, c := range re.Callers() {
-		callers[i] = fmt.Sprintf("%s:%d", c.File, c.Line)
+		callers[i+1] = fmt.Sprintf("%s:%d", c.File, c.Line)
 	}
 	return strings.Join(callers, "\n")
 }
