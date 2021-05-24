@@ -15,7 +15,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
 	"github.com/zly-app/zapp/pkg/utils"
 )
 
@@ -81,10 +80,7 @@ func (s *subscriber) start() {
 }
 
 func (s *subscriber) process(msg interface{}) {
-	ctx := &core.MsgbusContext{
-		ILogger: logger.Log.NewMirrorLogger(s.topicName),
-		Msg:     msg,
-	}
+	ctx := newContext(s.topicName, msg)
 
 	ctx.Debug("msgbus.receive")
 

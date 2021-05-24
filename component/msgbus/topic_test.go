@@ -19,7 +19,7 @@ func TestTopic(t *testing.T) {
 	topic := newMsgTopic("test")
 	defer topic.Close()
 
-	subscribe := topic.Subscribe(10, 1, func(ctx *core.MsgbusContext) error {
+	subscribe := topic.Subscribe(10, 1, func(ctx core.IMsgbusContext) error {
 		ctx.Info(ctx.Msg)
 		return nil
 	})

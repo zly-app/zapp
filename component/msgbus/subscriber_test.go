@@ -16,7 +16,7 @@ import (
 )
 
 func TestSubscriber(t *testing.T) {
-	s := newSubscriber("test", 10, 1, func(ctx *core.MsgbusContext) error {
+	s := newSubscriber("test", 10, 1, func(ctx core.IMsgbusContext) error {
 		ctx.Info(ctx.Msg)
 		return nil
 	})

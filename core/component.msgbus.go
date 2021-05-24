@@ -46,10 +46,11 @@ type IMsgbusSubscriber interface {
 	Close()
 }
 
-type MsgbusContext struct {
+type IMsgbusContext interface {
 	ILogger
-	Msg interface{}
+	Topic() string
+	Msg() interface{}
 }
 
 // 处理函数
-type MsgbusProcessFunc = func(ctx *MsgbusContext) error
+type MsgbusProcessFunc = func(ctx IMsgbusContext) error
