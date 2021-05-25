@@ -20,6 +20,8 @@ type IGPoolGroup interface {
 	Go(fn func() error) chan error
 	// 同步执行
 	GoSync(fn func() error) error
+	// 等待所有任务执行完毕
+	Wait()
 	// 关闭
 	Close()
 }

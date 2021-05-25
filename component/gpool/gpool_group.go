@@ -65,6 +65,11 @@ func (g *gpool) GoSync(fn func() error) error {
 	return <-job.done
 }
 
+// 等待所有任务执行完毕
+func (g *gpool) Wait() {
+	g.wg.Wait()
+}
+
 // 关闭, 关闭后禁止调用 Go 方法, 否则可能会产生panic
 func (g *gpool) Close() {
 	if atomic.CompareAndSwapUint32(&g.isClose, 0, 1) {
