@@ -22,7 +22,7 @@ type ComponentCli struct {
 	config *core.Config
 	core.ILogger
 
-	core.IGPoolManager
+	core.IGPool
 	core.IMsgbus
 }
 
@@ -30,7 +30,7 @@ func (c *ComponentCli) App() core.IApp       { return c.app }
 func (c *ComponentCli) Config() *core.Config { return c.config }
 
 func (c *ComponentCli) Close() {
-	c.IGPoolManager.Close()
+	c.IGPool.Close()
 	c.IMsgbus.Close()
 }
 
@@ -40,8 +40,8 @@ func NewComponent(app core.IApp) core.IComponent {
 		config:  app.GetConfig().Config(),
 		ILogger: app.GetLogger(),
 
-		IGPoolManager: gpool.NewGPoolManager(),
-		IMsgbus:       msgbus.NewMsgbus(),
+		IGPool:  gpool.NewGPoolManager(),
+		IMsgbus: msgbus.NewMsgbus(),
 	}
 	defaultComponent = c
 	return c

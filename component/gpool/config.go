@@ -20,8 +20,6 @@ const DefaultComponentType core.ComponentType = "gpool"
 const (
 	// 默认任务队列大小
 	defaultJobQueueSize = 10000
-	// 默认最小任务队列大小
-	defaultMinJobQueueSize = 100
 )
 
 type GPoolConfig struct {
@@ -32,13 +30,10 @@ type GPoolConfig struct {
 }
 
 func (g *GPoolConfig) check() {
-	if g.JobQueueSize <= 0 {
+	if g.JobQueueSize < 1 {
 		g.JobQueueSize = defaultJobQueueSize
 	}
-	if g.JobQueueSize < defaultMinJobQueueSize {
-		g.JobQueueSize = defaultMinJobQueueSize
-	}
-	if g.ThreadCount <= 0 {
+	if g.ThreadCount < 1 {
 		g.ThreadCount = runtime.NumCPU()
 	}
 }

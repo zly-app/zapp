@@ -8,14 +8,14 @@
 
 package core
 
-type IGPoolManager interface {
+type IGPool interface {
 	// 获取gpool
-	GetGPool(name ...string) IGPool
+	GetGPoolGroup(name ...string) IGPoolGroup
 	// 关闭
 	Close()
 }
 
-type IGPool interface {
+type IGPoolGroup interface {
 	// 异步执行
 	Go(fn func() error) chan error
 	// 同步执行

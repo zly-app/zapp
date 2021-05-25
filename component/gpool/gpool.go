@@ -9,62 +9,47 @@
 package gpool
 
 import (
-	"sync"
-	"sync/atomic"
+	"go.uber.org/zap"
 
+	"github.com/zly-app/zapp/component/conn"
+	"github.com/zly-app/zapp/config"
+	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/logger"
 	"github.com/zly-app/zapp/pkg/utils"
 )
 
-// 协程池
-type gpool struct {
-	queue   chan *job // 任务队列
-	wg      sync.WaitGroup
-	isClose uint32
+type gpoolManager struct {
+	conn *conn.Conn
 }
 
-func newGPool(conf *GPoolConfig) core.IGPool {
+func NewGPoolManager() core.IGPool {
+	return &gpoolManager{
+		conn: conn.NewConn(),
+	}
+}
+
+func (g *gpoolManager) GetGPoolGroup(name ...string) core.IGPoolGroup {
+	return g.conn.GetInstance(g.makeGPoolGroup, name...).(core.IGPoolGroup)
+}
+
+func (g *gpoolManager) makeGPoolGroup(name string) (conn.IInstance, error) {
+	componentName := utils.Ternary.Or(name, consts.DefaultComponentName).(string)
+	key := "components." + string(DefaultComponentType) + "." + componentName
+
+	conf := new(GPoolConfig)
+
+	vi := config.Conf.GetViper()
+	if !vi.IsSet(key) {
+		logger.Log.Warn("gpool组件配置不存在, 将使用默认配置", zap.String("name", componentName))
+	} else if err := vi.UnmarshalKey(key, conf); err != nil {
+		logger.Log.Warn("gpool组件配置解析失败, 将使用默认配置", zap.String("name", componentName), zap.Error(err))
+	}
+
 	conf.check()
-	g := &gpool{
-		queue: make(chan *job, conf.JobQueueSize),
-	}
-
-	// 开始处理
-	for i := 0; i < conf.ThreadCount; i++ {
-		go g.start()
-	}
-
-	return g
+	return newGPool(conf), nil
 }
 
-func (g *gpool) start() {
-	for job := range g.queue {
-		g.process(job)
-	}
-}
-
-func (g *gpool) process(job *job) {
-	err := utils.Recover.WrapCall(job.fn)
-	job.done <- err
-}
-
-// 异步执行
-func (g *gpool) Go(fn func() error) chan error {
-	job := newJob(fn)
-	g.queue <- job
-	return job.done
-}
-
-// 同步执行
-func (g *gpool) GoSync(fn func() error) error {
-	job := newJob(fn)
-	g.queue <- job
-	return <-job.done
-}
-
-// 关闭, 关闭后禁止调用 Go 方法, 否则可能会产生panic
-func (g *gpool) Close() {
-	if atomic.CompareAndSwapUint32(&g.isClose, 0, 1) {
-		close(g.queue)
-	}
+func (g *gpoolManager) Close() {
+	g.conn.CloseAll()
 }
