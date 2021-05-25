@@ -9,22 +9,29 @@
 package msgbus
 
 import (
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/zly-app/zapp/core"
 )
 
 func TestSubscriber(t *testing.T) {
-	s := newSubscriber("test", 10, 1, func(ctx core.IMsgbusContext) error {
-		ctx.Info(ctx.Msg)
+	var wg sync.WaitGroup
+	wg.Add(10)
+
+	s := newSubscriber(10, 1, func(ctx core.IMsgbusContext) error {
+		ctx.Info(ctx.Msg())
+		wg.Done()
 		return nil
 	})
 	defer s.Close()
 
 	for i := 0; i < 10; i++ {
-		s.Receive(i)
+		s.queue <- &channelMsg{
+			topic: "topic",
+			msg:   i,
+		}
 	}
 
-	time.Sleep(time.Second)
+	wg.Wait()
 }

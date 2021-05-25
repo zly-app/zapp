@@ -9,25 +9,43 @@
 package msgbus
 
 import (
+	"sync"
 	"testing"
-	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
 )
 
 func TestTopic(t *testing.T) {
-	topic := newMsgTopic("test")
-	defer topic.Close()
+	var wg sync.WaitGroup
+	wg.Add(10)
 
-	subscribe := topic.Subscribe(10, 1, func(ctx core.IMsgbusContext) error {
-		ctx.Info(ctx.Msg)
+	topic1 := newMsgTopic()
+	defer topic1.Close()
+
+	topic2 := newMsgTopic()
+	defer topic2.Close()
+
+	subscribe1 := topic1.Subscribe(10, 1, func(ctx core.IMsgbusContext) error {
+		ctx.Info("subscribe.topic1", zap.Any("msg", ctx.Msg()))
+		wg.Done()
 		return nil
 	})
 
-	for i := 0; i < 10; i++ {
-		topic.Publish(i)
+	subscribe2 := topic2.Subscribe(10, 1, func(ctx core.IMsgbusContext) error {
+		ctx.Info("subscribe.topic2", zap.Any("msg", ctx.Msg()))
+		wg.Done()
+		return nil
+	})
+
+	for i := 0; i < 5; i++ {
+		topic1.Publish("topic1", i)
+		topic2.Publish("topic2", i)
 	}
 
-	topic.Unsubscribe(subscribe)
-	time.Sleep(time.Second)
+	topic1.Unsubscribe(subscribe1)
+	topic2.Unsubscribe(subscribe2)
+
+	wg.Wait()
 }

@@ -15,73 +15,61 @@ import (
 )
 
 // 主题
-type topic struct {
-	name string
-	subs map[uint32]core.IMsgbusSubscriber
-	mx   sync.RWMutex
+type msgTopic struct {
+	subs map[uint32]*subscriber
+	mx   sync.RWMutex // 用于锁 subs
 }
 
-func newMsgTopic(name string) core.IMsgbusTopic {
-	return &topic{
-		name: name,
-		subs: make(map[uint32]core.IMsgbusSubscriber),
+func newMsgTopic() *msgTopic {
+	return &msgTopic{
+		subs: make(map[uint32]*subscriber),
 	}
 }
 
-func (t *topic) Name() string {
-	return t.name
-}
-
 // 发布消息
-func (t *topic) Publish(msg interface{}) {
+func (t *msgTopic) Publish(topic string, msg interface{}) {
 	t.mx.RLock()
 	for _, sub := range t.subs {
-		sub.Receive(msg)
+		sub.queue <- &channelMsg{
+			topic: topic,
+			msg:   msg,
+		}
 	}
 	t.mx.RUnlock()
 }
 
 // 订阅
-func (t *topic) Subscribe(queueSize, threadCount int, fn core.MsgbusProcessFunc) core.IMsgbusSubscriber {
-	sub := newSubscriber(t.name, queueSize, threadCount, fn)
+func (t *msgTopic) Subscribe(queueSize, threadCount int, handler core.MsgbusHandler) (subscriberId uint32) {
+	sub := newSubscriber(queueSize, threadCount, handler)
+	subscriberId = nextSubscriberId()
 
 	t.mx.Lock()
-	t.subs[sub.ID()] = sub
+	t.subs[subscriberId] = sub
 	t.mx.Unlock()
 
-	return sub
+	return subscriberId
 }
 
 // 取消订阅, 会将订阅者关闭
-func (t *topic) UnsubscribeByID(subscribeId uint32) {
+func (t *msgTopic) Unsubscribe(subscribeId uint32) {
 	t.mx.Lock()
 	sub, ok := t.subs[subscribeId]
 	if ok {
+		sub.Close()
 		delete(t.subs, subscribeId)
 	}
 	t.mx.Unlock()
-
-	if ok {
-		sub.Close()
-	}
-}
-
-// 取消订阅, 会将订阅者关闭
-func (t *topic) Unsubscribe(sub core.IMsgbusSubscriber) {
-	t.mx.Lock()
-	delete(t.subs, sub.ID())
-	t.mx.Unlock()
-	sub.Close()
 }
 
 // 关闭主题
-func (t *topic) Close() {
+func (t *msgTopic) Close() {
 	t.mx.Lock()
-	subs := t.subs
-	t.subs = make(map[uint32]core.IMsgbusSubscriber)
-	t.mx.Unlock()
-
-	for _, sub := range subs {
+	for _, sub := range t.subs {
 		sub.Close()
 	}
+
+	// 如果不清除, 在调用 Publish 会导致panic
+	t.subs = make(map[uint32]*subscriber)
+
+	t.mx.Unlock()
 }

@@ -9,11 +9,12 @@
 package msgbus
 
 import (
-	"sync"
+	"runtime"
 	"sync/atomic"
 
 	"go.uber.org/zap"
 
+	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/pkg/utils"
 )
@@ -26,43 +27,29 @@ func nextSubscriberId() uint32 {
 	return atomic.AddUint32(&autoIncrSubscriberId, 1)
 }
 
-const (
-	// 默认队列大小
-	defaultQueueSize = 1000
-	// 默认最小队列大小
-	defaultMinQueueSize = 10
-	// 默认最小线程数
-	defaultMinThreadCount = 1
-)
-
 // 订阅者
 type subscriber struct {
-	id        uint32
-	topicName string
-	fn        core.MsgbusProcessFunc
-	queue     chan interface{}
-	mx        sync.RWMutex
+	handler core.MsgbusHandler
+	queue   chan *channelMsg
 
 	isClose uint32
 }
 
-func newSubscriber(topicName string, queueSize, threadCount int, fn core.MsgbusProcessFunc) core.IMsgbusSubscriber {
-	if queueSize <= 0 {
-		queueSize = defaultQueueSize
-	}
-	if queueSize < defaultMinQueueSize {
-		queueSize = defaultMinQueueSize
-	}
-	if threadCount < defaultMinThreadCount {
-		threadCount = defaultMinThreadCount
+func newSubscriber(queueSize, threadCount int, handler core.MsgbusHandler) *subscriber {
+	if queueSize < 1 {
+		queueSize = consts.DefaultMsgbusQueueSize
 	}
 
+	if threadCount < 1 {
+		threadCount = runtime.NumCPU() >> 1
+		if threadCount < 1 {
+			threadCount = 1
+		}
+	}
 	// 创建订阅者
 	sub := &subscriber{
-		id:        nextSubscriberId(),
-		topicName: topicName,
-		fn:        fn,
-		queue:     make(chan interface{}, queueSize),
+		handler: handler,
+		queue:   make(chan *channelMsg, queueSize),
 	}
 
 	// 开始消费
@@ -79,13 +66,13 @@ func (s *subscriber) start() {
 	}
 }
 
-func (s *subscriber) process(msg interface{}) {
-	ctx := newContext(s.topicName, msg)
+func (s *subscriber) process(msg *channelMsg) {
+	ctx := newContext(msg)
 
 	ctx.Debug("msgbus.receive")
 
 	err := utils.Recover.WrapCall(func() error {
-		return s.fn(ctx)
+		return s.handler(ctx)
 	})
 
 	if err == nil {
@@ -93,23 +80,10 @@ func (s *subscriber) process(msg interface{}) {
 		return
 	}
 
-	ctx.Error("msgbus.error!", zap.Error(err))
+	ctx.Error("msgbus.error!", zap.String("error", utils.Recover.GetRecoverErrorDetail(err)))
 }
 
-func (s *subscriber) ID() uint32 {
-	return s.id
-}
-
-func (s *subscriber) TopicName() string {
-	return s.topicName
-}
-
-// 接收
-func (s *subscriber) Receive(msg interface{}) {
-	s.queue <- msg
-}
-
-// 关闭, 关闭后禁止调用 Receive 方法, 否则可能会产生panic
+// 关闭
 func (s *subscriber) Close() {
 	if atomic.CompareAndSwapUint32(&s.isClose, 0, 1) {
 		close(s.queue)

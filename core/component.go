@@ -22,6 +22,6 @@ type IComponent interface {
 
 	// 协程池
 	IGPoolManager
-	// 消息中心
+	// 消息总线
 	IMsgbus
 }

@@ -16,42 +16,62 @@ import (
 
 // 消息总线
 type msgbus struct {
-	topics map[string]core.IMsgbusTopic
-	mx     sync.RWMutex
+	global    *msgTopic // 用于接收全局消息
+	queueSize int
+	topics    map[string]*msgTopic
+	mx        sync.RWMutex // 用于锁 topics
 }
 
-func NewMsgbus() core.IMsgbus {
-	return &msgbus{
-		topics: make(map[string]core.IMsgbusTopic),
-	}
-}
+func (m *msgbus) Publish(topic string, msg interface{}) {
+	m.global.Publish(topic, msg) // 发送消息到全局
 
-// 获取topic, 如果topic不存在自动创建一个
-func (m *msgbus) GetMsgbusTopic(name string) core.IMsgbusTopic {
 	m.mx.RLock()
-	t, ok := m.topics[name]
+	t, ok := m.topics[topic]
 	m.mx.RUnlock()
 
 	if ok {
-		return t
+		t.Publish(topic, msg)
 	}
-
-	m.mx.Lock()
-	t, ok = m.topics[name]
-	if !ok {
-		t = newMsgTopic(name)
-		m.topics[name] = t
-	}
-	m.mx.Unlock()
-	return t
 }
 
-// 关闭topic
-func (m *msgbus) CloseMsgbusTopic(name string) {
-	m.mx.Lock()
-	t, ok := m.topics[name]
+func (m *msgbus) Subscribe(topic string, threadCount int, handler core.MsgbusHandler) (subscribeId uint32) {
+	m.mx.RLock()
+	t, ok := m.topics[topic]
+	m.mx.RUnlock()
+
+	if !ok {
+		m.mx.Lock()
+		t, ok = m.topics[topic]
+		if !ok {
+			t = newMsgTopic()
+			m.topics[topic] = t
+		}
+		m.mx.Unlock()
+	}
+	return t.Subscribe(m.queueSize, threadCount, handler)
+}
+func (m *msgbus) SubscribeGlobal(threadCount int, handler core.MsgbusHandler) (subscribeId uint32) {
+	return m.global.Subscribe(m.queueSize, threadCount, handler)
+}
+
+func (m *msgbus) Unsubscribe(topic string, subscribeId uint32) {
+	m.mx.RLock()
+	t, ok := m.topics[topic]
+	m.mx.RUnlock()
+
 	if ok {
-		delete(m.topics, name)
+		t.Unsubscribe(subscribeId)
+	}
+}
+func (m *msgbus) UnsubscribeGlobal(subscribeId uint32) {
+	m.global.Unsubscribe(subscribeId)
+}
+
+func (m *msgbus) CloseTopic(topic string) {
+	m.mx.Lock()
+	t, ok := m.topics[topic]
+	if ok {
+		delete(m.topics, topic)
 	}
 	m.mx.Unlock()
 
@@ -59,15 +79,20 @@ func (m *msgbus) CloseMsgbusTopic(name string) {
 		t.Close()
 	}
 }
-
-// 关闭
 func (m *msgbus) Close() {
 	m.mx.Lock()
-	topics := m.topics
-	m.topics = make(map[string]core.IMsgbusTopic)
+	m.global.Close()
+	m.global = newMsgTopic()
+	for _, t := range m.topics {
+		t.Close()
+	}
+	m.topics = make(map[string]*msgTopic)
 	m.mx.Unlock()
+}
 
-	for _, topic := range topics {
-		topic.Close()
+func NewMsgbus() core.IMsgbus {
+	return &msgbus{
+		global: newMsgTopic(),
+		topics: make(map[string]*msgTopic),
 	}
 }

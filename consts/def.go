@@ -28,3 +28,9 @@ const (
 
 // 默认组件名
 const DefaultComponentName = "default"
+
+// 组件
+const (
+	// msgbus 默认队列大小
+	DefaultMsgbusQueueSize = 1000
+)
