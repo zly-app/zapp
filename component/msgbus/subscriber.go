@@ -35,11 +35,7 @@ type subscriber struct {
 	isClose uint32
 }
 
-func newSubscriber(queueSize, threadCount int, handler core.MsgbusHandler) *subscriber {
-	if queueSize < 1 {
-		queueSize = consts.DefaultMsgbusQueueSize
-	}
-
+func newSubscriber(threadCount int, handler core.MsgbusHandler) *subscriber {
 	if threadCount < 1 {
 		threadCount = runtime.NumCPU() >> 1
 		if threadCount < 1 {
@@ -49,7 +45,7 @@ func newSubscriber(queueSize, threadCount int, handler core.MsgbusHandler) *subs
 	// 创建订阅者
 	sub := &subscriber{
 		handler: handler,
-		queue:   make(chan *channelMsg, queueSize),
+		queue:   make(chan *channelMsg, consts.DefaultMsgbusQueueSize),
 	}
 
 	// 开始消费

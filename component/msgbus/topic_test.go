@@ -27,13 +27,13 @@ func TestTopic(t *testing.T) {
 	topic2 := newMsgTopic()
 	defer topic2.Close()
 
-	subscribe1 := topic1.Subscribe(10, 1, func(ctx core.IMsgbusContext) error {
+	subscribe1 := topic1.Subscribe(1, func(ctx core.IMsgbusContext) error {
 		ctx.Info("subscribe.topic1", zap.Any("msg", ctx.Msg()))
 		wg.Done()
 		return nil
 	})
 
-	subscribe2 := topic2.Subscribe(10, 1, func(ctx core.IMsgbusContext) error {
+	subscribe2 := topic2.Subscribe(1, func(ctx core.IMsgbusContext) error {
 		ctx.Info("subscribe.topic2", zap.Any("msg", ctx.Msg()))
 		wg.Done()
 		return nil

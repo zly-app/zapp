@@ -39,8 +39,8 @@ func (t *msgTopic) Publish(topic string, msg interface{}) {
 }
 
 // 订阅
-func (t *msgTopic) Subscribe(queueSize, threadCount int, handler core.MsgbusHandler) (subscriberId uint32) {
-	sub := newSubscriber(queueSize, threadCount, handler)
+func (t *msgTopic) Subscribe(threadCount int, handler core.MsgbusHandler) (subscriberId uint32) {
+	sub := newSubscriber(threadCount, handler)
 	subscriberId = nextSubscriberId()
 
 	t.mx.Lock()

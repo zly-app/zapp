@@ -17,7 +17,6 @@ import (
 // 消息总线
 type msgbus struct {
 	global    *msgTopic // 用于接收全局消息
-	queueSize int
 	topics    map[string]*msgTopic
 	mx        sync.RWMutex // 用于锁 topics
 }
@@ -48,10 +47,10 @@ func (m *msgbus) Subscribe(topic string, threadCount int, handler core.MsgbusHan
 		}
 		m.mx.Unlock()
 	}
-	return t.Subscribe(m.queueSize, threadCount, handler)
+	return t.Subscribe(threadCount, handler)
 }
 func (m *msgbus) SubscribeGlobal(threadCount int, handler core.MsgbusHandler) (subscribeId uint32) {
-	return m.global.Subscribe(m.queueSize, threadCount, handler)
+	return m.global.Subscribe(threadCount, handler)
 }
 
 func (m *msgbus) Unsubscribe(topic string, subscribeId uint32) {
