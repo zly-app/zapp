@@ -94,7 +94,7 @@ func (c *Conn) getInstance(creator CreatorFunc, name string) IInstance {
 		c.mx.Lock()
 		delete(c.wgs, name)
 		c.mx.Unlock()
-		logger.Log.Panic(wg.e.Error(), zap.String("name", name))
+		logger.Log.Panic(utils.Recover.GetRecoverErrorDetail(wg.e), zap.String("name", name))
 	}
 
 	wg.wg.Done()
