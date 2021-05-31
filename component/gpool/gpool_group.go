@@ -50,7 +50,7 @@ func (g *gpool) process(job *job) {
 }
 
 // 异步执行
-func (g *gpool) Go(fn func() error) chan error {
+func (g *gpool) Go(fn func() error) <-chan error {
 	g.wg.Add(1)
 	job := newJob(fn)
 	g.queue <- job

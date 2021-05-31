@@ -17,7 +17,7 @@ type IGPool interface {
 
 type IGPoolGroup interface {
 	// 异步执行
-	Go(fn func() error) chan error
+	Go(fn func() error) <-chan error
 	// 同步执行
 	GoSync(fn func() error) error
 	// 等待所有任务执行完毕
