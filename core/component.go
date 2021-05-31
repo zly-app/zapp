@@ -21,7 +21,7 @@ type IComponent interface {
 	Close()
 
 	// 协程池
-	IGPool
+	IGPools
 	// 消息总线
 	IMsgbus
 }

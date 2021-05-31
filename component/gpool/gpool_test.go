@@ -14,16 +14,14 @@ import (
 )
 
 func TestGPool(t *testing.T) {
-	g := newGPool(&GPoolConfig{
-		JobQueueSize: 0,
-		ThreadCount:  0,
-	})
+	g := newGPool(new(GPoolConfig))
 	defer g.Close()
 
 	chs := make([]<-chan error, 5)
 	for i := 0; i < len(chs); i++ {
 		ch := g.Go(func(i int) func() error {
 			return func() error {
+				time.Sleep(time.Second)
 				t.Log("Go", i)
 				return nil
 			}
@@ -31,6 +29,9 @@ func TestGPool(t *testing.T) {
 		chs[i] = ch
 	}
 	for _, ch := range chs {
+		if ch == nil {
+			continue
+		}
 		<-ch
 	}
 

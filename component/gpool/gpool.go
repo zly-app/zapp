@@ -9,47 +9,109 @@
 package gpool
 
 import (
-	"go.uber.org/zap"
+	"sync"
 
-	"github.com/zly-app/zapp/component/conn"
-	"github.com/zly-app/zapp/config"
-	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
 	"github.com/zly-app/zapp/pkg/utils"
 )
 
-type gpoolManager struct {
-	conn *conn.Conn
+// 协程池
+type gpool struct {
+	workerQueue chan *worker  // 工人队列
+	jobQueue    chan *job     // 任务队列
+	stop        chan struct{} // 停止信号, 同步通道
+
+	wg sync.WaitGroup
 }
 
-func NewGPoolManager() core.IGPool {
-	return &gpoolManager{
-		conn: conn.NewConn(),
-	}
-}
-
-func (g *gpoolManager) GetGPoolGroup(name ...string) core.IGPoolGroup {
-	return g.conn.GetInstance(g.makeGPoolGroup, name...).(core.IGPoolGroup)
-}
-
-func (g *gpoolManager) makeGPoolGroup(name string) (conn.IInstance, error) {
-	componentName := utils.Ternary.Or(name, consts.DefaultComponentName).(string)
-	key := "components." + string(DefaultComponentType) + "." + componentName
-
-	conf := new(GPoolConfig)
-
-	vi := config.Conf.GetViper()
-	if !vi.IsSet(key) {
-		logger.Log.Warn("gpool组件配置不存在, 将使用默认配置", zap.String("name", componentName))
-	} else if err := vi.UnmarshalKey(key, conf); err != nil {
-		logger.Log.Warn("gpool组件配置解析失败, 将使用默认配置", zap.String("name", componentName), zap.Error(err))
-	}
-
+func newGPool(conf *GPoolConfig) core.IGPool {
 	conf.check()
-	return newGPool(conf), nil
+	g := &gpool{
+		workerQueue: make(chan *worker, conf.ThreadCount),
+		jobQueue:    make(chan *job, conf.JobQueueSize),
+		stop:        make(chan struct{}),
+	}
+
+	for i := 0; i < conf.ThreadCount; i++ {
+		worker := newWorker(g.workerQueue)
+		worker.Ready()
+		g.workerQueue <- worker
+	}
+
+	go g.dispatch()
+
+	return g
 }
 
-func (g *gpoolManager) Close() {
-	g.conn.CloseAll()
+// 为工人派遣任务
+func (g *gpool) dispatch() {
+	for {
+		select {
+		case job := <-g.jobQueue:
+			worker := <-g.workerQueue
+			worker.Do(job)
+		case <-g.stop:
+			for i := 0; i < cap(g.workerQueue); i++ {
+				worker := <-g.workerQueue
+				worker.Stop()
+			}
+
+			g.stop <- struct{}{}
+			return
+		}
+	}
+}
+
+// 异步执行
+func (g *gpool) Go(fn func() error) <-chan error {
+	job := g.newJob(fn)
+	g.wg.Add(1)
+	g.jobQueue <- job
+	return job.done
+}
+
+// 同步执行
+func (g *gpool) GoSync(fn func() error) error {
+	return <-g.Go(fn)
+}
+
+// 尝试异步执行, 如果任务队列已满则返回false
+func (g *gpool) TryGo(fn func() error) (ch <-chan error, ok bool) {
+	job := g.newJob(fn)
+	select {
+	case g.jobQueue <- job:
+		g.wg.Add(1)
+		return job.done, true
+	default:
+		return nil, false
+	}
+}
+
+// 尝试同步执行, 如果任务队列已满则返回false
+func (g *gpool) TryGoSync(fn func() error) (result error, ok bool) {
+	ch, ok := g.TryGo(fn)
+	if !ok {
+		return nil, false
+	}
+	return <-ch, true
+}
+
+// 等待所有任务结束
+func (g *gpool) Wait() {
+	g.wg.Wait()
+}
+
+// 关闭
+//
+// 命令所有没有收到任务的工人立即停工, 收到任务的工人完成当前任务后停工, 不管任务队列是否清空
+func (g *gpool) Close() {
+	g.stop <- struct{}{}
+	<-g.stop
+}
+
+func (g *gpool) newJob(fn func() error) *job {
+	return newJob(func() error {
+		defer g.wg.Done()
+		return utils.Recover.WrapCall(fn)
+	})
 }
