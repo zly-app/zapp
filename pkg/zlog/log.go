@@ -22,7 +22,7 @@ import (
 	"github.com/zly-app/zapp/core"
 )
 
-const logIdKey = "logId"
+const logIdKey = "log_id"
 
 var DefaultLogger core.ILogger = New(DefaultConfig)
 
@@ -33,7 +33,7 @@ func New(conf core.LogConfig, opts ...zap.Option) *logWrap {
 
 	opts = makeOpts(&conf, opts...)
 	zapCore := zapcore.NewCore(encoder, ws, level)
-	log := newLogWrap(zap.New(zapCore, opts...).Named(conf.Name), parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)), ws)
+	log := newLogWrap(zap.New(zapCore, opts...), parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)), ws)
 	return log
 }
 
@@ -54,13 +54,21 @@ func makeEncoder(conf *core.LogConfig) zapcore.Encoder {
 		EncodeCaller:   zapcore.FullCallerEncoder, // 全路径编码器
 		EncodeName:     zapcore.FullNameEncoder,
 	}
-	if conf.IsTerminal {
-		cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder // 大写彩色level
+	if !conf.Json && conf.Color {
+		if conf.CapitalLevel {
+			cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder // 大写彩色level
+		} else {
+			cfg.EncodeLevel = zapcore.LowercaseColorLevelEncoder // 小写彩色level
+		}
+	} else if conf.CapitalLevel {
+		cfg.EncodeLevel = zapcore.CapitalLevelEncoder
+	} else {
+		cfg.EncodeLevel = zapcore.LowercaseLevelEncoder
 	}
 	if conf.MillisDuration {
 		cfg.EncodeDuration = zapcore.MillisDurationEncoder
 	}
-	if conf.JsonEncoder {
+	if conf.Json {
 		return zapcore.NewJSONEncoder(cfg)
 	}
 	return zapcore.NewConsoleEncoder(cfg)
@@ -112,7 +120,7 @@ func makeOpts(conf *core.LogConfig, o ...zap.Option) []zap.Option {
 	if conf.ShowFileAndLinenum {
 		opts = append(opts, zap.AddCaller())
 	}
-	if conf.IsTerminal {
+	if !conf.Json && conf.Color {
 		opts = append(opts, withColoursMessageOfLoggerId())
 	}
 

@@ -116,7 +116,7 @@ func (l *logWrap) Fatal(v ...interface{}) {
 func (l *logWrap) NewMirrorLogger(tag ...string) core.ILogger {
 	return &logWrap{
 		log:            l.log,
-		fields:         append(append([]zap.Field{}, l.fields...), zap.String(logIdKey, l.nextLoggerId()), zap.Strings("logTag", tag)),
+		fields:         append(append([]zap.Field{}, l.fields...), zap.String(logIdKey, l.nextLoggerId()), zap.Strings("log_tag", tag)),
 		callerMinLevel: l.callerMinLevel,
 		ws:             l.ws,
 	}

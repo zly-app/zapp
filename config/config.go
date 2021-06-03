@@ -23,6 +23,7 @@ import (
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/logger"
 	"github.com/zly-app/zapp/pkg/utils"
+	"github.com/zly-app/zapp/pkg/zlog"
 )
 
 var Conf core.IConfig
@@ -34,14 +35,16 @@ type configCli struct {
 	labels map[string]string
 }
 
-func newConfig() *core.Config {
+func newConfig(appName string) *core.Config {
 	conf := &core.Config{
 		Frame: core.FrameConfig{
 			Debug:              true,
 			FreeMemoryInterval: consts.DefaultFreeMemoryInterval,
 			Labels:             make(map[string]string),
+			Log:                zlog.DefaultConfig,
 		},
 	}
+	conf.Frame.Log.Name = appName
 	return conf
 }
 
@@ -113,7 +116,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 
 	c := &configCli{
 		vi: vi,
-		c:  newConfig(),
+		c:  newConfig(appName),
 	}
 	// 解析配置
 	if err = vi.Unmarshal(c.c); err != nil {

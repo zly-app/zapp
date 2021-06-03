@@ -48,7 +48,7 @@ var levelMappingReverse = map[zapcore.Level]Level{
 
 var DefaultConfig = core.LogConfig{
 	Level:                      "debug",
-	JsonEncoder:                false,
+	Json:                       false,
 	WriteToStream:              true,
 	WriteToFile:                false,
 	Name:                       "zlog",
@@ -58,7 +58,8 @@ var DefaultConfig = core.LogConfig{
 	FileMaxBackupsNum:          3,
 	FileMaxDurableTime:         7,
 	TimeFormat:                 "2006-01-02 15:04:05",
-	IsTerminal:                 true,
+	Color:                      true,
+	CapitalLevel:               false,
 	DevelopmentMode:            true,
 	ShowFileAndLinenum:         false,
 	ShowFileAndLinenumMinLevel: "debug",
