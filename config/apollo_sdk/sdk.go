@@ -47,7 +47,7 @@ var defaultNamespaces = []string{
 var errStatusCodesDescribe = map[int]string{
 	400: "客户端传入参数的错误",
 	401: "客户端未授权或认证失败",
-	404: "网络错误或命名空间数据不存在",
+	404: "命名空间数据不存在",
 	405: "接口访问的Method不正确",
 	500: "服务内部错误",
 }
@@ -78,48 +78,59 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 		namespaces = append(namespaces, strings.Split(a.Namespaces, ",")...)
 	}
 
-	data := make(MultiNamespaceData, len(namespaces))
-	result := make(MultiNamespaceData, len(namespaces))
+	localData := make(MultiNamespaceData, len(namespaces)) // 本地数据
+	result := make(MultiNamespaceData, len(namespaces))    // 结果数据
 
 	// 允许从本地获取
-	if a.isAllowBackupFile() {
+	if !a.AlwaysLoadFromRemote && a.BackupFile != "" { // 不总是从远程获取 并且 存在备份文件
 		backupData, err := a.loadDataFromBackupFile()
-		if err == nil {
-			a.overrideMultiNamespaceData(data, backupData)
+		if err != nil {
+			logger.Log.Error("从本地加载配置失败", zap.Error(err))
+		} else {
+			a.overrideMultiNamespaceData(localData, backupData)
 		}
 	}
 
 	// 退出之前保存当前已存在数据
-	defer a.saveDataToBackupFile(data)
+	defer func() {
+		err := a.saveDataToBackupFile(localData)
+		if err != nil {
+			logger.Log.Error("备份配置文件失败", zap.Error(err))
+		}
+	}()
 
 	// 遍历获取
 	for _, namespace := range namespaces {
 		// 从远程获取数据
-		raw, err := a.getNamespaceDataFromRemote(namespace)
-
-		// 成功拿到则覆盖数据
-		if err == nil {
+		raw, err := a.loadNamespaceDataFromRemote(namespace)
+		if err == nil { // 成功拿到则覆盖数据
 			if raw == nil {
 				raw = make(NamespaceData, 0)
 			}
-			data[namespace] = raw
+			localData[namespace] = raw
 			result[namespace] = raw
 			continue
 		}
 
-		// 如果不使用备份文件或无历史数据则直接返回错误
-		if !a.isAllowBackupFile() || data[namespace] == nil {
-			return nil, fmt.Errorf("获取命名空间<%s>的数据失败: %s", namespace, err)
+		// 如果总是从远程获取则返回错误
+		if a.AlwaysLoadFromRemote {
+			return nil, fmt.Errorf("从远程获取命名空间<%s>的数据失败: %s", namespace, err)
 		}
 
-		result[namespace] = data[namespace]
+		logger.Log.Error("从远程获取配置失败", zap.String("namespace", namespace), zap.Error(err))
+		raw, ok := localData[namespace]
+		if !ok {
+			return nil, fmt.Errorf("本地命名空间<%s>的数据不存在", namespace)
+		}
+
+		result[namespace] = raw
 	}
 
 	return result, nil
 }
 
-// 从远程获取命名空间数据
-func (a *ApolloConfig) getNamespaceDataFromRemote(namespace string) (NamespaceData, error) {
+// 从远程加载命名空间数据
+func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceData, error) {
 	// 检查配置
 	if a.Address == "" {
 		return nil, errors.New("apollo的address是空的")
@@ -156,12 +167,6 @@ func (a *ApolloConfig) getNamespaceDataFromRemote(namespace string) (NamespaceDa
 	}
 	defer resp.Body.Close()
 
-	// 404表示namespace不存在
-	if resp.StatusCode == http.StatusNotFound {
-		logger.Log.Warn("命名空间不存在", zap.String("namespace", namespace))
-		return NamespaceData{}, nil
-	}
-
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
 		desc, ok := errStatusCodesDescribe[resp.StatusCode]
@@ -174,7 +179,10 @@ func (a *ApolloConfig) getNamespaceDataFromRemote(namespace string) (NamespaceDa
 	// 解码
 	var result NamespaceData
 	err = json.NewDecoder(resp.Body).Decode(&result)
-	return result, err
+	if err != nil {
+		return nil, fmt.Errorf("解码失败: %v", err)
+	}
+	return result, nil
 }
 
 // 保存数据到备份文件
@@ -207,19 +215,21 @@ func (a *ApolloConfig) loadDataFromBackupFile() (MultiNamespaceData, error) {
 	return result, err
 }
 
-// 将datab的数据覆盖dataa
-func (a *ApolloConfig) overrideMultiNamespaceData(dataa, datab MultiNamespaceData) {
-	for name, data := range datab {
-		dataa[name] = data
+// 将dataB的数据覆盖dataA, 区分大小写
+func (a *ApolloConfig) overrideMultiNamespaceData(dataA, dataB MultiNamespaceData) {
+	for name, data := range dataB {
+		dataA[name] = data
 	}
 }
 
-func (a *ApolloConfig) isAllowBackupFile() bool {
+// 是否允许从本地备份获取
+func (a *ApolloConfig) isAllowLoadFromBackupFile() bool {
 	return !a.AlwaysLoadFromRemote && a.BackupFile != ""
 }
 
-func (a *ApolloConfig) officialSignature(timestamp, url, accessKey string) string {
-	stringToSign := timestamp + "\n" + url
+// 官方签名
+func (a *ApolloConfig) officialSignature(timestamp, uri, accessKey string) string {
+	stringToSign := timestamp + "\n" + uri
 	key := []byte(accessKey)
 	mac := hmac.New(sha1.New, key)
 	_, _ = mac.Write([]byte(stringToSign))

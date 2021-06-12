@@ -85,7 +85,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	} else if opt.apolloConfig != nil { // WithApollo
 		rawVi, err = makeViperFromApollo(opt.apolloConfig)
 		if err != nil {
-			logger.Log.Fatal("从apollo构建viper失败", zap.Any("apolloConfig", opt.apolloConfig), zap.Error(err))
+			logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
 		}
 	} else { // 默认
 		files := strings.Split(consts.DefaultConfigFiles, ",")
@@ -107,7 +107,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		}
 		rawVi, err = makeViperFromApollo(apolloConf)
 		if err != nil {
-			logger.Log.Fatal("从apollo构建viper失败", zap.Any("apolloConfig", apolloConf), zap.Error(err))
+			logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
 		}
 		if err = vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
 			logger.Log.Fatal("合并apollo配置失败", zap.Error(err))
