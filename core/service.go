@@ -21,7 +21,7 @@ type IService interface {
 // 服务建造者
 type IServiceCreator interface {
 	// 创建服务
-	Create(app IApp) IService
+	Create(app IApp, opts ...interface{}) IService
 }
 
 // 组件类型

@@ -15,13 +15,14 @@ import (
 	"github.com/zly-app/zapp/logger"
 )
 
-// 服务建造者函数
-type serviceCreatorFunc func(app core.IApp) core.IService
+// 服务建造者
+type serviceCreator func(app core.IApp, opts ...interface{}) core.IService
 
-func (h serviceCreatorFunc) Create(app core.IApp) core.IService {
-	return h(app)
+func (h serviceCreator) Create(app core.IApp, opts ...interface{}) core.IService {
+	return h(app, opts...)
 }
 
+// 建造者列表
 var creators = make(map[core.ServiceType]core.IServiceCreator)
 
 // 注册服务建造者
@@ -33,14 +34,14 @@ func RegisterCreator(serviceType core.ServiceType, creator core.IServiceCreator)
 }
 
 // 注册服务建造者函数
-func RegisterCreatorFunc(serviceType core.ServiceType, creatorFunc func(app core.IApp) core.IService) {
-	RegisterCreator(serviceType, serviceCreatorFunc(creatorFunc))
+func RegisterCreatorFunc(serviceType core.ServiceType, creatorFunc func(app core.IApp, opts ...interface{}) core.IService) {
+	RegisterCreator(serviceType, serviceCreator(creatorFunc))
 }
 
 // 构建服务
-func MakeService(app core.IApp, serviceType core.ServiceType) core.IService {
+func MakeService(app core.IApp, serviceType core.ServiceType, opts ...interface{}) core.IService {
 	if creator, ok := creators[serviceType]; ok {
-		return creator.Create(app)
+		return creator.Create(app, opts...)
 	}
 	app.Fatal("使用了未注册建造者的服务", zap.String("serviceType", string(serviceType)))
 	return nil

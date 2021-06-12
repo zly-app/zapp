@@ -21,7 +21,8 @@ func (app *appCli) initService() {
 	app.opt.CheckCustomEnableServices(app)
 	for serviceType, enable := range app.opt.Services {
 		if enable {
-			app.services[serviceType] = service.MakeService(app, serviceType)
+			opts := app.opt.ServicesOpts[serviceType]
+			app.services[serviceType] = service.MakeService(app, serviceType, opts...)
 		}
 	}
 }

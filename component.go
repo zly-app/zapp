@@ -16,8 +16,8 @@ import (
 // 初始化组件
 func (app *appCli) initComponent() {
 	app.component = component.NewComponent(app)
-	if app.opt.CustomComponentCreator != nil {
-		app.component = app.opt.CustomComponentCreator(app)
+	if app.opt.CustomComponentFn != nil {
+		app.component = app.opt.CustomComponentFn(app)
 		component.ResetComponent(app.component)
 	}
 }
