@@ -106,7 +106,7 @@ zapp.WithCustomService(func(app core.IApp, services map[core.ServiceType]bool, s
 ## 会话独立日志
 
 ```text
-core.ILogger 提供了 NewMirrorLogger(tag ...string) ILogger 方法用于创建一个镜像 logger.
+core.ILogger 提供了 NewSessionLogger(tag ...string) ILogger 方法用于创建一个会话 logger.
 在会话开始时可以通过这个方法创建会话内使用的logger, 会话结束后无需考虑销毁它, 它会自动回收.
-使用镜像logger打印日志会产生一个全局日志id, 并且我们会根据不同的全局日志id输出不同的颜色.
+使用会话logger打印日志会产生一个全局日志id, 并且我们会根据不同的全局日志id输出不同的颜色.
 ```

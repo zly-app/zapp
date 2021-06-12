@@ -8,6 +8,10 @@
 
 package core
 
+import (
+	"go.uber.org/zap"
+)
+
 // 记录器
 type ILogger interface {
 	Debug(v ...interface{})
@@ -17,6 +21,6 @@ type ILogger interface {
 	DPanic(v ...interface{})
 	Panic(v ...interface{})
 	Fatal(v ...interface{})
-	// 创建一个镜像log
-	NewMirrorLogger(tag ...string) ILogger
+	// 创建一个会话log
+	NewSessionLogger(fields ...zap.Field) ILogger
 }

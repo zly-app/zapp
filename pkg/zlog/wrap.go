@@ -112,11 +112,11 @@ func (l *logWrap) Fatal(v ...interface{}) {
 	l.print(FatalLevel, v)
 }
 
-// 创建一个镜像log
-func (l *logWrap) NewMirrorLogger(tag ...string) core.ILogger {
+// 创建一个会话log
+func (l *logWrap) NewSessionLogger(fields ...zap.Field) core.ILogger {
 	return &logWrap{
 		log:            l.log,
-		fields:         append(append([]zap.Field{}, l.fields...), zap.String(logIdKey, l.nextLoggerId()), zap.Strings("log_tag", tag)),
+		fields:         append(append(append([]zap.Field{}, l.fields...), zap.String(logIdKey, l.nextLoggerId())), fields...),
 		callerMinLevel: l.callerMinLevel,
 		ws:             l.ws,
 	}
