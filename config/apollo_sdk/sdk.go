@@ -156,17 +156,10 @@ func (a *ApolloConfig) getNamespaceDataFromRemote(namespace string) (NamespaceDa
 	}
 	defer resp.Body.Close()
 
-	// 404时尝试检查是否namespace不存在
+	// 404表示namespace不存在
 	if resp.StatusCode == http.StatusNotFound {
-		var result struct {
-			Error string `json:"error"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&result); err == nil {
-			if result.Error == "Not Found" {
-				logger.Log.Warn("命名空间不存在", zap.String("namespace", namespace))
-				return NamespaceData{}, nil
-			}
-		}
+		logger.Log.Warn("命名空间不存在", zap.String("namespace", namespace))
+		return NamespaceData{}, nil
 	}
 
 	// 检查状态码
