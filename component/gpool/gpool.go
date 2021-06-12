@@ -24,7 +24,7 @@ type gpool struct {
 	wg sync.WaitGroup
 }
 
-func newGPool(conf *GPoolConfig) core.IGPool {
+func NewGPool(conf *GPoolConfig) core.IGPool {
 	conf.check()
 	g := &gpool{
 		workerQueue: make(chan *worker, conf.ThreadCount),

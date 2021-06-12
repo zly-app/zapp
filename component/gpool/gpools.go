@@ -47,7 +47,7 @@ func (g *gpools) makeGPoolGroup(name string) (conn.IInstance, error) {
 	}
 
 	conf.check()
-	return newGPool(conf), nil
+	return NewGPool(conf), nil
 }
 
 func (g *gpools) Close() {

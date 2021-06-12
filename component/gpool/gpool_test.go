@@ -14,7 +14,7 @@ import (
 )
 
 func TestGPool(t *testing.T) {
-	g := newGPool(new(GPoolConfig))
+	g := NewGPool(new(GPoolConfig))
 	defer g.Close()
 
 	chs := make([]<-chan error, 5)
