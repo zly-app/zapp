@@ -40,7 +40,7 @@ type IConfig interface {
 	HasFlag(flag string) bool
 	// 获取所有的flag, 注意: flag列表是无序的
 	GetFlags() []string
-	// 获取标签的值, 标签名是忽略大小写的
+	// 获取标签的值, 标签名是忽略大小写的, 标签不存在时返回空字符串
 	GetLabel(name string) string
 	// 获取标签数据
 	GetLabels() map[string]string

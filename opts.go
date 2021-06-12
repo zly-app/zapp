@@ -60,7 +60,7 @@ func newOption(opts ...Option) *option {
 }
 
 // 检查自定义启用服务
-func (o *option) CheckCustomEnableServices(app core.IApp) {
+func (o *option) CheckCustomServices(app core.IApp) {
 	if o.CustomServicesFn != nil {
 		o.CustomServicesFn(app, o.Services, o.ServicesOpts)
 	}
@@ -126,11 +126,9 @@ func WithServiceOpts(serviceType core.ServiceType, opts ...interface{}) Option {
 //
 // 与WithService不同的是这里已经加载了component, 用户可以方便的根据各种条件启用和关闭服务.
 // 示例:
-//      app.WithCustomEnableService(func(c core.IComponent) (servers map[core.ServiceType]bool) {
-//			return map[core.ServiceType]bool{
-//				core.CronService: true,
-//			}
-//		})
+// 		zapp.WithCustomService(func(app core.IApp, services map[core.ServiceType]bool, servicesOpts map[core.ServiceType][]interface{}) {
+// 			services["api"] = true
+// 		}),
 func WithCustomService(fn func(app core.IApp, services map[core.ServiceType]bool, servicesOpts map[core.ServiceType][]interface{})) Option {
 	return func(opt *option) {
 		opt.CustomServicesFn = fn

@@ -91,17 +91,15 @@ BeforeExitHandler               在app退出前
 AfterExitHandler                在app退出后
 ```
 
-## 根据配置决定启动哪些服务
+## 运行时自定义服务
 
-> 初始化时添加 `zapp.WithCustomEnableService(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些服务
+> 初始化时添加 `zapp.WithCustomService(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些服务
 
 ```go
-zapp.WithCustomEnableService(func(app core.IApp) (servers map[core.ServiceType]bool) {
-	servers = make(map[core.ServiceType]bool)
-	if app.GetConfig().HasFlag("api_service") {
-		servers["api"] = true
-	}
-	return servers
+zapp.WithCustomService(func(app core.IApp, services map[core.ServiceType]bool, servicesOpts map[core.ServiceType][]interface{}) {
+    if app.GetConfig().HasFlag("api_service") {
+        services["api"] = true
+    }
 })
 ```
 
