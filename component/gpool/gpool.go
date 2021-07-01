@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/pkg/utils"
 )
 
 // 协程池
@@ -113,6 +112,6 @@ func (g *gpool) Close() {
 func (g *gpool) newJob(fn func() error) *job {
 	return newJob(func() error {
 		defer g.wg.Done()
-		return utils.Recover.WrapCall(fn)
+		return fn()
 	})
 }
