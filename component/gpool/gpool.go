@@ -77,12 +77,13 @@ func (g *gpool) GoSync(fn func() error) error {
 
 // 尝试异步执行, 如果任务队列已满则返回false
 func (g *gpool) TryGo(fn func() error) (ch <-chan error, ok bool) {
+	g.wg.Add(1)
 	job := g.newJob(fn)
 	select {
 	case g.jobQueue <- job:
-		g.wg.Add(1)
 		return job.done, true
 	default:
+		g.wg.Done()
 		return nil, false
 	}
 }
