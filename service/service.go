@@ -16,10 +16,10 @@ import (
 )
 
 // 服务建造者
-type serviceCreator func(app core.IApp, opts ...interface{}) core.IService
+type serviceCreator func(app core.IApp) core.IService
 
-func (h serviceCreator) Create(app core.IApp, opts ...interface{}) core.IService {
-	return h(app, opts...)
+func (h serviceCreator) Create(app core.IApp) core.IService {
+	return h(app)
 }
 
 // 建造者列表
@@ -34,14 +34,14 @@ func RegisterCreator(serviceType core.ServiceType, creator core.IServiceCreator)
 }
 
 // 注册服务建造者函数
-func RegisterCreatorFunc(serviceType core.ServiceType, creatorFunc func(app core.IApp, opts ...interface{}) core.IService) {
+func RegisterCreatorFunc(serviceType core.ServiceType, creatorFunc func(app core.IApp) core.IService) {
 	RegisterCreator(serviceType, serviceCreator(creatorFunc))
 }
 
 // 构建服务
-func MakeService(app core.IApp, serviceType core.ServiceType, opts ...interface{}) core.IService {
+func MakeService(app core.IApp, serviceType core.ServiceType) core.IService {
 	if creator, ok := creators[serviceType]; ok {
-		return creator.Create(app, opts...)
+		return creator.Create(app)
 	}
 	app.Fatal("使用了未注册建造者的服务", zap.String("serviceType", string(serviceType)))
 	return nil

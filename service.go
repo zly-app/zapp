@@ -18,11 +18,10 @@ import (
 
 // 初始化服务
 func (app *appCli) initService() {
-	app.opt.CheckCustomServices(app)
+	app.opt.CheckCustomEnableServices(app)
 	for serviceType, enable := range app.opt.Services {
 		if enable {
-			opts := app.opt.ServicesOpts[serviceType]
-			app.services[serviceType] = service.MakeService(app, serviceType, opts...)
+			app.services[serviceType] = service.MakeService(app, serviceType)
 		}
 	}
 }

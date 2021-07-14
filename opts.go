@@ -34,10 +34,8 @@ type option struct {
 	IgnoreInjectOfDisableServer bool
 	// 服务
 	Services map[core.ServiceType]bool
-	// 服务选项
-	ServicesOpts map[core.ServiceType][]interface{}
-	// 自定义服务函数
-	CustomServicesFn func(app core.IApp, services map[core.ServiceType]bool, servicesOpts map[core.ServiceType][]interface{})
+	// 自定义启用服务函数
+	CustomEnableServicesFn func(app core.IApp, services map[core.ServiceType]bool)
 
 	// 自定义组件函数
 	CustomComponentFn func(app core.IApp) core.IComponent
@@ -51,7 +49,6 @@ func newOption(opts ...Option) *option {
 
 		IgnoreInjectOfDisableServer: false,
 		Services:                    make(map[core.ServiceType]bool),
-		ServicesOpts:                make(map[core.ServiceType][]interface{}),
 	}
 	for _, o := range opts {
 		o(opt)
@@ -60,9 +57,9 @@ func newOption(opts ...Option) *option {
 }
 
 // 检查自定义启用服务
-func (o *option) CheckCustomServices(app core.IApp) {
-	if o.CustomServicesFn != nil {
-		o.CustomServicesFn(app, o.Services, o.ServicesOpts)
+func (o *option) CheckCustomEnableServices(app core.IApp) {
+	if o.CustomEnableServicesFn != nil {
+		o.CustomEnableServicesFn(app, o.Services)
 	}
 }
 
@@ -108,30 +105,23 @@ func WithIgnoreInjectOfDisableServer(ignore ...bool) Option {
 	}
 }
 
-// 启动服务
+// 启动服务(使用者不要主动调用这个函数, 应该由service包装, 因为service的选项无法通过这个函数传递)
 func WithService(serviceType core.ServiceType, enable ...bool) Option {
 	return func(opt *option) {
 		opt.Services[serviceType] = len(enable) == 0 || enable[0]
 	}
 }
 
-// 服务选项
-func WithServiceOpts(serviceType core.ServiceType, opts ...interface{}) Option {
-	return func(opt *option) {
-		opt.ServicesOpts[serviceType] = append(opt.ServicesOpts[serviceType], opts...)
-	}
-}
-
 // 自定义服务
 //
-// 与WithService不同的是这里已经加载了component, 用户可以方便的根据各种条件启用和关闭服务.
+// 如果要启用某个服务, 必须使用该服务的 WithService() 选项
 // 示例:
-// 		zapp.WithCustomService(func(app core.IApp, services map[core.ServiceType]bool, servicesOpts map[core.ServiceType][]interface{}) {
+// 		zapp.WithCustomEnableService(func(app core.IApp, services map[core.ServiceType]bool) {
 // 			services["api"] = true
 // 		}),
-func WithCustomService(fn func(app core.IApp, services map[core.ServiceType]bool, servicesOpts map[core.ServiceType][]interface{})) Option {
+func WithCustomEnableService(fn func(app core.IApp, services map[core.ServiceType]bool)) Option {
 	return func(opt *option) {
-		opt.CustomServicesFn = fn
+		opt.CustomEnableServicesFn = fn
 	}
 }
 
