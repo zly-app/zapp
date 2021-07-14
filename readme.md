@@ -16,8 +16,13 @@
 - [使用说明](#%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)
     - [守护进程](#%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B)
     - [Handler](#handler)
-    - [根据配置决定启动哪些服务](#%E6%A0%B9%E6%8D%AE%E9%85%8D%E7%BD%AE%E5%86%B3%E5%AE%9A%E5%90%AF%E5%8A%A8%E5%93%AA%E4%BA%9B%E6%9C%8D%E5%8A%A1)
+    - [运行时自定义服务](#%E8%BF%90%E8%A1%8C%E6%97%B6%E8%87%AA%E5%AE%9A%E4%B9%89%E6%9C%8D%E5%8A%A1)
     - [会话独立日志](#%E4%BC%9A%E8%AF%9D%E7%8B%AC%E7%AB%8B%E6%97%A5%E5%BF%97)
+- [app生命周期](#app%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)
+    - [初始化](#%E5%88%9D%E5%A7%8B%E5%8C%96)
+    - [用户操作](#%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C)
+    - [启动](#%E5%90%AF%E5%8A%A8)
+    - [退出](#%E9%80%80%E5%87%BA)
 
 <!-- /TOC -->
 ---
@@ -105,8 +110,26 @@ zapp.WithCustomService(func(app core.IApp, services map[core.ServiceType]bool, s
 
 ## 会话独立日志
 
-```text
-core.ILogger 提供了 NewSessionLogger(tag ...string) ILogger 方法用于创建一个会话 logger.
-在会话开始时可以通过这个方法创建会话内使用的logger, 会话结束后无需考虑销毁它, 它会自动回收.
+`core.ILogger` 提供了 `NewSessionLogger(fields ...zap.Field) ILogger` 方法用于创建一个会话 logger.<br>
 使用会话logger打印日志会产生一个全局日志id, 并且我们会根据不同的全局日志id输出不同的颜色.
-```
+
+# app生命周期
+
+初始化 > 用户操作 > 启动 > 退出
+
+## 初始化
+
+`app := zapp.NewApp(...)` > 生成`BaseContext` > 加载配置 > 初始化日志记录器 > 初始化组件 > 创建服务   
+
+## 用户操作
+
+用户在这里对服务进行注入
+
+## 启动
+
+`app.Run()` > 启动服务 > 启动内存释放任务 > 阻塞等待退出信号
+
+## 退出
+
+`app.Exit() 或收到退出信号` > 关闭`BaseContext` > 停止内存释放任务 > 关闭服务 > 释放组件资源 > `结束之前调用app.Run()的阻塞` 
+
