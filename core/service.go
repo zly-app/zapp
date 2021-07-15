@@ -24,8 +24,5 @@ type IServiceCreator interface {
 	Create(app IApp) IService
 }
 
-// 组件类型
-type ComponentType string
-
 // 服务类型
 type ServiceType string

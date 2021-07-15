@@ -13,8 +13,8 @@ import (
 	"github.com/zly-app/zapp/core"
 )
 
-// 初始化组件
-func (app *appCli) initComponent() {
+// 构建组件
+func (app *appCli) makeComponent() {
 	app.component = component.NewComponent(app)
 	if app.opt.CustomComponentFn != nil {
 		app.component = app.opt.CustomComponentFn(app)

@@ -20,6 +20,9 @@ type Config struct {
 	// 服务配置
 	Services ServicesConfig
 
+	// 插件配置
+	Plugins PluginsConfig
+
 	// 组件配置
 	Components ComponentsConfig
 }
@@ -34,6 +37,8 @@ type IConfig interface {
 	Parse(key string, outPtr interface{}) error
 	// 解析组件配置
 	ParseComponentConfig(componentType ComponentType, componentName string, outPtr interface{}) error
+	// 解析插件配置
+	ParsePluginConfig(pluginType PluginType, outPtr interface{}) error
 	// 解析服务配置
 	ParseServiceConfig(serviceType ServiceType, outPtr interface{}) error
 	// 检查是否存在flag, 注意: flag是忽略大小写的
@@ -86,6 +91,9 @@ type LogConfig struct {
 
 // 服务配置
 type ServicesConfig map[string]interface{}
+
+// 插件配置
+type PluginsConfig map[string]interface{}
 
 // 组件配置
 type ComponentsConfig map[string]map[string]interface{}

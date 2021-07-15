@@ -30,6 +30,7 @@ var parseConfigToJsonOfMatchKeys = map[string]struct {
 	noMatchKeys string // 不匹配key
 }{
 	apollo_sdk.FrameNamespace:      {"log,flags,labels", ""},
+	apollo_sdk.PluginsNamespace:    {"*", "*.*"},   // 忽略存在.的key
 	apollo_sdk.ServicesNamespace:   {"*", "*.*"},   // 忽略存在.的key
 	apollo_sdk.ComponentsNamespace: {"*", "*.*.*"}, // 忽略存在两个.以上的key
 }

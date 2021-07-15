@@ -32,6 +32,7 @@ const ApolloGetNamespaceDataApiUrl = "/configfiles/json/%s/%s/%s" //  {config_se
 // 命名空间定义
 const (
 	FrameNamespace      = "frame"
+	PluginsNamespace    = "plugins"
 	ServicesNamespace   = "services"
 	ComponentsNamespace = "components"
 )
@@ -39,6 +40,7 @@ const (
 // 默认需要的的命名空间
 var defaultNamespaces = []string{
 	FrameNamespace,
+	PluginsNamespace,
 	ServicesNamespace,
 	ComponentsNamespace,
 }

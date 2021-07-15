@@ -25,3 +25,6 @@ type IComponent interface {
 	// 消息总线
 	IMsgbus
 }
+
+// 组件类型
+type ComponentType string

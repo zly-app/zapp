@@ -27,11 +27,18 @@ type option struct {
 	EnableDaemon bool
 	// handlers
 	Handlers map[HandlerType][]Handler
+
+	// 忽略未启用的插件注入
+	IgnoreInjectOfDisablePlugin bool
+	// 插件
+	Plugins map[core.PluginType]bool
+	// 自定义启用插件函数
+	CustomEnablePluginsFn func(app core.IApp, plugins map[core.PluginType]bool)
+
 	// 在服务不稳定观察阶段中出现错误则退出
 	ExitOnErrOfObserveServiceUnstable bool
-
 	// 忽略未启用的服务注入
-	IgnoreInjectOfDisableServer bool
+	IgnoreInjectOfDisableService bool
 	// 服务
 	Services map[core.ServiceType]bool
 	// 自定义启用服务函数
@@ -47,13 +54,23 @@ func newOption(opts ...Option) *option {
 		Handlers:                          make(map[HandlerType][]Handler),
 		ExitOnErrOfObserveServiceUnstable: true,
 
-		IgnoreInjectOfDisableServer: false,
-		Services:                    make(map[core.ServiceType]bool),
+		IgnoreInjectOfDisablePlugin: false,
+		Plugins:                     make(map[core.PluginType]bool),
+
+		IgnoreInjectOfDisableService: false,
+		Services:                     make(map[core.ServiceType]bool),
 	}
 	for _, o := range opts {
 		o(opt)
 	}
 	return opt
+}
+
+// 检查自定义启用插件
+func (o *option) CheckCustomEnablePlugins(app core.IApp) {
+	if o.CustomEnablePluginsFn != nil {
+		o.CustomEnablePluginsFn(app, o.Plugins)
+	}
 }
 
 // 检查自定义启用服务
@@ -91,6 +108,33 @@ func WithHandler(t HandlerType, hs ...Handler) Option {
 	}
 }
 
+// 忽略未启用的插件注入
+func WithIgnoreInjectOfDisablePlugin(ignore ...bool) Option {
+	return func(opt *option) {
+		opt.IgnoreInjectOfDisablePlugin = len(ignore) == 0 || ignore[0]
+	}
+}
+
+// 启动插件(使用者不要主动调用这个函数, 应该由plugin包装, 因为plugin的选项无法通过这个函数传递)
+func WithPlugin(pluginType core.PluginType, enable ...bool) Option {
+	return func(opt *option) {
+		opt.Plugins[pluginType] = len(enable) == 0 || enable[0]
+	}
+}
+
+// 自定义启用插件
+//
+// 如果要启用某个插件, 必须使用该插件的 WithPlugin() 选项
+// 示例:
+// 		zapp.WithCustomEnablePlugin(func(app core.IApp, plugins map[core.PluginType]bool) {
+// 			plugins["my_plugin"] = true
+// 		}),
+func WithCustomEnablePlugin(fn func(app core.IApp, plugins map[core.PluginType]bool)) Option {
+	return func(opt *option) {
+		opt.CustomEnablePluginsFn = fn
+	}
+}
+
 // 在服务不稳定观察阶段中出现错误则退出, 默认true
 func WithExitOnErrOfObserveServiceUnstable(exit ...bool) Option {
 	return func(opt *option) {
@@ -99,9 +143,9 @@ func WithExitOnErrOfObserveServiceUnstable(exit ...bool) Option {
 }
 
 // 忽略未启用的服务注入
-func WithIgnoreInjectOfDisableServer(ignore ...bool) Option {
+func WithIgnoreInjectOfDisableService(ignore ...bool) Option {
 	return func(opt *option) {
-		opt.IgnoreInjectOfDisableServer = len(ignore) == 0 || ignore[0]
+		opt.IgnoreInjectOfDisableService = len(ignore) == 0 || ignore[0]
 	}
 }
 
@@ -112,7 +156,7 @@ func WithService(serviceType core.ServiceType, enable ...bool) Option {
 	}
 }
 
-// 自定义服务
+// 自定义启用服务
 //
 // 如果要启用某个服务, 必须使用该服务的 WithService() 选项
 // 示例:

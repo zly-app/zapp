@@ -40,6 +40,11 @@ type IApp interface {
 	// 获取组件
 	GetComponent() IComponent
 
+	// 获取插件
+	GetPlugin(pluginType PluginType) (IPlugin, bool)
+	// 注入插件
+	InjectPlugin(pluginType PluginType, a ...interface{})
+
 	// 获取服务
 	GetService(serviceType ServiceType) (IService, bool)
 	// 注入服务

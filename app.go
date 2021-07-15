@@ -31,6 +31,7 @@ type appCli struct {
 	config core.IConfig
 	core.ILogger
 	component core.IComponent
+	plugins   map[core.PluginType]core.IPlugin
 	services  map[core.ServiceType]core.IService
 
 	interrupt chan os.Signal
@@ -49,6 +50,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app := &appCli{
 		name:      appName,
 		interrupt: make(chan os.Signal, 1),
+		plugins:   make(map[core.PluginType]core.IPlugin),
 		services:  make(map[core.ServiceType]core.IService),
 		opt:       newOption(opts...),
 	}
@@ -63,10 +65,12 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.handler(BeforeInitializeHandler)
 	app.Debug("app初始化")
 
-	// 初始化组件
-	app.initComponent()
-	// 初始化服务
-	app.initService()
+	// 构建组件
+	app.makeComponent()
+	// 构建插件
+	app.makePlugin()
+	// 构建服务
+	app.makeService()
 
 	app.Debug("app初始化完毕")
 	app.handler(AfterInitializeHandler)
@@ -78,9 +82,10 @@ func (app *appCli) run() {
 	app.handler(BeforeStartHandler)
 	app.Debug("启动app")
 
+	// 启动插件
+	app.startPlugin()
 	// 启动服务
 	app.startService()
-
 	// 开始释放内存
 	app.startFreeMemory()
 
@@ -104,6 +109,8 @@ func (app *appCli) exit() {
 	app.baseCtxCancel()
 	// 关闭服务
 	app.closeService()
+	// 关闭插件
+	app.closePlugin()
 	// 释放组件资源
 	app.releaseComponentResource()
 

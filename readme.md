@@ -7,16 +7,19 @@
 - [开始](#%E5%BC%80%E5%A7%8B)
 - [扩展性](#%E6%89%A9%E5%B1%95%E6%80%A7)
     - [组件](#%E7%BB%84%E4%BB%B6)
+    - [插件](#%E6%8F%92%E4%BB%B6)
     - [服务](#%E6%9C%8D%E5%8A%A1)
 - [配置](#%E9%85%8D%E7%BD%AE)
 - [依赖包说明](#%E4%BE%9D%E8%B5%96%E5%8C%85%E8%AF%B4%E6%98%8E)
 - [扩展开发规范](#%E6%89%A9%E5%B1%95%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
     - [组件开发规范](#%E7%BB%84%E4%BB%B6%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
+    - [插件开发规范](#%E6%8F%92%E4%BB%B6%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
     - [服务开发规范](#%E6%9C%8D%E5%8A%A1%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83)
 - [使用说明](#%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)
     - [守护进程](#%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B)
     - [Handler](#handler)
-    - [运行时自定义服务](#%E8%BF%90%E8%A1%8C%E6%97%B6%E8%87%AA%E5%AE%9A%E4%B9%89%E6%9C%8D%E5%8A%A1)
+    - [运行时自定义启用插件](#%E8%BF%90%E8%A1%8C%E6%97%B6%E8%87%AA%E5%AE%9A%E4%B9%89%E5%90%AF%E7%94%A8%E6%8F%92%E4%BB%B6)
+    - [运行时自定义启用服务](#%E8%BF%90%E8%A1%8C%E6%97%B6%E8%87%AA%E5%AE%9A%E4%B9%89%E5%90%AF%E7%94%A8%E6%9C%8D%E5%8A%A1)
     - [会话独立日志](#%E4%BC%9A%E8%AF%9D%E7%8B%AC%E7%AB%8B%E6%97%A5%E5%BF%97)
 - [app生命周期](#app%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)
     - [初始化](#%E5%88%9D%E5%A7%8B%E5%8C%96)
@@ -40,6 +43,10 @@ app.Run()
 
 > 我们实现了一些组件, 可以在 [这里](https://github.com/zly-app/component) 找到
 
+## 插件
+
+> 我们实现了一些插件, 可以在 [这里](https://github.com/zly-app/plugin) 找到
+
 ## 服务
 
 > 我们实现了一些服务, 可以在 [这里](https://github.com/zly-app/service) 找到
@@ -61,6 +68,10 @@ app.Run()
 ## 组件开发规范
 
 > 我们提供了自定义组件创建选项 `zapp.WithCustomComponent`, 这个核心功能能让我们支持任何组件
+
+> ... 待完善
+
+## 插件开发规范
 
 > ... 待完善
 
@@ -96,6 +107,18 @@ BeforeExitHandler               在app退出前
 AfterExitHandler                在app退出后
 ```
 
+## 运行时自定义启用插件
+
+> 初始化时添加 `zapp.WithCustomEnablePlugin(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些插件
+
+```go
+zapp.WithCustomEnablePlugin(func(app core.IApp, plugins map[core.PluginType]bool) {
+    if !app.GetConfig().HasFlag("my_plugin") {
+        plugins["my_plugin"] = false
+    }
+})
+```
+
 ## 运行时自定义启用服务
 
 > 初始化时添加 `zapp.WithCustomEnableService(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些服务
@@ -119,7 +142,7 @@ zapp.WithCustomEnableService(func(app core.IApp, services map[core.ServiceType]b
 
 ## 初始化
 
-`app := zapp.NewApp(...)` > 生成`BaseContext` > 加载配置 > 初始化日志记录器 > 初始化组件 > 创建服务   
+`app := zapp.NewApp(...)` > 生成`BaseContext` > 加载配置 > 初始化日志记录器 > 构建组件 > 构建插件 > 构建服务   
 
 ## 用户操作
 
@@ -127,9 +150,9 @@ zapp.WithCustomEnableService(func(app core.IApp, services map[core.ServiceType]b
 
 ## 启动
 
-`app.Run()` > 启动服务 > 启动内存释放任务 > 阻塞等待退出信号
+`app.Run()` > 启动插件 > 启动服务 > 启动内存释放任务 > 阻塞等待退出信号
 
 ## 退出
 
-`app.Exit() 或收到退出信号` > 关闭`BaseContext` > 停止内存释放任务 > 关闭服务 > 释放组件资源 > `结束之前调用app.Run()的阻塞` 
+`app.Exit() 或收到退出信号` > 关闭`BaseContext` > 停止内存释放任务 > 关闭服务 > 关闭插件 > 释放组件资源 > `结束之前调用app.Run()的阻塞` 
 

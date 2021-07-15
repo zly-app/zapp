@@ -16,8 +16,8 @@ import (
 	"github.com/zly-app/zapp/service"
 )
 
-// 初始化服务
-func (app *appCli) initService() {
+// 构建服务
+func (app *appCli) makeService() {
 	app.opt.CheckCustomEnableServices(app)
 	for serviceType, enable := range app.opt.Services {
 		if enable {
@@ -57,7 +57,7 @@ func (app *appCli) GetService(serviceType core.ServiceType) (core.IService, bool
 func (app *appCli) InjectService(serviceType core.ServiceType, a ...interface{}) {
 	s, ok := app.GetService(serviceType)
 	if !ok {
-		if app.opt.IgnoreInjectOfDisableServer {
+		if app.opt.IgnoreInjectOfDisableService {
 			return
 		}
 		logger.Log.Fatal("未启用api服务")

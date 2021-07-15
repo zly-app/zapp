@@ -230,6 +230,17 @@ func (c *configCli) ParseComponentConfig(componentType core.ComponentType, compo
 	return nil
 }
 
+func (c *configCli) ParsePluginConfig(pluginType core.PluginType, outPtr interface{}) error {
+	key := "plugins." + string(pluginType)
+	if !c.vi.IsSet(key) {
+		return fmt.Errorf("插件配置<%s>不存在", pluginType)
+	}
+	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
+		return fmt.Errorf("无法解析<%s>插件配置: %s", pluginType, err)
+	}
+	return nil
+}
+
 func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr interface{}) error {
 	key := "services." + string(serviceType)
 	if !c.vi.IsSet(key) {
