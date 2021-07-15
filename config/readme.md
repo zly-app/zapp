@@ -195,5 +195,6 @@ apollo的配置也可以使用json, 如下:
     Cluster = "default"             # 集群名, 默认default
     AlwaysLoadFromRemote = false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
     BackupFile = "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
+    NamespacePrefix = ""            # 命名空间前缀, apollo支持的部门前缀
     Namespaces = ""                 # 其他自定义命名空间, 多个命名空间用英文逗号隔开
     ```

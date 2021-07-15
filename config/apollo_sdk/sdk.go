@@ -63,6 +63,7 @@ type ApolloConfig struct {
 	Cluster              string // 集群名, 默认default
 	AlwaysLoadFromRemote bool   // 总是从远程获取, 在远程加载失败时不会从备份文件加载
 	BackupFile           string // 备份文件名
+	NamespacePrefix      string // 命名空间前缀, apollo支持的部门前缀
 	Namespaces           string // 其他自定义命名空间, 多个命名空间用英文逗号隔开
 }
 
@@ -133,6 +134,7 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 
 // 从远程加载命名空间数据
 func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceData, error) {
+	namespace = a.NamespacePrefix + namespace
 	// 检查配置
 	if a.Address == "" {
 		return nil, errors.New("apollo的address是空的")
