@@ -20,6 +20,12 @@ import (
 	"github.com/zly-app/zapp/logger"
 )
 
+var defaultApp core.IApp
+
+func App() core.IApp {
+	return defaultApp
+}
+
 type appCli struct {
 	name string
 
@@ -75,6 +81,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.Debug("app初始化完毕")
 	app.handler(AfterInitializeHandler)
 
+	defaultApp = app
 	return app
 }
 
