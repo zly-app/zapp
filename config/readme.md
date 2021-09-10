@@ -15,7 +15,7 @@
     - [apollo命名空间和配置说明](#apollo%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E5%92%8C%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
         - [apollo配置json支持](#apollo%E9%85%8D%E7%BD%AEjson%E6%94%AF%E6%8C%81)
     - [在配置文件中设置从apollo加载](#%E5%9C%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E8%AE%BE%E7%BD%AE%E4%BB%8Eapollo%E5%8A%A0%E8%BD%BD)
-- [包含配置文件](#%E5%8C%85%E5%90%AB%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+- [引用配置文件](#%E5%BC%95%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
 
 <!-- /TOC -->
 ---
