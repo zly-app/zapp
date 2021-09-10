@@ -70,6 +70,8 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		if err != nil {
 			logger.Log.Fatal("从命令指定文件构建viper失败", zap.Strings("files", files), zap.Error(err))
 		}
+	} else if rawVi = loadDefaultFiles(); rawVi != nil {
+		logger.Log.Info("使用默认配置文件", zap.String("file", consts.DefaultConfigFiles))
 	} else if opt.vi != nil { // WithViper
 		rawVi = opt.vi
 	} else if opt.conf != nil { // WithConfig
@@ -87,17 +89,14 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		if err != nil {
 			logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
 		}
-	} else { // 默认
-		files := strings.Split(consts.DefaultConfigFiles, ",")
-		logger.Log.Debug("使用默认配置文件", zap.Strings("files", files))
-		rawVi, err = makeViperFromFile(files, true)
-		if err != nil {
-			logger.Log.Fatal("从默认配置文件构建viper失败", zap.Strings("files", files), zap.Error(err))
-		}
 	}
 
 	vi := viper.New()
-	vi.MergeConfigMap(rawVi.AllSettings())
+	if rawVi != nil{
+		if err := vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
+			logger.Log.Fatal("合并配置文件失败", zap.Error(err))
+		}
+	}
 
 	// 如果从viper中发现了apollo配置
 	if vi.IsSet(consts.ApolloConfigKey) {
@@ -158,22 +157,56 @@ func (c *configCli) makeLabels() {
 	c.c.Frame.Labels = c.labels
 }
 
-// 从文件构建viper
-func makeViperFromFile(files []string, isDefault bool) (*viper.Viper, error) {
+// 加载默认配置文件, 默认配置文件不存在返回nil
+func loadDefaultFiles() *viper.Viper {
+	files := strings.Split(consts.DefaultConfigFiles, ",")
+	var exist bool
 	vi := viper.New()
 	for _, file := range files {
 		_, err := os.Stat(file)
 		if err != nil {
-			if isDefault && os.IsNotExist(err) { // 如果默认配置文件不存在则忽略
-				logger.Log.Warn("默认配置文件不存在", zap.String("file", file))
+			if os.IsNotExist(err) {
 				continue
 			}
-			return nil, fmt.Errorf("读取配置文件'%s'信息失败: %s", file, err)
+			logger.Log.Fatal("读取配置文件信息失败", zap.String("file", file), zap.Error(err))
 		}
 
+		exist = true
 		vi.SetConfigFile(file)
 		if err = vi.MergeInConfig(); err != nil {
-			return nil, fmt.Errorf("合并配置文件'%s'失败: %s", file, err)
+			logger.Log.Fatal("合并配置文件失败", zap.String("file", file), zap.Error(err))
+		}
+	}
+	if !exist {
+		return nil
+	}
+	return vi
+}
+
+// 合并文件到viper
+func mergeFile(vi *viper.Viper, file string, ignoreNotExist bool) error {
+	_, err := os.Stat(file)
+	if err != nil {
+		if ignoreNotExist && os.IsNotExist(err) { // 如果文件不存在则忽略
+			logger.Log.Warn("配置文件不存在", zap.String("file", file))
+			return nil
+		}
+		return fmt.Errorf("读取配置文件'%s'信息失败: %s", file, err)
+	}
+
+	vi.SetConfigFile(file)
+	if err = vi.MergeInConfig(); err != nil {
+		return fmt.Errorf("合并配置文件'%s'失败: %s", file, err)
+	}
+	return nil
+}
+
+// 从文件构建viper
+func makeViperFromFile(files []string, ignoreNotExist bool) (*viper.Viper, error) {
+	vi := viper.New()
+	for _, file := range files {
+		if err := mergeFile(vi, file, ignoreNotExist); err != nil {
+			return nil, err
 		}
 	}
 	return vi, nil
