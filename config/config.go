@@ -92,10 +92,15 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	}
 
 	vi := viper.New()
-	if rawVi != nil{
+	if rawVi != nil {
 		if err := vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
 			logger.Log.Fatal("合并配置文件失败", zap.Error(err))
 		}
+	}
+
+	// 如果发现包含配置
+	if vi.IsSet(consts.IncludeConfigFileKey) {
+		vi = loadIncludeConfigFile(vi)
 	}
 
 	// 如果从viper中发现了apollo配置
@@ -226,6 +231,25 @@ func makeViperFromStruct(a interface{}) (*viper.Viper, error) {
 		return nil, fmt.Errorf("数据解析失败: %s", err)
 	}
 	return vi, nil
+}
+
+// 加载包含配置文件
+func loadIncludeConfigFile(vi *viper.Viper) *viper.Viper {
+	var temp struct {
+		Files string
+	}
+	err := vi.UnmarshalKey(consts.IncludeConfigFileKey, &temp)
+	if err != nil {
+		logger.Log.Fatal("include配置错误", zap.Error(err))
+	}
+
+	files := strings.Split(temp.Files, ",")
+	for _, file := range files {
+		if err := mergeFile(vi, file, false); err != nil {
+			logger.Log.Fatal("合并包含文件失败", zap.String("file", file), zap.Error(err))
+		}
+	}
+	return vi
 }
 
 func (c *configCli) checkDefaultConfig(conf *core.Config) {

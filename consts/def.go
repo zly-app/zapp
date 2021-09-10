@@ -24,6 +24,8 @@ const (
 	DefaultConfigFiles = "./configs/default.toml"
 	// apollo配置key
 	ApolloConfigKey = "apollo"
+	// 包含配置文件key
+	IncludeConfigFileKey = "include"
 )
 
 // 默认组件名
