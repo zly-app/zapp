@@ -70,8 +70,6 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		if err != nil {
 			logger.Log.Fatal("从命令指定文件加载失败", zap.Error(err))
 		}
-	} else if rawVi = loadDefaultFiles(); rawVi != nil {
-		logger.Log.Info("使用默认配置文件", zap.String("file", consts.DefaultConfigFiles))
 	} else if opt.vi != nil { // WithViper
 		rawVi = opt.vi
 	} else if opt.conf != nil { // WithConfig
@@ -89,6 +87,8 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		if err != nil {
 			logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
 		}
+	} else if rawVi = loadDefaultFiles(); rawVi != nil {
+		logger.Log.Info("使用默认配置文件", zap.String("file", consts.DefaultConfigFiles))
 	}
 
 	vi := viper.New()
