@@ -96,9 +96,10 @@ func makeWriteSyncer(conf *core.LogConfig) zapcore.WriteSyncer {
 		lumberjackHook := &lumberjack.Logger{
 			Filename:   fmt.Sprintf("%s/%s.log", conf.Path, name), // 日志文件路径
 			MaxSize:    conf.FileMaxSize,                          // 每个日志文件保存的最大尺寸 单位：M
-			MaxBackups: conf.FileMaxBackupsNum,                    // 日志文件最多保存多少个备份
-			MaxAge:     conf.FileMaxDurableTime,                   // 文件最多保存多少天
-			Compress:   false,                                     // 是否压缩
+			MaxBackups: conf.FileMaxBackupsNum,                    // 日志文件最多保存多少个备份, 0表示永久
+			MaxAge:     conf.FileMaxDurableTime,                   // 文件最多保存多少天, 0表示永久
+			LocalTime:  true,
+			Compress:   conf.Compress, // 是否压缩
 		}
 		ws = append(ws, zapcore.Lock(zapcore.AddSync(lumberjackHook)))
 	}

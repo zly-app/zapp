@@ -78,8 +78,9 @@ type LogConfig struct {
 	AppendPid                  bool   // 是否在日志文件名后附加进程号
 	Path                       string // 默认日志存放路径
 	FileMaxSize                int    // 每个日志最大尺寸,单位M
-	FileMaxBackupsNum          int    // 日志文件最多保存多少个备份
-	FileMaxDurableTime         int    // 文件最多保存多长时间,单位天
+	FileMaxBackupsNum          int    // 日志文件最多保存多少个备份, 0表示永久
+	FileMaxDurableTime         int    // 文件最多保存多长时间,单位天, 0表示永久
+	Compress                   bool   // 是否压缩历史日志
 	TimeFormat                 string // 时间显示格式
 	Color                      bool   // 是否打印彩色日志等级, 只有关闭json编码器才生效
 	CapitalLevel               bool   // 是否大写日志等级
