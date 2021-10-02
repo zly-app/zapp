@@ -24,6 +24,8 @@ const (
 	DefaultConfigFiles = "./configs/default.toml"
 	// apollo配置key
 	ApolloConfigKey = "apollo"
+	// 从环境变量中加载apollo集群名
+	ApolloConfigClusterFromEnvKey = "ApolloCluster"
 	// 包含配置文件key
 	IncludeConfigFileKey = "include"
 )

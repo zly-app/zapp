@@ -11,6 +11,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -56,6 +57,10 @@ func makeApolloConfigFromViper(vi *viper.Viper) (*ApolloConfig, error) {
 
 // 从apollo中获取配置构建viper
 func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
+	if conf.Cluster == "" {
+		conf.Cluster = os.Getenv(consts.ApolloConfigClusterFromEnvKey)
+	}
+
 	data, err := conf.GetNamespacesData()
 	if err != nil {
 		return nil, fmt.Errorf("获取apollo配置数据失败: %s", err)
