@@ -33,14 +33,31 @@ type IConfig interface {
 	Config() *Config
 	// 获取配置viper结构
 	GetViper() *viper.Viper
-	// 解析指定key数据到结构中
-	Parse(key string, outPtr interface{}) error
-	// 解析组件配置
-	ParseComponentConfig(componentType ComponentType, componentName string, outPtr interface{}) error
-	// 解析插件配置
-	ParsePluginConfig(pluginType PluginType, outPtr interface{}) error
-	// 解析服务配置
-	ParseServiceConfig(serviceType ServiceType, outPtr interface{}) error
+	/*解析指定key数据到结构中
+	  key 配置的key
+	  outPtr 接收配置的变量
+	  ignoreNotSet 如果未配置key, 则忽略, 默认为false
+	*/
+	Parse(key string, outPtr interface{}, ignoreNotSet ...bool) error
+	/*解析组件配置, key的值为 components.{componentType}.{componentName}
+	  componentType 组件类型
+	  componentName 组件名
+	  outPtr 接收配置的变量
+	  ignoreNotSet 如果未配置key, 则忽略, 默认为false
+	*/
+	ParseComponentConfig(componentType ComponentType, componentName string, outPtr interface{}, ignoreNotSet ...bool) error
+	/*解析插件配置, key的值为 plugins.{pluginType}
+	  pluginType 插件类型
+	  outPtr 接收配置的变量
+	  ignoreNotSet 如果未配置key, 则忽略, 默认为false
+	*/
+	ParsePluginConfig(pluginType PluginType, outPtr interface{}, ignoreNotSet ...bool) error
+	/*解析服务配置, key的值为 services.{serviceType}
+	  serviceType 服务类型
+	  outPtr 接收配置的变量
+	  ignoreNotSet 如果未配置key, 则忽略, 默认为false
+	*/
+	ParseServiceConfig(serviceType ServiceType, outPtr interface{}, ignoreNotSet ...bool) error
 	// 检查是否存在flag, 注意: flag是忽略大小写的
 	HasFlag(flag string) bool
 	// 获取所有的flag, 注意: flag列表是无序的

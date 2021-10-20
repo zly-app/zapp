@@ -268,8 +268,11 @@ func (c *configCli) GetViper() *viper.Viper {
 	return c.vi
 }
 
-func (c *configCli) Parse(key string, outPtr interface{}) error {
+func (c *configCli) Parse(key string, outPtr interface{}, ignoreNotSet ...bool) error {
 	if !c.vi.IsSet(key) {
+		if len(ignoreNotSet) > 0 && ignoreNotSet[0] {
+			return nil
+		}
 		return fmt.Errorf("key<%s>不存在", key)
 	}
 	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
@@ -278,10 +281,13 @@ func (c *configCli) Parse(key string, outPtr interface{}) error {
 	return nil
 }
 
-func (c *configCli) ParseComponentConfig(componentType core.ComponentType, componentName string, outPtr interface{}) error {
+func (c *configCli) ParseComponentConfig(componentType core.ComponentType, componentName string, outPtr interface{}, ignoreNotSet ...bool) error {
 	componentName = utils.Ternary.Or(componentName, consts.DefaultComponentName).(string)
 	key := "components." + string(componentType) + "." + componentName
 	if !c.vi.IsSet(key) {
+		if len(ignoreNotSet) > 0 && ignoreNotSet[0] {
+			return nil
+		}
 		return fmt.Errorf("组件配置<%s.%s>不存在", componentType, componentName)
 	}
 	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
@@ -290,9 +296,12 @@ func (c *configCli) ParseComponentConfig(componentType core.ComponentType, compo
 	return nil
 }
 
-func (c *configCli) ParsePluginConfig(pluginType core.PluginType, outPtr interface{}) error {
+func (c *configCli) ParsePluginConfig(pluginType core.PluginType, outPtr interface{}, ignoreNotSet ...bool) error {
 	key := "plugins." + string(pluginType)
 	if !c.vi.IsSet(key) {
+		if len(ignoreNotSet) > 0 && ignoreNotSet[0] {
+			return nil
+		}
 		return fmt.Errorf("插件配置<%s>不存在", pluginType)
 	}
 	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
@@ -301,9 +310,12 @@ func (c *configCli) ParsePluginConfig(pluginType core.PluginType, outPtr interfa
 	return nil
 }
 
-func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr interface{}) error {
+func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr interface{}, ignoreNotSet ...bool) error {
 	key := "services." + string(serviceType)
 	if !c.vi.IsSet(key) {
+		if len(ignoreNotSet) > 0 && ignoreNotSet[0] {
+			return nil
+		}
 		return fmt.Errorf("服务配置<%s>不存在", serviceType)
 	}
 	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
