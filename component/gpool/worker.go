@@ -1,14 +1,10 @@
 package gpool
 
-import (
-	"github.com/zly-app/zapp/pkg/utils"
-)
-
 // 工人
 type worker struct {
-	pool       chan<- *worker
-	jobChannel chan *job     // 工作任务
-	stop       chan struct{} // 停止信号
+	pool       chan<- *worker // 工人队列池
+	jobChannel chan *job      // 工作任务
+	stop       chan struct{}  // 停止信号
 }
 
 // 准备好
@@ -18,8 +14,7 @@ func (w *worker) Ready() {
 		for {
 			select {
 			case job = <-w.jobChannel: // 等待任务
-				err := utils.Recover.WrapCall(job.fn)
-				job.done <- err
+				job.Do()
 				w.pool <- w
 			case <-w.stop:
 				w.stop <- struct{}{}

@@ -35,18 +35,14 @@ func (g *gpools) GetGPool(name ...string) core.IGPool {
 
 func (g *gpools) makeGPoolGroup(name string) (conn.IInstance, error) {
 	componentName := utils.Ternary.Or(name, consts.DefaultComponentName).(string)
-	key := "components." + string(DefaultComponentType) + "." + componentName
 
 	conf := new(GPoolConfig)
-
-	vi := config.Conf.GetViper()
-	if !vi.IsSet(key) {
-		logger.Log.Warn("gpool组件配置不存在, 将使用默认配置", zap.String("name", componentName))
-	} else if err := vi.UnmarshalKey(key, conf); err != nil {
+	err := config.Conf.ParseComponentConfig(DefaultComponentType, componentName, conf, true)
+	if err != nil {
 		logger.Log.Warn("gpool组件配置解析失败, 将使用默认配置", zap.String("name", componentName), zap.Error(err))
 	}
-
 	conf.check()
+
 	return NewGPool(conf), nil
 }
 

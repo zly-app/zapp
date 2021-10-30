@@ -62,25 +62,25 @@ func (g *gpool) dispatch() {
 }
 
 // 异步执行
-func (g *gpool) Go(fn func() error) <-chan error {
+func (g *gpool) Go(fn func() error) core.IGPoolJobResult {
 	job := g.newJob(fn)
 	g.wg.Add(1)
 	g.jobQueue <- job
-	return job.done
+	return job
 }
 
 // 同步执行
 func (g *gpool) GoSync(fn func() error) error {
-	return <-g.Go(fn)
+	return g.Go(fn).Wait()
 }
 
 // 尝试异步执行, 如果任务队列已满则返回false
-func (g *gpool) TryGo(fn func() error) (ch <-chan error, ok bool) {
+func (g *gpool) TryGo(fn func() error) (result core.IGPoolJobResult, ok bool) {
 	g.wg.Add(1)
 	job := g.newJob(fn)
 	select {
 	case g.jobQueue <- job:
-		return job.done, true
+		return job, true
 	default:
 		g.wg.Done()
 		return nil, false
@@ -89,11 +89,10 @@ func (g *gpool) TryGo(fn func() error) (ch <-chan error, ok bool) {
 
 // 尝试同步执行, 如果任务队列已满则返回false
 func (g *gpool) TryGoSync(fn func() error) (result error, ok bool) {
-	ch, ok := g.TryGo(fn)
-	if !ok {
-		return nil, false
+	if result, ok := g.TryGo(fn); ok {
+		return result.Wait(), true
 	}
-	return <-ch, true
+	return nil, false
 }
 
 // 等待所有任务结束

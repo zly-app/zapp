@@ -8,16 +8,35 @@
 
 package gpool
 
+import (
+	"sync"
+
+	"github.com/zly-app/zapp/pkg/utils"
+)
+
 type job struct {
 	// 执行函数
-	fn func() error
-	// 结束通知通道
-	done chan error
+	fn  func() error
+	wg  sync.WaitGroup
+	err error
 }
 
 func newJob(fn func() error) *job {
-	return &job{
-		fn:   fn,
-		done: make(chan error, 1),
+	j := &job{
+		fn: fn,
 	}
+	j.wg.Add(1)
+	return j
+}
+
+// 执行
+func (j *job) Do() {
+	j.err = utils.Recover.WrapCall(j.fn)
+	j.wg.Done()
+}
+
+// 等待结果
+func (j *job) Wait() error {
+	j.wg.Wait()
+	return j.err
 }

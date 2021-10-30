@@ -17,15 +17,20 @@ type IGPools interface {
 
 type IGPool interface {
 	// 异步执行
-	Go(fn func() error) <-chan error
+	Go(fn func() error) IGPoolJobResult
 	// 同步执行
-	GoSync(fn func() error) error
+	GoSync(fn func() error) (result error)
 	// 尝试异步执行, 如果任务队列已满则返回false
-	TryGo(fn func() error) (ch <-chan error, ok bool)
+	TryGo(fn func() error) (result IGPoolJobResult, ok bool)
 	// 尝试同步执行, 如果任务队列已满则返回false
 	TryGoSync(fn func() error) (result error, ok bool)
 	// 等待所有任务结束
 	Wait()
 	// 关闭, 命令所有没有收到任务的工人立即停工, 收到任务的工人完成当前任务后停工, 不管任务队列是否清空
 	Close()
+}
+
+type IGPoolJobResult interface {
+	// 等待执行结果
+	Wait() error
 }

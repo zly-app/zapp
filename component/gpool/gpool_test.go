@@ -11,28 +11,27 @@ package gpool
 import (
 	"testing"
 	"time"
+
+	"github.com/zly-app/zapp/core"
 )
 
 func TestGPool(t *testing.T) {
 	g := NewGPool(new(GPoolConfig))
 	defer g.Close()
 
-	chs := make([]<-chan error, 5)
-	for i := 0; i < len(chs); i++ {
-		ch := g.Go(func(i int) func() error {
+	results := make([]core.IGPoolJobResult, 5)
+	for i := 0; i < len(results); i++ {
+		result := g.Go(func(i int) func() error {
 			return func() error {
 				time.Sleep(time.Second)
-				t.Log("Go", i)
+				t.Log("GoAsync", i)
 				return nil
 			}
 		}(i))
-		chs[i] = ch
+		results[i] = result
 	}
-	for _, ch := range chs {
-		if ch == nil {
-			continue
-		}
-		<-ch
+	for _, result := range results {
+		_ = result.Wait()
 	}
 
 	for i := 0; i < 5; i++ {
@@ -47,7 +46,7 @@ func TestGPool(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		go func(i int) {
 			_ = g.GoSync(func() error {
-				t.Log("GoSync2", i)
+				t.Log("Async(GoSync)", i)
 				return nil
 			})
 		}(i)
