@@ -112,6 +112,62 @@ func (l *logWrap) Fatal(v ...interface{}) {
 	l.print(FatalLevel, v)
 }
 
+// 添加fields
+func (l *logWrap) AddFields(fields ...zap.Field) {
+	l.fields = append(append([]zap.Field{}, l.fields...), fields...)
+}
+
+/*为log移除一些field, 返回移除的个数
+  count	移除key的个数, <1表示所有
+*/
+func (l *logWrap) RemoveFields(count int, fieldKeys ...string) int {
+	if len(l.fields) == 0 || len(fieldKeys) == 0 {
+		return 0
+	}
+
+	// key查找
+	hasKey := func() func(key string) bool {
+		// 值少时通过遍历方式
+		if len(fieldKeys) <= 16 {
+			return func(key string) bool {
+				for _, k := range fieldKeys {
+					if k == key {
+						return true
+					}
+				}
+				return false
+			}
+		}
+
+		// 通过map方式
+		keyMap := make(map[string]struct{}, len(fieldKeys))
+		for _, k := range fieldKeys {
+			keyMap[k] = struct{}{}
+		}
+		return func(key string) bool {
+			_, ok := keyMap[key]
+			return ok
+		}
+	}()
+
+	var n int
+	ff := make([]zap.Field, 0, len(l.fields))
+	for i, f := range l.fields {
+		if !hasKey(f.Key) {
+			ff = append(ff, f)
+			continue
+		}
+
+		n++
+		if count >= 1 && n == count { // 不能再去掉了
+			ff = append(ff, l.fields[i+1:]...) // 接上末尾的fields
+			break
+		}
+	}
+	l.fields = ff
+	return n
+}
+
 // 创建一个会话log
 func (l *logWrap) NewSessionLogger(fields ...zap.Field) core.ILogger {
 	return &logWrap{
@@ -128,4 +184,25 @@ func GetLogWriteSyncer(l interface{}) (zapcore.WriteSyncer, bool) {
 		return a.ws, true
 	}
 	return nil, false
+}
+
+// 为log添加一些field
+func AddFields(l interface{}, fields ...zap.Field) bool {
+	a, ok := l.(*logWrap)
+	if !ok {
+		return false
+	}
+	a.AddFields(fields...)
+	return true
+}
+
+/*为log移除一些field, 返回移除的个数
+  count	移除key的个数, <1表示所有
+*/
+func RemoveFields(l interface{}, count int, fieldKeys ...string) (int, bool) {
+	a, ok := l.(*logWrap)
+	if !ok {
+		return 0, false
+	}
+	return a.RemoveFields(count, fieldKeys...), true
 }
