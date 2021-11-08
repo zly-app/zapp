@@ -61,7 +61,7 @@ var DefaultConfig = core.LogConfig{
 	Color:                      true,
 	CapitalLevel:               false,
 	DevelopmentMode:            true,
-	ShowFileAndLinenum:         false,
-	ShowFileAndLinenumMinLevel: "debug",
+	ShowFileAndLinenum:         true,
+	ShowFileAndLinenumMinLevel: "warn",
 	MillisDuration:             true,
 }
