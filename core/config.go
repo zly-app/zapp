@@ -66,7 +66,23 @@ type IConfig interface {
 	GetLabel(name string) string
 	// 获取标签数据
 	GetLabels() map[string]string
+	// 观察变更
+	WatchKey(groupName, keyName string, opts ...ConfigWatchOption)
 }
+
+// 配置观察选项
+type ConfigWatchOption func(opts map[string]interface{})
+
+// 配置观察提供者
+type ConfigWatchProvider interface {
+	// 获取数据
+	Get(groupName, keyName string) ([]byte, error)
+	// 监听
+	Watch(groupName, keyName string, callback ConfigWatchProviderCallback) error
+}
+
+// 配置观察提供者回调
+type ConfigWatchProviderCallback func(groupName, keyName string, oldData, newData []byte)
 
 // frame配置
 type FrameConfig struct {
