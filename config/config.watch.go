@@ -8,20 +8,20 @@ import (
 )
 
 // 用于承载配置观察提供者
-var configWatchProviders = make(map[string]core.ConfigWatchProvider)
+var configWatchProviders = make(map[string]core.IConfigWatchProvider)
 
 // 获取默认配置观察提供者, 可能返回nil
-func GetDefaultConfigWatchProvider() core.ConfigWatchProvider {
+func GetDefaultConfigWatchProvider() core.IConfigWatchProvider {
 	return configWatchProviders["default"]
 }
 
 // 设置默认配置观察提供者
-func SetDefaultConfigWatchProvider(p core.ConfigWatchProvider) {
+func SetDefaultConfigWatchProvider(p core.IConfigWatchProvider) {
 	configWatchProviders["default"] = p
 }
 
 // 添加配置观察提供者, 第一个被添加的提供者会作为默认提供者
-func AddConfigWatchProvider(name string, p core.ConfigWatchProvider) {
+func AddConfigWatchProvider(name string, p core.IConfigWatchProvider) {
 	if name == "default" {
 		logger.Log.Fatal("配置提供者名不能为default")
 	}

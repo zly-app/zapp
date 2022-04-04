@@ -66,15 +66,54 @@ type IConfig interface {
 	GetLabel(name string) string
 	// 获取标签数据
 	GetLabels() map[string]string
-	// 观察变更
-	WatchKey(groupName, keyName string, opts ...ConfigWatchOption)
+	// 观察变更, 失败会fatal
+	WatchKey(groupName, keyName string, opts ...ConfigWatchOption) IConfigWatchKeyObject
 }
 
 // 配置观察选项
 type ConfigWatchOption func(opts map[string]interface{})
 
+// 配置观察key对象
+type IConfigWatchKeyObject interface {
+	// 获取组名
+	GroupName() string
+	// 获取key名
+	KeyName() string
+	// 观察
+	Watch(callback ...IConfigWatchKeyCallback)
+	// 获取原始数据的副本
+	GetData() []byte
+	// 获取字符串
+	GetString() string
+	GetBool(def ...bool) bool
+	GetInt(def ...int) int
+	GetInt8(def ...int8) int8
+	GetInt16(def ...int16) int16
+	GetInt32(def ...int32) int32
+	GetInt64(def ...int64) int64
+	GetUint(def ...uint) uint
+	GetUint8(def ...uint8) uint8
+	GetUint16(def ...uint16) uint16
+	GetUint32(def ...uint32) uint32
+	GetUint64(def ...uint64) uint64
+	GetFloat32(def ...float32) float32
+	GetFloat64(def ...float64) float64
+
+	/*解析为json
+	  outPtr 用于接收数据的指针
+	*/
+	ParseJSON(outPtr interface{}) error
+	/*解析为yaml
+	  outPtr 用于接收数据的指针
+	*/
+	ParseYaml(outPtr interface{}) error
+}
+
+// 配置观察key对象回调
+type IConfigWatchKeyCallback func(k IConfigWatchKeyObject, oldData, newData []byte)
+
 // 配置观察提供者
-type ConfigWatchProvider interface {
+type IConfigWatchProvider interface {
 	// 获取数据
 	Get(groupName, keyName string) ([]byte, error)
 	// 监听
