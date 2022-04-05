@@ -20,6 +20,11 @@ func SetDefaultConfigWatchProvider(p core.IConfigWatchProvider) {
 	configWatchProviders["default"] = p
 }
 
+// 获取配置观察者, 不存在时返回nil
+func GetConfigWatchProvider(name string) core.IConfigWatchProvider {
+	return configWatchProviders[name]
+}
+
 // 添加配置观察提供者, 第一个被添加的提供者会作为默认提供者
 func AddConfigWatchProvider(name string, p core.IConfigWatchProvider) {
 	if name == "default" {

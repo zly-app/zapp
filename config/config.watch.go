@@ -6,5 +6,6 @@ import (
 
 // 观察key
 func (c *configCli) WatchKey(groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyObject {
-	panic("implement me")
+	w := newWatchKeyObject(groupName, keyName, opts...)
+	return w
 }

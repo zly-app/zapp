@@ -71,7 +71,7 @@ type IConfig interface {
 }
 
 // 配置观察选项
-type ConfigWatchOption func(opts map[string]interface{})
+type ConfigWatchOption func(w interface{})
 
 // 配置观察key对象
 type IConfigWatchKeyObject interface {
@@ -79,10 +79,12 @@ type IConfigWatchKeyObject interface {
 	GroupName() string
 	// 获取key名
 	KeyName() string
-	// 观察
-	Watch(callback ...IConfigWatchKeyCallback)
+	// 添加回调
+	AddCallback(callback ...IConfigWatchKeyCallback)
 	// 获取原始数据的副本
 	GetData() []byte
+	// 检查是否复合预期的值
+	Expect(v interface{}) bool
 	// 获取字符串
 	GetString() string
 	GetBool(def ...bool) bool
