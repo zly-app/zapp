@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"sync/atomic"
 
 	"go.uber.org/zap"
@@ -20,7 +21,9 @@ type watchKeyObject struct {
 
 	groupName string
 	keyName   string
-	callbacks []core.IConfigWatchKeyCallback
+
+	callbacks []core.ConfigWatchKeyCallback
+	watchMx   sync.Mutex // 用于锁 callback
 
 	data atomic.Value
 }
@@ -28,10 +31,18 @@ type watchKeyObject struct {
 func (w *watchKeyObject) GroupName() string { return w.groupName }
 func (w *watchKeyObject) KeyName() string   { return w.keyName }
 
-func (w *watchKeyObject) AddCallback(callback ...core.IConfigWatchKeyCallback) {
-	items := make([]core.IConfigWatchKeyCallback, 0, len(callback))
+func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
+	w.watchMx.Lock()
+	defer w.watchMx.Unlock()
+
+	items := make([]core.ConfigWatchKeyCallback, 0, len(callback))
 	items = append(items, callback...)
 	w.callbacks = append(w.callbacks, items...)
+
+	// 立即触发
+	for _, fn := range w.callbacks {
+		go fn(w, make([]byte, 0), w.GetData()) // 通过GetData重新获取数据保证不会被改变
+	}
 }
 
 func (w *watchKeyObject) GetData() []byte {
@@ -267,7 +278,7 @@ func (w *watchKeyObject) watchCallback(_, _ string, _, newData []byte) {
 	w.resetData(data)
 
 	for _, fn := range w.callbacks {
-		fn(w, oldData, w.GetData()) // 通过GetData重新获取数据保证不会被改变
+		go fn(w, oldData, w.GetData()) // 通过GetData重新获取数据保证不会被改变
 	}
 }
 
@@ -289,7 +300,6 @@ func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption
 	}
 
 	w.check()
-	w.resetData(nil)
 
 	// 立即获取
 	data, err := w.p.Get(groupName, keyName)
@@ -300,9 +310,7 @@ func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption
 			zap.Error(err),
 		)
 	}
-
-	// 立即触发
-	w.watchCallback(groupName, keyName, nil, data)
+	w.resetData(data)
 
 	// 开始观察
 	err = w.p.Watch(groupName, keyName, w.watchCallback)

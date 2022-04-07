@@ -148,7 +148,7 @@ zapp.WithCustomEnableService(func(app core.IApp, services map[core.ServiceType]b
 
 ## 用户操作
 
-用户在这里对服务进行注入
+用户在这里对服务进行注入, 如注入插件, 注入服务等.
 
 ## 启动
 

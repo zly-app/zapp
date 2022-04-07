@@ -80,7 +80,7 @@ type IConfigWatchKeyObject interface {
 	// 获取key名
 	KeyName() string
 	// 添加回调
-	AddCallback(callback ...IConfigWatchKeyCallback)
+	AddCallback(callback ...ConfigWatchKeyCallback)
 	// 获取原始数据的副本
 	GetData() []byte
 	// 检查是否复合预期的值
@@ -112,7 +112,7 @@ type IConfigWatchKeyObject interface {
 }
 
 // 配置观察key对象回调
-type IConfigWatchKeyCallback func(k IConfigWatchKeyObject, oldData, newData []byte)
+type ConfigWatchKeyCallback func(w IConfigWatchKeyObject, oldData, newData []byte)
 
 // 配置观察提供者
 type IConfigWatchProvider interface {

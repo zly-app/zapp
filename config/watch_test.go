@@ -82,7 +82,7 @@ var testProvider *TestWatchProvider
 func init() {
 	p := NewTestWatchProvider(map[string]map[string][]byte{})
 	testProvider = p
-	AddConfigWatchProvider("test", p)
+	RegistryConfigWatchProvider("test", p)
 }
 
 func TestSDK(t *testing.T) {
@@ -96,23 +96,23 @@ func TestSDK(t *testing.T) {
 
 	// 获取原始数据
 	y1 := keyObj.GetString()
-	require.Equal(t, y1, "1")
+	require.Equal(t, "1", y1)
 
 	// 转为 int 值
 	y2 := keyObj.GetInt()
-	require.Equal(t, y2, 1)
+	require.Equal(t, 1, y2)
 
 	// 转为 boolean 值
 	y3 := keyObj.GetBool()
-	require.Equal(t, y3, true)
+	require.Equal(t, true, y3)
 
 	// 检查复合预期
 	b1 := keyObj.Expect("1")
-	require.Equal(t, b1, true)
+	require.Equal(t, true, b1)
 	b2 := keyObj.Expect(1)
-	require.Equal(t, b2, true)
+	require.Equal(t, true, b2)
 	b3 := keyObj.Expect(true)
-	require.Equal(t, b3, true)
+	require.Equal(t, true, b3)
 }
 
 func TestWatch(t *testing.T) {
@@ -127,15 +127,15 @@ func TestWatch(t *testing.T) {
 	var isCallback bool
 	keyObj.AddCallback(func(k core.IConfigWatchKeyObject, oldData, newData []byte) {
 		isCallback = true
-		require.Equal(t, string(oldData), "2")
-		require.Equal(t, string(newData), "22")
-		require.Equal(t, k, keyObj)
+		require.Equal(t, "", string(oldData))
+		require.Equal(t, "2", string(newData))
+		require.Equal(t, keyObj, k)
 	})
 	require.Nil(t, err)
 
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Millisecond * 100)
 	require.True(t, isCallback)
-	require.Equal(t, keyObj.GetString(), "22")
+	require.Equal(t, "2", keyObj.GetString())
 }
 
 func TestExpect(t *testing.T) {
@@ -201,22 +201,22 @@ func TestConvert(t *testing.T) {
 
 	keyObj := newWatchKeyObject(testGroupName, testKeyName)
 
-	require.Equal(t, keyObj.GetData(), []byte("4"))
-	require.Equal(t, keyObj.GetString(), "4")
-	require.Equal(t, keyObj.GetBool(), false)
-	require.Equal(t, keyObj.GetBool(true), true)
-	require.Equal(t, keyObj.GetInt(), 4)
-	require.Equal(t, keyObj.GetInt8(), int8(4))
-	require.Equal(t, keyObj.GetInt16(), int16(4))
-	require.Equal(t, keyObj.GetInt32(), int32(4))
-	require.Equal(t, keyObj.GetInt64(), int64(4))
-	require.Equal(t, keyObj.GetUint(), uint(4))
-	require.Equal(t, keyObj.GetUint8(), uint8(4))
-	require.Equal(t, keyObj.GetUint16(), uint16(4))
-	require.Equal(t, keyObj.GetUint32(), uint32(4))
-	require.Equal(t, keyObj.GetUint64(), uint64(4))
-	require.Equal(t, keyObj.GetFloat32(), float32(4))
-	require.Equal(t, keyObj.GetFloat64(), float64(4))
+	require.Equal(t, []byte("4"), keyObj.GetData())
+	require.Equal(t, "4", keyObj.GetString())
+	require.Equal(t, false, keyObj.GetBool())
+	require.Equal(t, true, keyObj.GetBool(true))
+	require.Equal(t, 4, keyObj.GetInt())
+	require.Equal(t, int8(4), keyObj.GetInt8())
+	require.Equal(t, int16(4), keyObj.GetInt16())
+	require.Equal(t, int32(4), keyObj.GetInt32())
+	require.Equal(t, int64(4), keyObj.GetInt64())
+	require.Equal(t, uint(4), keyObj.GetUint())
+	require.Equal(t, uint8(4), keyObj.GetUint8())
+	require.Equal(t, uint16(4), keyObj.GetUint16())
+	require.Equal(t, uint32(4), keyObj.GetUint32())
+	require.Equal(t, uint64(4), keyObj.GetUint64())
+	require.Equal(t, float32(4), keyObj.GetFloat32())
+	require.Equal(t, float64(4), keyObj.GetFloat64())
 }
 
 func TestParseJSON(t *testing.T) {
@@ -238,8 +238,8 @@ func TestParseJSON(t *testing.T) {
 	}
 	err = keyObj.ParseJSON(&a)
 	require.Nil(t, err)
-	require.Equal(t, a.A, 1)
-	require.Equal(t, a.B.C, []string{"x", "y", "z"})
+	require.Equal(t, 1, a.A)
+	require.Equal(t, []string{"x", "y", "z"}, a.B.C)
 }
 
 func TestParseYaml(t *testing.T) {
@@ -267,6 +267,6 @@ b:
 	}
 	err = keyObj.ParseYaml(&a)
 	require.Nil(t, err)
-	require.Equal(t, a.A, 1)
-	require.Equal(t, a.B.C, []string{"x", "y", "z"})
+	require.Equal(t, 1, a.A)
+	require.Equal(t, []string{"x", "y", "z"}, a.B.C)
 }

@@ -212,3 +212,8 @@ apollo的配置也可以使用json, 如下:
 [include]
 files = './1.toml,./2.toml'
 ```
+
+# 远程配置变更观察
+
+[示例代码](./watch_example)
+
