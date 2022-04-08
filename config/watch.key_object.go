@@ -41,7 +41,7 @@ func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
 
 	// 立即触发
 	for _, fn := range w.callbacks {
-		go fn(w, make([]byte, 0), w.GetData()) // 通过GetData重新获取数据保证不会被改变
+		fn(w, make([]byte, 0), w.GetData()) // 通过GetData重新获取数据保证不会被改变
 	}
 }
 
