@@ -30,8 +30,12 @@ import (
 // https://github.com/ctripcorp/apollo/wiki/%E5%85%B6%E5%AE%83%E8%AF%AD%E8%A8%80%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%8E%A5%E5%85%A5%E6%8C%87%E5%8D%97
 const ApolloGetNamespaceDataApiUrl = "/configfiles/json/%s/%s/%s" //  {config_server_url}/configfiles/json/{appId}/{clusterName}/{namespaceName}
 
-// http请求超时
-var HttpReqTimeout = time.Second * 3
+var (
+	// http请求超时
+	HttpReqTimeout = time.Second * 3
+	// 是否忽略命名空间不存在
+	IgnoreNamespaceNotFound = false
+)
 
 // 命名空间定义
 const (
@@ -181,6 +185,10 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceD
 
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound && IgnoreNamespaceNotFound { // 命名空间不存在
+			return make(NamespaceData), nil // 视为空配置数据
+		}
+
 		desc, ok := errStatusCodesDescribe[resp.StatusCode]
 		if !ok {
 			desc = "未知错误"
