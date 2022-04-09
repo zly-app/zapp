@@ -84,6 +84,7 @@ type ApolloConfig struct {
 	BackupFile           string // 备份文件名
 	NamespacePrefix      string // 命名空间前缀, apollo支持的部门前缀
 	Namespaces           string // 其他自定义命名空间, 多个命名空间用英文逗号隔开
+	cache                MultiNamespaceData
 }
 
 type (
@@ -94,7 +95,7 @@ type (
 		Namespace      string            `json:"namespaceName"`
 		Configurations map[string]string `json:"configurations"`
 		ReleaseKey     string            `json:"releaseKey"`
-		NotificationId int               `json:"-"`
+		NotificationId int               `json:"notificationId"`
 	}
 	// 多个命名空间数据
 	MultiNamespaceData = map[string]*NamespaceData
@@ -110,23 +111,17 @@ type (
 	}
 )
 
-// 获取指定命名空间的数据
-func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
-	// 检查配置
-	if a.Address == "" {
-		return nil, errors.New("apollo的address是空的")
-	}
-	if a.AppId == "" {
-		return nil, errors.New("apollo的appid是空的")
-	}
+func (a *ApolloConfig) clientIP() string {
+	return ""
+}
 
+// 获取所有命名空间的数据
+func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 	namespaces := append([]string{}, defaultNamespaces...)
 	if a.Namespaces != "" {
 		namespaces = append(namespaces, strings.Split(a.Namespaces, ",")...)
 	}
-
-	localData := make(MultiNamespaceData, len(namespaces)) // 本地数据
-	result := make(MultiNamespaceData, len(namespaces))    // 结果数据
+	a.cache = make(MultiNamespaceData, len(namespaces)) // 结果数据
 
 	// 允许从本地备份获取
 	if a.isAllowLoadFromBackupFile() {
@@ -134,25 +129,19 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 		if err != nil {
 			logger.Log.Error("从本地加载配置失败", zap.Error(err))
 		} else {
-			a.overrideMultiNamespaceData(localData, backupData)
+			a.writeCache(backupData)
 		}
 	}
 
 	// 退出之前保存当前已存在数据
-	defer func() {
-		err := a.saveDataToBackupFile(localData)
-		if err != nil {
-			logger.Log.Error("备份配置文件失败", zap.Error(err))
-		}
-	}()
+	defer a.saveDataToBackupFile()
 
 	// 遍历获取
 	for _, namespace := range namespaces {
 		// 从远程获取数据
-		raw, err := a.loadNamespaceDataFromRemote(namespace)
+		remoteData, _, err := a.loadNamespaceDataFromRemote(namespace)
 		if err == nil { // 成功拿到则覆盖数据
-			localData[namespace] = raw
-			result[namespace] = raw
+			a.cache[namespace] = remoteData
 			continue
 		}
 
@@ -162,22 +151,36 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 		}
 
 		logger.Log.Error("从远程获取配置失败", zap.String("namespace", namespace), zap.Error(err))
-		raw, ok := localData[namespace]
+		_, ok := a.cache[namespace]
 		if !ok {
 			return nil, fmt.Errorf("本地命名空间<%s>的数据不存在", namespace)
 		}
-
-		result[namespace] = raw
 	}
 
-	return result, nil
+	return a.cache, nil
 }
 
 // 从远程加载命名空间数据
-func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (*NamespaceData, error) {
+func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (data *NamespaceData, changed bool, err error) {
 	namespace = a.NamespacePrefix + namespace
+	// 检查配置
+	if a.Address == "" {
+		return nil, false, errors.New("apollo的address是空的")
+	}
+	if a.AppId == "" {
+		return nil, false, errors.New("apollo的appid是空的")
+	}
 	if a.Cluster == "" {
 		a.Cluster = "default"
+	}
+
+	cacheData, hasCache := a.cache[namespace]
+
+	var requestUri string
+	if hasCache {
+		requestUri = fmt.Sprintf(ApolloGetNamespaceDataApiUrl, a.AppId, a.Cluster, namespace, cacheData.ReleaseKey, a.clientIP())
+	} else {
+		requestUri = fmt.Sprintf(ApolloGetNamespaceDataApiUrl, a.AppId, a.Cluster, namespace, "", a.clientIP())
 	}
 
 	// 构建请求体
@@ -185,43 +188,64 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (*Namespace
 	ctx, cancel := context.WithTimeout(context.Background(), HttpReqTimeout)
 	defer cancel()
 
-	requestUri := fmt.Sprintf(ApolloGetNamespaceDataApiUrl, a.AppId, a.Cluster, namespace, "", "")
 	req, err := http.NewRequestWithContext(ctx, "GET", a.Address+requestUri, nil)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	a.officialSignature(req) // 认证
 
 	// 请求
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	defer resp.Body.Close()
 
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound && IgnoreNamespaceNotFound { // 命名空间不存在
-			return &NamespaceData{Configurations: make(map[string]string)}, nil // 视为空配置数据
+			empty := &NamespaceData{
+				AppId:          a.AppId,
+				Cluster:        a.Cluster,
+				Namespace:      namespace,
+				Configurations: make(map[string]string),
+			}
+			return empty, true, nil // 视为空配置数据
+		}
+		if resp.StatusCode == http.StatusNotModified { // 未改变
+			return cacheData, false, nil
 		}
 
 		desc, ok := errStatusCodesDescribe[resp.StatusCode]
 		if !ok {
 			desc = "未知错误"
 		}
-		return nil, fmt.Errorf("收到错误码: %d: %s", resp.StatusCode, desc)
+		return nil, false, fmt.Errorf("收到错误码: %d: %s", resp.StatusCode, desc)
 	}
 
 	// 解码
 	var result NamespaceData
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
-		return nil, fmt.Errorf("解码失败: %v", err)
+		return nil, false, fmt.Errorf("解码失败: %v", err)
 	}
 	if result.Configurations == nil {
 		result.Configurations = make(map[string]string)
 	}
-	return &result, nil
+	return &result, true, nil
+}
+
+/*获取命名空间数据
+  如果 oldData 为 nil 会直接获取数据
+  如果 oldData.ReleaseKey 不为空则检查是否会改变了
+*/
+func (a *ApolloConfig) GetNamespaceData(namespace string) (newData *NamespaceData, changed bool, err error) {
+	newData, changed, err = a.loadNamespaceDataFromRemote(namespace)
+	if changed {
+		a.cache[namespace] = newData
+		a.saveDataToBackupFile()
+	}
+	return
 }
 
 /*等待通知
@@ -230,6 +254,13 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (*Namespace
 func (a *ApolloConfig) WaitNotification(ctx context.Context, param []*NotificationParam) ([]*NotificationRsp, error) {
 	if len(param) == 0 {
 		return nil, nil
+	}
+	// 检查配置
+	if a.Address == "" {
+		return nil, errors.New("apollo的address是空的")
+	}
+	if a.AppId == "" {
+		return nil, errors.New("apollo的appid是空的")
 	}
 	if a.Cluster == "" {
 		a.Cluster = "default"
@@ -282,17 +313,18 @@ func (a *ApolloConfig) WaitNotification(ctx context.Context, param []*Notificati
 }
 
 // 保存数据到备份文件
-func (a *ApolloConfig) saveDataToBackupFile(data MultiNamespaceData) error {
-	if len(data) == 0 || a.BackupFile == "" {
-		return nil
+func (a *ApolloConfig) saveDataToBackupFile() {
+	if len(a.cache) == 0 || a.BackupFile == "" {
+		return
 	}
 
-	bs, err := json.MarshalIndent(data, "", "  ")
+	bs, err := json.MarshalIndent(a.cache, "", "  ")
+	if err == nil {
+		err = ioutil.WriteFile(a.BackupFile, bs, 0644)
+	}
 	if err != nil {
-		return err
+		logger.Log.Error("备份配置文件失败", zap.Error(err))
 	}
-
-	return ioutil.WriteFile(a.BackupFile, bs, 0644)
 }
 
 // 从备份文件加载数据
@@ -311,10 +343,10 @@ func (a *ApolloConfig) loadDataFromBackupFile() (MultiNamespaceData, error) {
 	return result, err
 }
 
-// 将dataB的数据覆盖dataA, 区分大小写
-func (a *ApolloConfig) overrideMultiNamespaceData(dataA, dataB MultiNamespaceData) {
-	for name, data := range dataB {
-		dataA[name] = data
+// 写入缓存
+func (a *ApolloConfig) writeCache(data MultiNamespaceData) {
+	for k, v := range data {
+		a.cache[k] = v
 	}
 }
 
