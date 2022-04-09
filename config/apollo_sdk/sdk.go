@@ -95,7 +95,6 @@ type (
 		Namespace      string            `json:"namespaceName"`
 		Configurations map[string]string `json:"configurations"`
 		ReleaseKey     string            `json:"releaseKey"`
-		NotificationId int               `json:"notificationId"`
 	}
 	// 多个命名空间数据
 	MultiNamespaceData = map[string]*NamespaceData
@@ -239,7 +238,17 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (data *Name
   如果 oldData 为 nil 会直接获取数据
   如果 oldData.ReleaseKey 不为空则检查是否会改变了
 */
-func (a *ApolloConfig) GetNamespaceData(namespace string) (newData *NamespaceData, changed bool, err error) {
+func (a *ApolloConfig) GetNamespaceData(namespace string) (oldData, newData *NamespaceData, changed bool, err error) {
+	oldData = a.cache[namespace]
+	if oldData == nil {
+		oldData = &NamespaceData{
+			AppId:          a.AppId,
+			Cluster:        a.Cluster,
+			Namespace:      namespace,
+			Configurations: make(map[string]string),
+		}
+	}
+
 	newData, changed, err = a.loadNamespaceDataFromRemote(namespace)
 	if changed {
 		a.cache[namespace] = newData

@@ -215,5 +215,52 @@ files = './1.toml,./2.toml'
 
 # 远程配置变更观察
 
-[示例代码](./watch_example)
++ 内置apollo提供者示例
+
+```go
+package main
+
+import (
+	"go.uber.org/zap"
+
+	"github.com/zly-app/zapp"
+	"github.com/zly-app/zapp/config"
+	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/plugin/apollo_provider"
+)
+
+func main() {
+	app := zapp.NewApp("test",
+		apollo_provider.WithPlugin(true),
+		zapp.WithConfigOption(
+			config.WithApollo(&config.ApolloConfig{
+              Address:           "http://127.0.0.1:8080", // apollo-api地址, 多个地址用英文逗号连接
+              AppId:             "test",                  // 应用名
+              AccessKey:         "",                      // 验证key, 优先级高于基础认证
+              AuthBasicUser:     "",                      // 基础认证用户名, 可用于nginx的基础认证扩展
+              AuthBasicPassword: "",                      // 基础认证密码
+              Cluster:           "default",               // 集群名, 默认default
+              NamespacePrefix:   "",                      // 命名空间前缀, apollo支持的部门前缀
+			}),
+		),
+	)
+	defer app.Exit()
+
+	callback := func(w core.IConfigWatchKeyObject, oldData, newData []byte) {
+		app.Info("回调",
+			zap.String("groupName", w.GroupName()),
+			zap.String("keyName", w.KeyName()),
+			zap.String("oldData", string(oldData)),
+			zap.String("newData", string(newData)),
+		)
+	}
+	app.GetConfig().WatchKey("watch", "a").AddCallback(callback)
+	app.GetConfig().WatchKey("watch", "b").AddCallback(callback)
+	app.GetConfig().WatchKey("watch2", "a").AddCallback(callback)
+
+	app.Run()
+}
+```
+
+[其它示例代码](./watch_example)
 
