@@ -118,7 +118,7 @@ type ConfigWatchKeyCallback func(w IConfigWatchKeyObject, oldData, newData []byt
 type IConfigWatchProvider interface {
 	// 获取数据
 	Get(groupName, keyName string) ([]byte, error)
-	// 监听
+	// 监听, 注意, 这个方法不能一直阻塞, 应该尽早的返回, 而通过协程开始watch
 	Watch(groupName, keyName string, callback ConfigWatchProviderCallback) error
 }
 

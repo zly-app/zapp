@@ -83,10 +83,12 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 			logger.Log.Fatal("从用户指定文件构建viper失败", zap.Error(err))
 		}
 	} else if opt.apolloConfig != nil { // WithApollo
-		rawVi, err = makeViperFromApollo(opt.apolloConfig)
-		if err != nil {
-			logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
-		}
+		rawVi = viper.New()
+		rawVi.Set(consts.ApolloConfigKey, opt.apolloConfig)
+		// rawVi, err = makeViperFromApollo(opt.apolloConfig)
+		// if err != nil {
+		// 	logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
+		// }
 	} else if rawVi = loadDefaultFiles(); rawVi != nil {
 		logger.Log.Info("使用默认配置文件", zap.String("file", consts.DefaultConfigFiles))
 	}

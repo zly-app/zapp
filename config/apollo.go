@@ -10,6 +10,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -50,6 +51,15 @@ func RegistryParseConfigToJsonOfMatchKeys(namespace string, matchKeys, noMatchKe
 
 // 从viper构建apollo配置
 func makeApolloConfigFromViper(vi *viper.Viper) (*ApolloConfig, error) {
+	if !vi.IsSet(consts.ApolloConfigKey) {
+		return nil, errors.New("apollo配置不存在")
+	}
+
+	v := vi.Get(consts.ApolloConfigKey)
+	if ac, ok := v.(*ApolloConfig); ok {
+		return ac, nil
+	}
+
 	var conf ApolloConfig
 	err := vi.UnmarshalKey(consts.ApolloConfigKey, &conf)
 	return &conf, err
