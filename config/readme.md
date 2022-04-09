@@ -16,6 +16,8 @@
         - [apollo配置json支持](#apollo%E9%85%8D%E7%BD%AEjson%E6%94%AF%E6%8C%81)
     - [在配置文件中设置从apollo加载](#%E5%9C%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E8%AE%BE%E7%BD%AE%E4%BB%8Eapollo%E5%8A%A0%E8%BD%BD)
 - [引用配置文件](#%E5%BC%95%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+- [远程配置变更观察](#%E8%BF%9C%E7%A8%8B%E9%85%8D%E7%BD%AE%E5%8F%98%E6%9B%B4%E8%A7%82%E5%AF%9F)
+    - [内置apollo提供者示例](#%E5%86%85%E7%BD%AEapollo%E6%8F%90%E4%BE%9B%E8%80%85%E7%A4%BA%E4%BE%8B)
 
 <!-- /TOC -->
 ---
@@ -215,7 +217,7 @@ files = './1.toml,./2.toml'
 
 # 远程配置变更观察
 
-+ 内置apollo提供者示例
+## 内置apollo提供者示例
 
 ```go
 package main
