@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -32,9 +33,17 @@ import (
 // {config_server_url}/configs/{appId}/{clusterName}/{namespaceName}?releaseKey={releaseKey}&ip={clientIp}
 const ApolloGetNamespaceDataApiUrl = "/configs/%s/%s/%s?releaseKey=%s&ip=%s"
 
+const (
+	// apollo获取通知api
+	// {config_server_url}/notifications/v2?appId={appId}&cluster={clusterName}&notifications={notifications}
+	ApolloWatchNamespaceChangedApiUrl = "/notifications/v2?appId=%s&cluster=%s&notifications=%s"
+)
+
 var (
 	// http请求超时
 	HttpReqTimeout = time.Second * 3
+	// http请求通知超时
+	HttpReqNotificationTimeout = time.Second * 65
 	// 是否忽略命名空间不存在
 	IgnoreNamespaceNotFound = false
 )
@@ -80,14 +89,25 @@ type ApolloConfig struct {
 type (
 	// 命名空间数据
 	NamespaceData = struct {
-		AppID          string            `json:"appId"`
+		AppId          string            `json:"appId"`
 		Cluster        string            `json:"cluster"`
 		Namespace      string            `json:"namespaceName"`
 		Configurations map[string]string `json:"configurations"`
 		ReleaseKey     string            `json:"releaseKey"`
+		NotificationId int               `json:"-"`
 	}
 	// 多个命名空间数据
 	MultiNamespaceData = map[string]*NamespaceData
+	// 通知参数
+	NotificationParam struct {
+		NamespaceName  string `json:"namespaceName"`
+		NotificationId int    `json:"notificationId"`
+	}
+	// 通知结果数据
+	NotificationRsp struct {
+		NamespaceName  string `json:"namespaceName"`
+		NotificationId int    `json:"notificationId"`
+	}
 )
 
 // 获取指定命名空间的数据
@@ -156,9 +176,8 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 // 从远程加载命名空间数据
 func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (*NamespaceData, error) {
 	namespace = a.NamespacePrefix + namespace
-	cluster := a.Cluster
-	if cluster == "" {
-		cluster = "default"
+	if a.Cluster == "" {
+		a.Cluster = "default"
 	}
 
 	// 构建请求体
@@ -166,18 +185,12 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (*Namespace
 	ctx, cancel := context.WithTimeout(context.Background(), HttpReqTimeout)
 	defer cancel()
 
-	requestUri := fmt.Sprintf(ApolloGetNamespaceDataApiUrl, a.AppId, cluster, namespace, "", "")
+	requestUri := fmt.Sprintf(ApolloGetNamespaceDataApiUrl, a.AppId, a.Cluster, namespace, "", "")
 	req, err := http.NewRequestWithContext(ctx, "GET", a.Address+requestUri, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	// 认证
-	if a.AccessKey != "" {
-		a.officialSignature(req)
-	} else if a.AuthBasicUser != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte(a.AuthBasicUser+":"+a.AuthBasicPassword))))
-	}
+	a.officialSignature(req) // 认证
 
 	// 请求
 	resp, err := http.DefaultClient.Do(req)
@@ -209,6 +222,63 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (*Namespace
 		result.Configurations = make(map[string]string)
 	}
 	return &result, nil
+}
+
+/*等待通知
+  如果数据未被改变, 此方法会导致挂起直到超时或被改变
+*/
+func (a *ApolloConfig) WaitNotification(ctx context.Context, param []*NotificationParam) ([]*NotificationRsp, error) {
+	if len(param) == 0 {
+		return nil, nil
+	}
+	if a.Cluster == "" {
+		a.Cluster = "default"
+	}
+
+	paramData, _ := json.Marshal(param)
+	requestUri := fmt.Sprintf(ApolloWatchNamespaceChangedApiUrl, a.AppId, a.Cluster, url.QueryEscape(string(paramData)))
+
+	// 超时
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(ctx, HttpReqNotificationTimeout)
+	defer cancel()
+
+	// 构建请求体
+	req, err := http.NewRequestWithContext(ctx, "GET", a.Address+requestUri, nil)
+	if err != nil {
+		return nil, err
+	}
+	a.officialSignature(req) // 认证
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		if err == context.Canceled { // 被主动取消
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// 检查状态码
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotModified { // 状态未改变
+			return nil, nil
+		}
+
+		desc, ok := errStatusCodesDescribe[resp.StatusCode]
+		if !ok {
+			desc = "未知错误"
+		}
+		return nil, fmt.Errorf("收到错误码: %d: %s", resp.StatusCode, desc)
+	}
+
+	// 解码
+	var result []*NotificationRsp
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return nil, fmt.Errorf("解码失败: %v", err)
+	}
+	return result, nil
 }
 
 // 保存数据到备份文件
@@ -255,12 +325,20 @@ func (a *ApolloConfig) isAllowLoadFromBackupFile() bool {
 
 // 官方签名
 func (a *ApolloConfig) officialSignature(req *http.Request) {
-	timestamp := fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond))
-	stringToSign := timestamp + "\n" + req.URL.RequestURI()
-	key := []byte(a.AccessKey)
-	mac := hmac.New(sha1.New, key)
-	_, _ = mac.Write([]byte(stringToSign))
-	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-	req.Header.Add("Authorization", fmt.Sprintf("Apollo %s:%s", a.AppId, signature))
-	req.Header.Add("Timestamp", timestamp)
+	if a.AccessKey != "" {
+		timestamp := fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond))
+		stringToSign := timestamp + "\n" + req.URL.RequestURI()
+		key := []byte(a.AccessKey)
+		mac := hmac.New(sha1.New, key)
+		_, _ = mac.Write([]byte(stringToSign))
+		signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Add("Authorization", fmt.Sprintf("Apollo %s:%s", a.AppId, signature))
+		req.Header.Add("Timestamp", timestamp)
+		return
+	}
+
+	if a.AuthBasicUser != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte(a.AuthBasicUser+":"+a.AuthBasicPassword))))
+		return
+	}
 }
