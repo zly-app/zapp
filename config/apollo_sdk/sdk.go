@@ -92,8 +92,8 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 	localData := make(MultiNamespaceData, len(namespaces)) // 本地数据
 	result := make(MultiNamespaceData, len(namespaces))    // 结果数据
 
-	// 允许从本地获取
-	if !a.AlwaysLoadFromRemote && a.BackupFile != "" { // 不总是从远程获取 并且 存在备份文件
+	// 允许从本地备份获取
+	if a.isAllowLoadFromBackupFile() {
 		backupData, err := a.loadDataFromBackupFile()
 		if err != nil {
 			logger.Log.Error("从本地加载配置失败", zap.Error(err))
@@ -168,10 +168,7 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceD
 
 	// 认证
 	if a.AccessKey != "" {
-		timestamp := fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond))
-		signature := a.officialSignature(timestamp, requestUri, a.AccessKey)
-		req.Header.Add("Authorization", fmt.Sprintf("Apollo %s:%s", a.AppId, signature))
-		req.Header.Add("Timestamp", timestamp)
+		a.officialSignature(req)
 	} else if a.AuthBasicUser != "" {
 		req.Header.Add("Authorization", fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte(a.AuthBasicUser+":"+a.AuthBasicPassword))))
 	}
@@ -244,14 +241,17 @@ func (a *ApolloConfig) overrideMultiNamespaceData(dataA, dataB MultiNamespaceDat
 
 // 是否允许从本地备份获取
 func (a *ApolloConfig) isAllowLoadFromBackupFile() bool {
-	return !a.AlwaysLoadFromRemote && a.BackupFile != ""
+	return !a.AlwaysLoadFromRemote && a.BackupFile != "" // 不总是从远程获取 并且 存在备份文件
 }
 
 // 官方签名
-func (a *ApolloConfig) officialSignature(timestamp, uri, accessKey string) string {
-	stringToSign := timestamp + "\n" + uri
-	key := []byte(accessKey)
+func (a *ApolloConfig) officialSignature(req *http.Request) {
+	timestamp := fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond))
+	stringToSign := timestamp + "\n" + req.URL.RequestURI()
+	key := []byte(a.AccessKey)
 	mac := hmac.New(sha1.New, key)
 	_, _ = mac.Write([]byte(stringToSign))
-	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	req.Header.Add("Authorization", fmt.Sprintf("Apollo %s:%s", a.AppId, signature))
+	req.Header.Add("Timestamp", timestamp)
 }
