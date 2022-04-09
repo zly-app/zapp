@@ -83,6 +83,7 @@ func init() {
 	p := NewTestWatchProvider(map[string]map[string][]byte{})
 	testProvider = p
 	RegistryConfigWatchProvider("test", p)
+	SetDefaultConfigWatchProvider(p)
 }
 
 func TestSDK(t *testing.T) {

@@ -19,10 +19,13 @@ func SetPluginType(t core.PluginType) {
 }
 
 // 启用插件
-func WithPlugin() zapp.Option {
+func WithPlugin(setDefaultProvider ...bool) zapp.Option {
 	plugin.RegisterCreatorFunc(nowPluginType, func(app core.IApp) core.IPlugin {
 		p := NewExamplePlugin(app)
 		config.RegistryConfigWatchProvider("example_watch_provider", p) // 注册提供者
+		if len(setDefaultProvider) > 0 && setDefaultProvider[0] {
+			config.SetDefaultConfigWatchProvider(p) // 设为默认
+		}
 		return p
 	})
 	return zapp.WithPlugin(nowPluginType)
