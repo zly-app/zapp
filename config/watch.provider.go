@@ -25,7 +25,7 @@ func GetConfigWatchProvider(name string) core.IConfigWatchProvider {
 	return configWatchProviders[name]
 }
 
-// 注册配置观察提供者, 第一个被添加的提供者会作为默认提供者
+// 注册配置观察提供者
 func RegistryConfigWatchProvider(name string, p core.IConfigWatchProvider) {
 	if name == "default" {
 		logger.Log.Fatal("配置提供者名不能为default")
@@ -34,9 +34,4 @@ func RegistryConfigWatchProvider(name string, p core.IConfigWatchProvider) {
 		logger.Log.Fatal("配置提供者已存在", zap.String("name", name))
 	}
 	configWatchProviders[name] = p
-
-	// 设置默认配置提供者
-	if GetDefaultConfigWatchProvider() == nil {
-		SetDefaultConfigWatchProvider(p)
-	}
 }
