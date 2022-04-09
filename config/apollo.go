@@ -117,3 +117,12 @@ func analyseApolloConfig(namespace string, configurations map[string]string) map
 	}
 	return data
 }
+
+// 获取apollo客户端
+func GetApolloClient() (*ApolloConfig, error) {
+	if Conf == nil {
+		return nil, fmt.Errorf("config未初始化")
+	}
+	vi := Conf.GetViper()
+	return makeApolloConfigFromViper(vi)
+}
