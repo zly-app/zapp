@@ -93,7 +93,8 @@ func TestSDK(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("1"))
 	require.Nil(t, err)
 
-	keyObj := newWatchKeyObject(testGroupName, testKeyName)
+	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
+	require.Nil(t, err)
 
 	// 获取原始数据
 	y1 := keyObj.GetString()
@@ -123,7 +124,8 @@ func TestWatch(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("2"))
 	require.Nil(t, err)
 
-	keyObj := newWatchKeyObject(testGroupName, testKeyName)
+	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
+	require.Nil(t, err)
 
 	var isCallback bool
 	keyObj.AddCallback(func(k core.IConfigWatchKeyObject, oldData, newData []byte) {
@@ -146,7 +148,8 @@ func TestExpect(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("1"))
 	require.Nil(t, err)
 
-	keyObj := newWatchKeyObject(testGroupName, testKeyName)
+	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
+	require.Nil(t, err)
 
 	var tests = []struct {
 		expect interface{}
@@ -200,7 +203,8 @@ func TestConvert(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("4"))
 	require.Nil(t, err)
 
-	keyObj := newWatchKeyObject(testGroupName, testKeyName)
+	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
+	require.Nil(t, err)
 
 	require.Equal(t, []byte("4"), keyObj.GetData())
 	require.Equal(t, "4", keyObj.GetString())
@@ -228,7 +232,9 @@ func TestParseJSON(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte(value))
 	require.Nil(t, err)
 
-	keyObj := newWatchKeyObject(testGroupName, testKeyName)
+	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
+	require.Nil(t, err)
+
 	require.Equal(t, keyObj.GetString(), value)
 
 	var a struct {
@@ -257,7 +263,9 @@ b:
 	err := testProvider.Set(testGroupName, testKeyName, []byte(value))
 	require.Nil(t, err)
 
-	keyObj := newWatchKeyObject(testGroupName, testKeyName)
+	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
+	require.Nil(t, err)
+
 	require.Equal(t, keyObj.GetString(), value)
 
 	var a struct {

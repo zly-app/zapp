@@ -8,7 +8,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
 	"github.com/zly-app/zapp/core"
@@ -290,7 +289,7 @@ func (w *watchKeyObject) resetData(data []byte) {
 	w.data.Store(data)
 }
 
-func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyObject {
+func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption) (core.IConfigWatchKeyObject, error) {
 	w := &watchKeyObject{
 		groupName: groupName,
 		keyName:   keyName,
@@ -304,22 +303,14 @@ func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption
 	// 立即获取
 	data, err := w.p.Get(groupName, keyName)
 	if err != nil {
-		logger.Log.Fatal("获取watch数据失败",
-			zap.String("groupName", groupName),
-			zap.String("keyName", keyName),
-			zap.Error(err),
-		)
+		return nil, fmt.Errorf("获取配置失败: %v", err)
 	}
 	w.resetData(data)
 
 	// 开始观察
 	err = w.p.Watch(groupName, keyName, w.watchCallback)
 	if err != nil {
-		logger.Log.Fatal("watch配置失败",
-			zap.String("groupName", groupName),
-			zap.String("keyName", keyName),
-			zap.Error(err),
-		)
+		return nil, fmt.Errorf("watch配置失败: %v", err)
 	}
-	return w
+	return w, nil
 }
