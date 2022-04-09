@@ -61,15 +61,14 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 		conf.Cluster = os.Getenv(consts.ApolloConfigClusterFromEnvKey)
 	}
 
-	data, err := conf.GetNamespacesData()
+	dataList, err := conf.GetNamespacesData()
 	if err != nil {
 		return nil, fmt.Errorf("获取apollo配置数据失败: %s", err)
 	}
 
-	configs := make(map[string]interface{}, len(data))
-	for namespace, raw := range data {
-		d := map[string]interface{}(raw)
-		d = analyseApolloConfig(namespace, d)
+	configs := make(map[string]interface{}, len(dataList))
+	for namespace, data := range dataList {
+		d := analyseApolloConfig(namespace, data.Configurations)
 		configs[namespace] = d
 	}
 
@@ -82,10 +81,14 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 }
 
 // 分析apollo配置, 然后匹配key的value转为 map[string]interface{}
-func analyseApolloConfig(namespace string, raw map[string]interface{}) map[string]interface{} {
+func analyseApolloConfig(namespace string, configurations map[string]string) map[string]interface{} {
 	matchKey, ok := parseConfigToJsonOfMatchKeys[namespace]
 	if !ok || (matchKey.matchKeys == "" && matchKey.noMatchKeys == "") { // 没有设置匹配key
-		return raw
+		result := make(map[string]interface{})
+		for k, v := range configurations {
+			result[k] = v
+		}
+		return result
 	}
 
 	rawMatchKeys, rawNoMatchKeys := matchKey.matchKeys, matchKey.noMatchKeys
@@ -98,7 +101,7 @@ func analyseApolloConfig(namespace string, raw map[string]interface{}) map[strin
 	}
 
 	data := make(map[string]interface{})
-	for key, value := range raw {
+	for key, value := range configurations {
 		if (len(matchKeys) > 0 && !utils.Text.IsMatchWildcardAny(strings.ToLower(key), matchKeys...)) ||
 			(len(noMatchKeys) > 0 && utils.Text.IsMatchWildcardAny(strings.ToLower(key), noMatchKeys...)) {
 			data[key] = value
@@ -111,7 +114,6 @@ func analyseApolloConfig(namespace string, raw map[string]interface{}) map[strin
 			logger.Log.Fatal("apollo的value无法转为json", zap.String("namespace", namespace), zap.String("key", key), zap.Error(err))
 		}
 		data[key] = doc
-
 	}
 	return data
 }

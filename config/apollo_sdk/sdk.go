@@ -28,7 +28,9 @@ import (
 
 // apollo获取配置api
 // https://github.com/ctripcorp/apollo/wiki/%E5%85%B6%E5%AE%83%E8%AF%AD%E8%A8%80%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%8E%A5%E5%85%A5%E6%8C%87%E5%8D%97
-const ApolloGetNamespaceDataApiUrl = "/configfiles/json/%s/%s/%s" //  {config_server_url}/configfiles/json/{appId}/{clusterName}/{namespaceName}
+// https://www.apolloconfig.com/#/zh/usage/other-language-client-user-guide?id=_13-%e9%80%9a%e8%bf%87%e4%b8%8d%e5%b8%a6%e7%bc%93%e5%ad%98%e7%9a%84http%e6%8e%a5%e5%8f%a3%e4%bb%8eapollo%e8%af%bb%e5%8f%96%e9%85%8d%e7%bd%ae
+// {config_server_url}/configs/{appId}/{clusterName}/{namespaceName}?releaseKey={releaseKey}&ip={clientIp}
+const ApolloGetNamespaceDataApiUrl = "/configs/%s/%s/%s?releaseKey=%s&ip=%s"
 
 var (
 	// http请求超时
@@ -77,13 +79,27 @@ type ApolloConfig struct {
 
 type (
 	// 命名空间数据
-	NamespaceData = map[string]interface{}
+	NamespaceData = struct {
+		AppID          string            `json:"appId"`
+		Cluster        string            `json:"cluster"`
+		Namespace      string            `json:"namespaceName"`
+		Configurations map[string]string `json:"configurations"`
+		ReleaseKey     string            `json:"releaseKey"`
+	}
 	// 多个命名空间数据
-	MultiNamespaceData = map[string]NamespaceData
+	MultiNamespaceData = map[string]*NamespaceData
 )
 
 // 获取指定命名空间的数据
 func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
+	// 检查配置
+	if a.Address == "" {
+		return nil, errors.New("apollo的address是空的")
+	}
+	if a.AppId == "" {
+		return nil, errors.New("apollo的appid是空的")
+	}
+
 	namespaces := append([]string{}, defaultNamespaces...)
 	if a.Namespaces != "" {
 		namespaces = append(namespaces, strings.Split(a.Namespaces, ",")...)
@@ -115,9 +131,6 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 		// 从远程获取数据
 		raw, err := a.loadNamespaceDataFromRemote(namespace)
 		if err == nil { // 成功拿到则覆盖数据
-			if raw == nil {
-				raw = make(NamespaceData, 0)
-			}
 			localData[namespace] = raw
 			result[namespace] = raw
 			continue
@@ -141,15 +154,8 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 }
 
 // 从远程加载命名空间数据
-func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceData, error) {
+func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (*NamespaceData, error) {
 	namespace = a.NamespacePrefix + namespace
-	// 检查配置
-	if a.Address == "" {
-		return nil, errors.New("apollo的address是空的")
-	}
-	if a.AppId == "" {
-		return nil, errors.New("apollo的appid是空的")
-	}
 	cluster := a.Cluster
 	if cluster == "" {
 		cluster = "default"
@@ -160,7 +166,7 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceD
 	ctx, cancel := context.WithTimeout(context.Background(), HttpReqTimeout)
 	defer cancel()
 
-	requestUri := fmt.Sprintf(ApolloGetNamespaceDataApiUrl, a.AppId, cluster, namespace)
+	requestUri := fmt.Sprintf(ApolloGetNamespaceDataApiUrl, a.AppId, cluster, namespace, "", "")
 	req, err := http.NewRequestWithContext(ctx, "GET", a.Address+requestUri, nil)
 	if err != nil {
 		return nil, err
@@ -183,7 +189,7 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceD
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound && IgnoreNamespaceNotFound { // 命名空间不存在
-			return make(NamespaceData), nil // 视为空配置数据
+			return &NamespaceData{Configurations: make(map[string]string)}, nil // 视为空配置数据
 		}
 
 		desc, ok := errStatusCodesDescribe[resp.StatusCode]
@@ -199,7 +205,10 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (NamespaceD
 	if err != nil {
 		return nil, fmt.Errorf("解码失败: %v", err)
 	}
-	return result, nil
+	if result.Configurations == nil {
+		result.Configurations = make(map[string]string)
+	}
+	return &result, nil
 }
 
 // 保存数据到备份文件
