@@ -14,6 +14,8 @@ import (
 
 type Handler func(app core.IApp, handlerType HandlerType)
 
+var handlers = map[HandlerType][]Handler{}
+
 // handler类型
 type HandlerType int
 
@@ -33,7 +35,15 @@ const (
 )
 
 func (app *appCli) handler(t HandlerType) {
+	for _, h := range handlers[t] {
+		h(app, t)
+	}
 	for _, h := range app.opt.Handlers[t] {
 		h(app, t)
 	}
+}
+
+// 添加handler, 和WithHandler不同的是, 它可以在NewApp之前执行, 并且它的执行顺序优先于WithHandler
+func AddHandler(t HandlerType, hs ...Handler) {
+	handlers[t] = append(handlers[t], hs...)
 }
