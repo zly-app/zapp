@@ -61,6 +61,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 		opt:       newOption(opts...),
 	}
 	app.baseCtx, app.baseCtxCancel = context.WithCancel(context.Background())
+	defaultApp = app
 
 	// 启用守护进程
 	app.enableDaemon()
@@ -81,7 +82,6 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.Debug("app初始化完毕")
 	app.handler(AfterInitializeHandler)
 
-	defaultApp = app
 	return app
 }
 
