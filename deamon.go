@@ -9,6 +9,7 @@
 package zapp
 
 import (
+	"flag"
 	"os"
 
 	"github.com/takama/daemon"
@@ -21,6 +22,12 @@ func (app *appCli) enableDaemon() {
 	if !app.opt.EnableDaemon || len(os.Args) < 2 {
 		return
 	}
+
+	flag.String("install", "", "安装服务, string 是运行时传递给 app 的参数, 请不要使用相对路径")
+	flag.Bool("remove", false, "移除服务")
+	flag.Bool("start", false, "启动服务")
+	flag.Bool("stop", false, "停止服务")
+	flag.Bool("status", false, "查看运行状态")
 
 	switch os.Args[1] {
 	case "install":
