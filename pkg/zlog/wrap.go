@@ -9,6 +9,7 @@
 package zlog
 
 import (
+	"context"
 	"fmt"
 	"sync/atomic"
 
@@ -16,6 +17,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 var loggerId uint32
@@ -173,6 +175,18 @@ func (l *logWrap) NewSessionLogger(fields ...zap.Field) core.ILogger {
 	return &logWrap{
 		log:            l.log,
 		fields:         append(append(append([]zap.Field{}, l.fields...), zap.String(logIdKey, l.nextLoggerId())), fields...),
+		callerMinLevel: l.callerMinLevel,
+		ws:             l.ws,
+	}
+}
+
+// 创建一个带链路id的log
+func (l *logWrap) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.ILogger {
+	span := utils.Trace.GetSpan(ctx)
+	traceID := utils.Trace.GetTraceID(span)
+	return &logWrap{
+		log:            l.log,
+		fields:         append(append(append([]zap.Field{}, l.fields...), zap.String(logTraceIdKey, traceID)), fields...),
 		callerMinLevel: l.callerMinLevel,
 		ws:             l.ws,
 	}

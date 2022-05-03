@@ -9,6 +9,8 @@
 package core
 
 import (
+	"context"
+
 	"go.uber.org/zap"
 )
 
@@ -23,4 +25,6 @@ type ILogger interface {
 	Fatal(v ...interface{})
 	// 创建一个会话log
 	NewSessionLogger(fields ...zap.Field) ILogger
+	// 创建一个带链路id的log
+	NewTraceLogger(ctx context.Context, fields ...zap.Field) ILogger
 }

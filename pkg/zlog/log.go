@@ -11,6 +11,7 @@ package zlog
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 )
 
 const logIdKey = "log_id"
+const logTraceIdKey = "traceID"
 
 var DefaultLogger core.ILogger = New(DefaultConfig)
 
@@ -122,7 +124,7 @@ func makeOpts(conf *core.LogConfig, o ...zap.Option) []zap.Option {
 		opts = append(opts, zap.AddCaller())
 	}
 	if !conf.Json && conf.Color {
-		opts = append(opts, withColoursMessageOfLoggerId())
+		opts = append(opts, withColoursMessageOfLoggerId(), withColoursMessageOfTraceId())
 	}
 
 	opts = append(opts, o...)
@@ -146,6 +148,7 @@ func GetRawZapLogger(l core.ILogger) (*zap.Logger, bool) {
 	return nil, false
 }
 
+// 根据logID对文本染色
 func withColoursMessageOfLoggerId() zap.Option {
 	return WithHook(func(ent *zapcore.Entry, fields []zapcore.Field) (cancel bool) {
 		if ent.Message == "" {
@@ -174,5 +177,32 @@ func makeColorMessageOfLoggerId(logId string, message string) string {
 	}
 
 	color := ColorType(id&7) + defaultColor
+	return makeColorText(color, message)
+}
+
+// 根据链路id对文本染色
+func withColoursMessageOfTraceId() zap.Option {
+	return WithHook(func(ent *zapcore.Entry, fields []zapcore.Field) (cancel bool) {
+		if ent.Message == "" {
+			return
+		}
+
+		for _, field := range fields {
+			if field.Key == logTraceIdKey {
+				ent.Message = makeColorMessageOfTraceId(field.String, ent.Message)
+				break
+			}
+		}
+		return
+	})
+}
+
+func makeColorMessageOfTraceId(traceID string, message string) string {
+	tid, _ := strconv.ParseUint(traceID, 16, 0)
+	if tid == 0 {
+		return message
+	}
+
+	color := ColorType(tid&7) + defaultColor
 	return makeColorText(color, message)
 }
