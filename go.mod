@@ -3,6 +3,7 @@ module github.com/zly-app/zapp
 go 1.15
 
 require (
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.4.0
 	github.com/takama/daemon v1.0.0
