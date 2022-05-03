@@ -128,6 +128,9 @@ zapp.WithCustomEnableService(func(app core.IApp, services map[core.ServiceType]b
 `core.ILogger` 提供了 `NewSessionLogger(fields ...zap.Field) ILogger` 方法用于创建一个会话 logger.<br>
 使用会话logger打印日志会产生一个全局日志id, 并且我们会根据不同的全局日志id输出不同的颜色.
 
+`core.ILogger` 提供了 `NewTraceLogger(ctx context.Context, fields ...zap.Field) ILogger` 方法用于创建一个带链路id的 logger(前提是ctx中包含有效的span).<br>
+使用生成的log打印日志会带上链路id, 并且我们会根据不同的链路id输出不同的颜色.
+
 # app生命周期
 
 初始化 > 用户操作 > 启动 > 退出
