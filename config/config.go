@@ -85,10 +85,6 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	} else if opt.apolloConfig != nil { // WithApollo
 		rawVi = viper.New()
 		rawVi.Set(consts.ApolloConfigKey, opt.apolloConfig)
-		// rawVi, err = makeViperFromApollo(opt.apolloConfig)
-		// if err != nil {
-		// 	logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
-		// }
 	} else if rawVi = loadDefaultFiles(); rawVi != nil {
 		logger.Log.Info("使用默认配置文件", zap.String("file", consts.DefaultConfigFiles))
 	}
@@ -258,6 +254,9 @@ func loadIncludeConfigFile(vi *viper.Viper) *viper.Viper {
 }
 
 func (c *configCli) checkDefaultConfig(conf *core.Config) {
+	if conf.Frame.Name != "" {
+		conf.Frame.Log.Name = conf.Frame.Name
+	}
 	conf.Frame.WaitServiceRunTime = utils.Ternary.Or(conf.Frame.WaitServiceRunTime, consts.DefaultWaitServiceRunTime).(int)
 	conf.Frame.ServiceUnstableObserveTime = utils.Ternary.Or(conf.Frame.ServiceUnstableObserveTime, consts.DefaultServiceUnstableObserveTime).(int)
 }

@@ -49,10 +49,6 @@ type appCli struct {
 // 根据提供的app名和选项创建一个app
 // 正常启动时会初始化所有服务
 func NewApp(appName string, opts ...Option) core.IApp {
-	if appName == "" {
-		logger.Log.Fatal("appName must not empty")
-	}
-
 	app := &appCli{
 		name:      appName,
 		interrupt: make(chan os.Signal, 1),
@@ -67,6 +63,14 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.enableDaemon()
 
 	app.config = config.NewConfig(appName, app.opt.ConfigOpts...)
+	if name := app.config.Config().Frame.Name; name != "" {
+		app.name = name
+	}
+	if app.name == "" {
+		logger.Log.Fatal("appName is empty")
+	}
+	app.config.Config().Frame.Name = app.name
+
 	app.ILogger = logger.NewLogger(appName, app.config, app.opt.LogOpts...)
 
 	app.handler(BeforeInitializeHandler)

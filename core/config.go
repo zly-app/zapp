@@ -129,6 +129,8 @@ type ConfigWatchProviderCallback func(groupName, keyName string, oldData, newDat
 type FrameConfig struct {
 	// debug标志
 	Debug bool
+	// app 名
+	Name string
 	// 主动清理内存间隔时间(毫秒), <= 0 表示禁用
 	FreeMemoryInterval int
 	// 默认等待服务启动阶段, 等待时间(毫秒), 如果时间到未收到服务启动成功信号则将服务标记为不稳定状态然后继续开始工作(我们总不能一直等着吧)
