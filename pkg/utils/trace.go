@@ -12,12 +12,17 @@ var Trace = &traceCli{}
 type traceCli struct{}
 
 // 将span存入ctx
-func (*ctxCli) SaveSpan(ctx context.Context, span opentracing.Span) context.Context {
+func (*traceCli) SaveSpan(ctx context.Context, span opentracing.Span) context.Context {
 	return opentracing.ContextWithSpan(ctx, span)
 }
 
+// 获取span
+func (*traceCli) GetSpan(ctx context.Context) opentracing.Span {
+	return opentracing.SpanFromContext(ctx)
+}
+
 // 获取或生成子span
-func (*ctxCli) GetChildSpan(ctx context.Context, operationName string) opentracing.Span {
+func (*traceCli) GetChildSpan(ctx context.Context, operationName string) opentracing.Span {
 	parentSpan := opentracing.SpanFromContext(ctx)
 	if parentSpan != nil {
 		return opentracing.StartSpan(operationName, opentracing.ChildOf(parentSpan.Context()))
@@ -26,7 +31,7 @@ func (*ctxCli) GetChildSpan(ctx context.Context, operationName string) opentraci
 }
 
 // 获取或生成跟随span
-func (*ctxCli) GetFollowSpan(ctx context.Context, operationName string) opentracing.Span {
+func (*traceCli) GetFollowSpan(ctx context.Context, operationName string) opentracing.Span {
 	parentSpan := opentracing.SpanFromContext(ctx)
 	if parentSpan != nil {
 		return opentracing.StartSpan(operationName, opentracing.FollowsFrom(parentSpan.Context()))
@@ -35,7 +40,7 @@ func (*ctxCli) GetFollowSpan(ctx context.Context, operationName string) opentrac
 }
 
 // 获取TraceID
-func (c *ctxCli) GetTraceID(span opentracing.Span) string {
+func (c *traceCli) GetTraceID(span opentracing.Span) string {
 	if span == nil {
 		return ""
 	}
@@ -57,7 +62,7 @@ func (c *ctxCli) GetTraceID(span opentracing.Span) string {
 	return traceID
 }
 
-func (*ctxCli) getJaegerTraceID(carrier opentracing.TextMapCarrier) string {
+func (*traceCli) getJaegerTraceID(carrier opentracing.TextMapCarrier) string {
 	const TraceID = "uber-trace-id"
 	values := strings.SplitN(carrier[TraceID], ":", 2)
 	if len(values) >= 1 {
@@ -66,7 +71,7 @@ func (*ctxCli) getJaegerTraceID(carrier opentracing.TextMapCarrier) string {
 	return ""
 }
 
-func (*ctxCli) getZipKinTraceID(carrier opentracing.TextMapCarrier) string {
+func (*traceCli) getZipKinTraceID(carrier opentracing.TextMapCarrier) string {
 	const TraceID = "x-b3-traceid"
 	return carrier[TraceID]
 }
