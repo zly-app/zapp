@@ -86,7 +86,6 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		rawVi = viper.New()
 		rawVi.Set(consts.ApolloConfigKey, opt.apolloConfig)
 	} else if rawVi = loadDefaultFiles(); rawVi != nil {
-		logger.Log.Info("使用默认配置文件", zap.String("file", consts.DefaultConfigFiles))
 	}
 
 	vi := viper.New()
@@ -177,6 +176,7 @@ func loadDefaultFiles() *viper.Viper {
 		if err = vi.MergeInConfig(); err != nil {
 			logger.Log.Fatal("合并配置文件失败", zap.String("file", file), zap.Error(err))
 		}
+		logger.Log.Info("使用默认配置文件", zap.String("file", file))
 		return vi
 	}
 	return nil
