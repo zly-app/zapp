@@ -163,7 +163,6 @@ func (c *configCli) makeLabels() {
 // 加载默认配置文件, 默认配置文件不存在返回nil
 func loadDefaultFiles() *viper.Viper {
 	files := strings.Split(consts.DefaultConfigFiles, ",")
-	var exist bool
 	vi := viper.New()
 	for _, file := range files {
 		_, err := os.Stat(file)
@@ -174,16 +173,13 @@ func loadDefaultFiles() *viper.Viper {
 			logger.Log.Fatal("读取配置文件信息失败", zap.String("file", file), zap.Error(err))
 		}
 
-		exist = true
 		vi.SetConfigFile(file)
 		if err = vi.MergeInConfig(); err != nil {
 			logger.Log.Fatal("合并配置文件失败", zap.String("file", file), zap.Error(err))
 		}
+		return vi
 	}
-	if !exist {
-		return nil
-	}
-	return vi
+	return nil
 }
 
 // 合并文件到viper
