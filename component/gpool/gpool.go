@@ -44,73 +44,112 @@ func NewGPool(conf *GPoolConfig) core.IGPool {
 
 // 为工人派遣任务
 func (g *gpool) dispatch() {
-	for {
+	var worker *worker
+	var stop bool
+	for !stop {
+		if worker == nil {
+			select {
+			case w := <-g.workerQueue:
+				worker = w
+			case <-g.stop:
+				stop = true
+				continue
+			}
+		}
+
 		select {
 		case job := <-g.jobQueue:
-			worker := <-g.workerQueue
 			worker.Do(job)
+			worker = nil
 		case <-g.stop:
-			for i := 0; i < cap(g.workerQueue); i++ {
-				worker := <-g.workerQueue
-				worker.Stop()
-			}
-
-			g.stop <- struct{}{}
-			return
+			stop = true
 		}
 	}
+
+	// 释放worker
+	if worker != nil {
+		worker.Do(nil) // 让这个工人回到池
+	}
+	for i := 0; i < cap(g.workerQueue); i++ {
+		w := <-g.workerQueue
+		w.Stop()
+	}
+	g.workerQueue = nil
+
+	// 释放job
+	jobLen := len(g.jobQueue)
+	g.jobQueue = nil
+	for i := 0; i < jobLen; i++ {
+		g.wg.Done()
+	}
+
+	g.stop <- struct{}{}
 }
 
 // 异步执行
-func (g *gpool) Go(fn func() error) core.IGPoolJobResult {
-	job := g.newJob(fn)
-	g.wg.Add(1)
+func (g *gpool) Go(fn func() error, callback func(err error)) {
+	job := g.newJob(fn, callback)
 	g.jobQueue <- job
-	return job
 }
 
 // 同步执行
-func (g *gpool) GoSync(fn func() error) error {
-	return g.Go(fn).Wait()
+func (g *gpool) GoSync(fn func() error) (result error) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	g.Go(fn, func(err error) {
+		result = err
+		wg.Done()
+	})
+	wg.Wait()
+	return result
 }
 
 // 尝试异步执行, 如果任务队列已满则返回false
-func (g *gpool) TryGo(fn func() error) (result core.IGPoolJobResult, ok bool) {
-	g.wg.Add(1)
-	job := g.newJob(fn)
+func (g *gpool) TryGo(fn func() error, callback func(err error)) (ok bool) {
+	job := g.newJob(fn, callback)
 	select {
 	case g.jobQueue <- job:
-		return job, true
+		return true
 	default:
 		g.wg.Done()
-		return nil, false
+		return false
 	}
 }
 
 // 尝试同步执行, 如果任务队列已满则返回false
 func (g *gpool) TryGoSync(fn func() error) (result error, ok bool) {
-	if result, ok := g.TryGo(fn); ok {
-		return result.Wait(), true
+	var wg sync.WaitGroup
+	wg.Add(1)
+	ok = g.TryGo(fn, func(err error) {
+		result = err
+		wg.Done()
+	})
+	if ok {
+		wg.Wait()
 	}
-	return nil, false
+	return
 }
 
-// 等待所有任务结束
+// 等待队列中所有的任务结束
 func (g *gpool) Wait() {
 	g.wg.Wait()
 }
 
 // 关闭
 //
-// 命令所有没有收到任务的工人立即停工, 收到任务的工人完成当前任务后停工, 不管任务队列是否清空
+// 命令所有没有收到任务的工人立即停工, 收到任务的工人完成当前任务后停工, 不管任务队列是否清空.
+// 表现为加入队列的任务不一定会执行, 但是正在执行的任务不会被取消并会等待这些任务执行完毕.
 func (g *gpool) Close() {
 	g.stop <- struct{}{}
 	<-g.stop
 }
 
-func (g *gpool) newJob(fn func() error) *job {
-	return newJob(func() error {
-		defer g.wg.Done()
-		return fn()
+func (g *gpool) newJob(fn func() error, callback func(err error)) *job {
+	g.wg.Add(1)
+	return newJob(fn, func(err error) {
+		g.wg.Done()
+		if callback != nil {
+			callback(err)
+		}
 	})
 }

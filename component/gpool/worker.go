@@ -14,7 +14,9 @@ func (w *worker) Ready() {
 		for {
 			select {
 			case job = <-w.jobChannel: // 等待任务
-				job.Do()
+				if job != nil {
+					job.Do()
+				}
 				w.pool <- w
 			case <-w.stop:
 				w.stop <- struct{}{}
