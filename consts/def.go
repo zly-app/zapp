@@ -21,7 +21,7 @@ const (
 // 配置
 const (
 	// 默认配置文件优先级
-	DefaultConfigFiles = "./configs/default.toml,./configs/default.yaml,./configs/default.json"
+	DefaultConfigFiles = "./configs/default.yaml,./configs/default.yml,./configs/default.toml,./configs/default.json"
 	// apollo配置key
 	ApolloConfigKey = "apollo"
 	// 从环境变量中加载apollo集群名
