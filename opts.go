@@ -9,6 +9,8 @@
 package zapp
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/config"
@@ -31,18 +33,18 @@ type option struct {
 	// 忽略未启用的插件注入
 	IgnoreInjectOfDisablePlugin bool
 	// 插件
-	Plugins map[core.PluginType]bool
+	Plugins []core.PluginType
 	// 自定义启用插件函数
-	CustomEnablePluginsFn func(app core.IApp, plugins map[core.PluginType]bool)
+	CustomEnablePluginsFn func(app core.IApp, plugins []core.PluginType) []core.PluginType
 
 	// 在服务不稳定观察阶段中出现错误则退出
 	ExitOnErrOfObserveServiceUnstable bool
 	// 忽略未启用的服务注入
 	IgnoreInjectOfDisableService bool
 	// 服务
-	Services map[core.ServiceType]bool
+	Services []core.ServiceType
 	// 自定义启用服务函数
-	CustomEnableServicesFn func(app core.IApp, services map[core.ServiceType]bool)
+	CustomEnableServicesFn func(app core.IApp, services []core.ServiceType) []core.ServiceType
 
 	// 自定义组件函数
 	CustomComponentFn func(app core.IApp) core.IComponent
@@ -55,10 +57,10 @@ func newOption(opts ...Option) *option {
 		ExitOnErrOfObserveServiceUnstable: true,
 
 		IgnoreInjectOfDisablePlugin: false,
-		Plugins:                     make(map[core.PluginType]bool),
+		Plugins:                     make([]core.PluginType, 0),
 
 		IgnoreInjectOfDisableService: false,
-		Services:                     make(map[core.ServiceType]bool),
+		Services:                     make([]core.ServiceType, 0),
 	}
 	for _, o := range opts {
 		o(opt)
@@ -67,17 +69,37 @@ func newOption(opts ...Option) *option {
 }
 
 // 检查自定义启用插件
-func (o *option) CheckCustomEnablePlugins(app core.IApp) {
+func (o *option) CheckPlugins(app core.IApp) error {
 	if o.CustomEnablePluginsFn != nil {
-		o.CustomEnablePluginsFn(app, o.Plugins)
+		o.Plugins = o.CustomEnablePluginsFn(app, o.Plugins)
 	}
+
+	mm := make(map[core.PluginType]struct{}, len(o.Plugins))
+	for _, t := range o.Plugins {
+		l := len(mm)
+		mm[t] = struct{}{}
+		if len(mm) == l {
+			return fmt.Errorf("插件启用重复: %v", t)
+		}
+	}
+	return nil
 }
 
 // 检查自定义启用服务
-func (o *option) CheckCustomEnableServices(app core.IApp) {
+func (o *option) CheckServices(app core.IApp) error {
 	if o.CustomEnableServicesFn != nil {
-		o.CustomEnableServicesFn(app, o.Services)
+		o.Services = o.CustomEnableServicesFn(app, o.Services)
 	}
+
+	mm := make(map[core.ServiceType]struct{}, len(o.Services))
+	for _, t := range o.Services {
+		l := len(mm)
+		mm[t] = struct{}{}
+		if len(mm) == l {
+			return fmt.Errorf("服务启用重复: %v", t)
+		}
+	}
+	return nil
 }
 
 // 设置config选项
@@ -118,18 +140,16 @@ func WithIgnoreInjectOfDisablePlugin(ignore ...bool) Option {
 // 启动插件(使用者不要主动调用这个函数, 应该由plugin包装, 因为plugin的选项无法通过这个函数传递)
 func WithPlugin(pluginType core.PluginType, enable ...bool) Option {
 	return func(opt *option) {
-		opt.Plugins[pluginType] = len(enable) == 0 || enable[0]
+		if len(enable) == 0 || enable[0] {
+			opt.Plugins = append(opt.Plugins, pluginType)
+		}
 	}
 }
 
 // 自定义启用插件
 //
-// 如果要启用某个插件, 必须使用该插件的 WithPlugin() 选项
-// 示例:
-// 		zapp.WithCustomEnablePlugin(func(app core.IApp, plugins map[core.PluginType]bool) {
-// 			plugins["my_plugin"] = true
-// 		}),
-func WithCustomEnablePlugin(fn func(app core.IApp, plugins map[core.PluginType]bool)) Option {
+// 如果要启用某个插件, 必须先注册该插件
+func WithCustomEnablePlugin(fn func(app core.IApp, plugins []core.PluginType) []core.PluginType) Option {
 	return func(opt *option) {
 		opt.CustomEnablePluginsFn = fn
 	}
@@ -152,18 +172,16 @@ func WithIgnoreInjectOfDisableService(ignore ...bool) Option {
 // 启动服务(使用者不要主动调用这个函数, 应该由service包装, 因为service的选项无法通过这个函数传递)
 func WithService(serviceType core.ServiceType, enable ...bool) Option {
 	return func(opt *option) {
-		opt.Services[serviceType] = len(enable) == 0 || enable[0]
+		if len(enable) == 0 || enable[0] {
+			opt.Services = append(opt.Services, serviceType)
+		}
 	}
 }
 
 // 自定义启用服务
 //
-// 如果要启用某个服务, 必须使用该服务的 WithService() 选项
-// 示例:
-// 		zapp.WithCustomEnableService(func(app core.IApp, services map[core.ServiceType]bool) {
-// 			services["api"] = true
-// 		}),
-func WithCustomEnableService(fn func(app core.IApp, services map[core.ServiceType]bool)) Option {
+// 如果要启用某个服务, 必须先注册该服务
+func WithCustomEnableService(fn func(app core.IApp, services []core.ServiceType) []core.ServiceType) Option {
 	return func(opt *option) {
 		opt.CustomEnableServicesFn = fn
 	}

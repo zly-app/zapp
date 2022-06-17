@@ -18,17 +18,24 @@ import (
 
 // 初始化插件
 func (app *appCli) makePlugin() {
-	app.opt.CheckCustomEnablePlugins(app)
-	for pluginType, enable := range app.opt.Plugins {
-		if enable {
-			app.plugins[pluginType] = plugin.MakePlugin(app, pluginType)
-		}
+	err := app.opt.CheckPlugins(app)
+	if err != nil {
+		app.Fatal("插件检查失败", zap.Error(err))
+	}
+
+	for _, pluginType := range app.opt.Plugins {
+		app.plugins[pluginType] = plugin.MakePlugin(app, pluginType)
 	}
 }
 
 func (app *appCli) startPlugin() {
 	app.Debug("启动插件")
-	for pluginType, p := range app.plugins {
+	for _, pluginType := range app.opt.Plugins {
+		p, ok := app.plugins[pluginType]
+		if !ok {
+			app.Fatal("插件查找失败", zap.String("pluginType", string(pluginType)))
+		}
+
 		err := p.Start()
 		if err != nil {
 			app.Fatal("插件启动失败", zap.String("pluginType", string(pluginType)), zap.Error(err))
@@ -38,7 +45,12 @@ func (app *appCli) startPlugin() {
 
 func (app *appCli) closePlugin() {
 	app.Debug("关闭插件")
-	for pluginType, p := range app.plugins {
+	for _, pluginType := range app.opt.Plugins {
+		p, ok := app.plugins[pluginType]
+		if !ok {
+			app.Fatal("插件查找失败", zap.String("pluginType", string(pluginType)))
+		}
+
 		if err := p.Close(); err != nil {
 			app.Error("插件关闭失败", zap.String("pluginType", string(pluginType)), zap.Error(err))
 		}
@@ -56,7 +68,7 @@ func (app *appCli) InjectPlugin(pluginType core.PluginType, a ...interface{}) {
 		if app.opt.IgnoreInjectOfDisablePlugin {
 			return
 		}
-		logger.Log.Fatal("未启用api插件")
+		logger.Log.Fatal("注入失败, 未启用插件", zap.String("pluginType", string(pluginType)))
 	}
 
 	p.Inject(a...)

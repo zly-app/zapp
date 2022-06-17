@@ -18,17 +18,24 @@ import (
 
 // 构建服务
 func (app *appCli) makeService() {
-	app.opt.CheckCustomEnableServices(app)
-	for serviceType, enable := range app.opt.Services {
-		if enable {
-			app.services[serviceType] = service.MakeService(app, serviceType)
-		}
+	err := app.opt.CheckServices(app)
+	if err != nil {
+		app.Fatal("服务检查失败", zap.Error(err))
+	}
+
+	for _, serviceType := range app.opt.Services {
+		app.services[serviceType] = service.MakeService(app, serviceType)
 	}
 }
 
 func (app *appCli) startService() {
 	app.Debug("启动服务")
-	for serviceType, s := range app.services {
+	for _, serviceType := range app.opt.Services {
+		s, ok := app.services[serviceType]
+		if !ok {
+			app.Fatal("服务查找失败", zap.String("serviceType", string(serviceType)))
+		}
+
 		err := service.WaitRun(app, &service.WaitRunOption{
 			ServiceType:        serviceType,
 			ExitOnErrOfObserve: app.opt.ExitOnErrOfObserveServiceUnstable,
@@ -42,7 +49,12 @@ func (app *appCli) startService() {
 
 func (app *appCli) closeService() {
 	app.Debug("关闭服务")
-	for serviceType, s := range app.services {
+	for _, serviceType := range app.opt.Services {
+		s, ok := app.services[serviceType]
+		if !ok {
+			app.Fatal("服务查找失败", zap.String("serviceType", string(serviceType)))
+		}
+
 		if err := s.Close(); err != nil {
 			app.Error("服务关闭失败", zap.String("serviceType", string(serviceType)), zap.Error(err))
 		}
@@ -60,7 +72,7 @@ func (app *appCli) InjectService(serviceType core.ServiceType, a ...interface{})
 		if app.opt.IgnoreInjectOfDisableService {
 			return
 		}
-		logger.Log.Fatal("未启用api服务")
+		logger.Log.Fatal("注入失败, 未启用服务", zap.String("serviceType", string(serviceType)))
 	}
 
 	s.Inject(a...)
