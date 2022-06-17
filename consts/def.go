@@ -15,7 +15,7 @@ const (
 	// 默认等待服务启动阶段, 等待时间(毫秒)
 	DefaultWaitServiceRunTime int = 1000
 	// 默认服务不稳定观察时间, 等待时间(毫秒)
-	DefaultServiceUnstableObserveTime int = 120000
+	DefaultServiceUnstableObserveTime int = 10000
 )
 
 // 配置
