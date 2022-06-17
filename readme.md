@@ -55,22 +55,6 @@ app.Run()
 
 > 请转到 [这里](./config)
 
-# 扩展开发规范
-
-## 组件开发规范
-
-> 我们提供了自定义组件创建选项 `zapp.WithCustomComponent`, 这个核心功能能让我们支持任何组件
-
-> ... 待完善
-
-## 插件开发规范
-
-> ... 待完善
-
-## 服务开发规范
-
-> ... 待完善
-
 # 使用说明
 
 ## 守护进程
@@ -104,10 +88,11 @@ AfterExitHandler                在app退出后
 > 初始化时添加 `zapp.WithCustomEnablePlugin(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些插件
 
 ```go
-zapp.WithCustomEnablePlugin(func(app core.IApp, plugins map[core.PluginType]bool) {
+zapp.WithCustomEnablePlugin(func(app core.IApp, plugins []core.PluginType) []core.PluginType {
     if !app.GetConfig().HasFlag("my_plugin") {
-        plugins["my_plugin"] = false
+        plugins = append(plugins, "my_plugin")
     }
+	return plugins
 })
 ```
 
@@ -116,10 +101,11 @@ zapp.WithCustomEnablePlugin(func(app core.IApp, plugins map[core.PluginType]bool
 > 初始化时添加 `zapp.WithCustomEnableService(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些服务
 
 ```go
-zapp.WithCustomEnableService(func(app core.IApp, services map[core.ServiceType]bool) {
+zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []core.ServiceType) Option {
     if !app.GetConfig().HasFlag("api_service") {
-        services["api"] = false
+        services = append(services, "api")
     }
+	return services
 })
 ```
 
