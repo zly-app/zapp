@@ -42,54 +42,68 @@
 
 ## 框架配置示例
 
-```toml
-[frame]
-Debug = true # debug 标志
-FreeMemoryInterval = 120000 # 主动清理内存间隔时间(毫秒), <= 0 表示禁用
-#...
+```yaml
+frame: # 框架配置
+    debug: true # debug标志
+    Name: '' # app名
+    FreeMemoryInterval: 120000 # 主动清理内存间隔时间(毫秒), <= 0 表示禁用
+    WaitServiceRunTime: 1000 # 默认等待服务启动阶段, 等待时间(毫秒), 如果时间到未收到服务启动成功信号则将服务标记为不稳定状态然后继续开始工作(我们总不能一直等着吧)
+    ServiceUnstableObserveTime: 10000 # 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功
+    Flags: [] # flag, 注意: flag是忽略大小写的
+    Labels: # 标签, 注意: 标签名是忽略大小写的
+        #Foo: Bar
+    Log: # 日志配置
+        Level: 'debug' # 日志等级, debug, info, warn, error, dpanic, panic, fatal
+        Json: false # 启用json编码器, 输出的每一行日志转为json格式
+        WriteToStream: true # 输出到屏幕
+        WriteToFile: false # 日志是否输出到文件
+        Name: '' # 日志文件名, 末尾会自动附加 .log 后缀
+        AppendPid: false # 是否在日志文件名后附加进程号
+        Path: './log' # 默认日志存放路径
+        FileMaxSize: 32 # 每个日志最大尺寸,单位M
+        FileMaxBackupsNum: 3 # 日志文件最多保存多少个备份, 0表示永久
+        FileMaxDurableTime: 7 # 文件最多保存多长时间,单位天, 0表示永久
+        Compress: false # 是否压缩历史日志
+        TimeFormat: '2006-01-02 15:04:05' # 时间显示格式
+        Color: true # 是否打印彩色日志等级, 只有关闭json编码器才生效
+        CapitalLevel: false # 是否大写日志等级
+        DevelopmentMode: true # 开发者模式, 在开发者模式下日志记录器在写完DPanic消息后程序会感到恐慌
+        ShowFileAndLinenum: true # 显示文件路径和行号
+        ShowFileAndLinenumMinLevel: 'warn' # 最小显示文件路径和行号的等级
+        MillisDuration: true # 对zap.Duration转为毫秒
 ```
 
 ## 插件配置示例
-```toml
-[plugins.zipkin]
-A = 1
-B = "v"
-
-#[...]
+```yaml
+plugins: # 插件配置
+    my_plugin: # 插件类型
+        Foo: Bar # 示例, 不代表真实插件配置情况
 ```
 
 ## 服务配置示例
-```toml
-[services.api]
-Bind = ":8080"
-IPWithNginxForwarded = false
-IPWithNginxReal = false
-
-[services.grpc]
-Bind = ":3000"
-HeartbeatTime = 20000
-
-#[...]
+```yaml
+services: # 服务配置
+    api: # 服务类型
+        Bind: :8080 # 示例, 不代表真实插件配置情况
+    grpc: # 服务类型
+        Bind: :3000 # 示例, 不代表真实插件配置情况
 ```
 
 ## 组件配置示例
-```toml
-[components.cache.default]
-CacheDB = "memory"
-Codec = "msgpack"
-DirectReturnOnCacheFault = true
-MemoryCacheDB.CleanupInterval = 300000
-
-#[...]
+```yaml
+components: # 组件配置
+    cache: # 组件类型
+        default: # 组件名
+            CacheDB: memory # 示例, 不代表真实插件配置情况
 ```
 
 ## 其它配置
 
-> 除了 frame; plugins services; components 这几类, 还可以添加自定义配置, 然后使用 `Parse` 方法将配置读取到变量中
+> 除了 frame / plugins / services / components 这几类, 还可以添加自定义配置, 然后使用 `Parse` 方法将配置读取到变量中
 
-```toml
-[自定义分片名]
-key=value
+```yaml
+myconfig: #自定义分片名
+    Foo: Bar # 示例, 不代表真实情况
 ```
 
 + 更多配置说明阅读源码 [core.Config](../core/config.go)
@@ -188,31 +202,31 @@ apollo的配置也可以使用json, 如下:
 
 > 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo_sdk/sdk.go). 从apollo拉取的配置会和文件的配置智能合并, 以apollo配置优先
 
-    ```toml
-    [apollo]
-    Address = "http://127.0.0.1:8080"
-    AppId = "your-appid"
-    AccessKey = ""                  # 验证key, 优先级高于基础认证
-    AuthBasicUser = ""              # 基础认证用户名, 可用于nginx的基础认证扩展
-    AuthBasicPassword = ""          # 基础认证密码
-    Cluster = "default"             # 集群名, 默认default
-    AlwaysLoadFromRemote = false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
-    BackupFile = "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
-    NamespacePrefix = ""            # 命名空间前缀, apollo支持的部门前缀
-    Namespaces = ""                 # 其他自定义命名空间, 多个命名空间用英文逗号隔开
+    ```yaml
+    apollo:
+        Address: "http://127.0.0.1:8080"
+        AppId: "your-appid"
+        AccessKey: ""                  # 验证key, 优先级高于基础认证
+        AuthBasicUser: ""              # 基础认证用户名, 可用于nginx的基础认证扩展
+        AuthBasicPassword: ""          # 基础认证密码
+        Cluster: "default"             # 集群名, 默认default
+        AlwaysLoadFromRemote: false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
+        BackupFile: "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
+        NamespacePrefix: ""            # 命名空间前缀, apollo支持的部门前缀
+        Namespaces: ""                 # 其他自定义命名空间, 多个命名空间用英文逗号隔开
     ```
 
 # 引用配置文件
 
-可以在配置中引用另一个配置文件, 可以使用相对路径, 相对于程序运行时当前目录
+可以在配置中引用另一个配置文件, 可以使用相对路径, 相对于程序运行时当前目录.
 
-被引用的配置文件中不能再添加引用了, 它不会被识别
+被引用的配置文件中不能再添加引用了, 它不会被识别.
 
-引用的配置文件必须存在
+引用的配置文件必须存在.
 
-```toml
-[include]
-files = './1.toml,./2.toml'
+```yaml
+include:
+    files: './1.toml,./2.toml'
 ```
 
 # 远程配置变更观察
