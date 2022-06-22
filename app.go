@@ -15,6 +15,8 @@ import (
 	"sync"
 	"syscall"
 
+	_ "go.uber.org/automaxprocs"
+
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/logger"
