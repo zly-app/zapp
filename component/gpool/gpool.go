@@ -86,7 +86,7 @@ func (g *gpool) dispatch() {
 	g.stop <- struct{}{}
 }
 
-// 异步执行
+// 异步执行, 如果队列任务已满则阻塞等待直到有空位
 func (g *gpool) Go(fn func() error, callback func(err error)) {
 	job := g.newJob(fn, callback)
 	g.jobQueue <- job
