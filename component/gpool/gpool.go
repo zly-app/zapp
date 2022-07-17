@@ -25,6 +25,10 @@ type gpool struct {
 
 func NewGPool(conf *GPoolConfig) core.IGPool {
 	conf.check()
+	if conf.ThreadCount < 0 {
+		return NewNoPool()
+	}
+
 	g := &gpool{
 		workerQueue: make(chan *worker, conf.ThreadCount),
 		jobQueue:    make(chan *job, conf.JobQueueSize),

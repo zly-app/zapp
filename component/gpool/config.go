@@ -25,7 +25,7 @@ const (
 type GPoolConfig struct {
 	// 任务队列大小
 	JobQueueSize int
-	// 同时处理信息的goroutine数, 默认为逻辑cpu数量
+	// 同时处理信息的goroutine数, 设为0时取逻辑cpu数量 * 2, 设为负数时不作任何限制, 每个请求有独立的线程执行
 	ThreadCount int
 }
 
@@ -33,7 +33,10 @@ func (g *GPoolConfig) check() {
 	if g.JobQueueSize < 1 {
 		g.JobQueueSize = defaultJobQueueSize
 	}
+	if g.ThreadCount == 0 {
+		g.ThreadCount = runtime.NumCPU() * 2
+	}
 	if g.ThreadCount < 1 {
-		g.ThreadCount = runtime.NumCPU()
+		g.ThreadCount = -1
 	}
 }
