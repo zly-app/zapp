@@ -42,6 +42,7 @@ func newConfig(appName string) *core.Config {
 			FreeMemoryInterval: consts.DefaultFreeMemoryInterval,
 			Labels:             make(map[string]string),
 			Log:                zlog.DefaultConfig,
+			PrintConfig:        true,
 		},
 	}
 	conf.Frame.Log.Name = appName
