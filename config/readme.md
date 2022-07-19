@@ -13,7 +13,6 @@
 - [从配置结构体加载配置](#%E4%BB%8E%E9%85%8D%E7%BD%AE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
 - [从apollo加载配置](#%E4%BB%8Eapollo%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
     - [apollo命名空间和配置说明](#apollo%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E5%92%8C%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
-        - [apollo配置json支持](#apollo%E9%85%8D%E7%BD%AEjson%E6%94%AF%E6%8C%81)
     - [在配置文件中设置从apollo加载](#%E5%9C%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E8%AE%BE%E7%BD%AE%E4%BB%8Eapollo%E5%8A%A0%E8%BD%BD)
 - [引用配置文件](#%E5%BC%95%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
 - [远程配置变更观察](#%E8%BF%9C%E7%A8%8B%E9%85%8D%E7%BD%AE%E5%8F%98%E6%9B%B4%E8%A7%82%E5%AF%9F)
@@ -49,7 +48,7 @@ frame: # 框架配置
     FreeMemoryInterval: 120000 # 主动清理内存间隔时间(毫秒), <= 0 表示禁用
     WaitServiceRunTime: 1000 # 默认等待服务启动阶段, 等待时间(毫秒), 如果时间到未收到服务启动成功信号则将服务标记为不稳定状态然后继续开始工作(我们总不能一直等着吧)
     ServiceUnstableObserveTime: 10000 # 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功
-    Flags: [] # flag, 注意: flag是忽略大小写的
+    Flags: [] # flag, 注意: flag是忽略大小写的, 示例 ['a', 'B', 'c']
     Labels: # 标签, 注意: 标签名是忽略大小写的
         #Foo: Bar
     Log: # 日志配置
@@ -71,6 +70,7 @@ frame: # 框架配置
         ShowFileAndLinenum: true # 显示文件路径和行号
         ShowFileAndLinenumMinLevel: 'warn' # 最小显示文件路径和行号的等级
         MillisDuration: true # 对zap.Duration转为毫秒
+    PrintConfig: true # app初始化完成后是否打印配置
 ```
 
 ## 插件配置示例
@@ -122,99 +122,45 @@ myconfig: #自定义分片名
 
 ## apollo命名空间和配置说明
 
+zapp会将apollo的`application`命名空间下的key数据解析为顶级配置.
+
+其它命名空间的数据会将命名空间名称作为配置顶级key, 将其数据解析为该key的下一级数据.
+
 ```text
-apollo命名空间主要为以下部分:
-    frame: 框架配置
-    plugins: 插件配置
-    services: 服务配置
-    components: 组件配置
-    当然你也通过设置 ApolloConfig.Namespaces 以加载自定义命名空间
-apollo的配置是扁平化的, 多级的key应该用点连接起来, 所以配置应该类似于这样:
-    frame:
-        Debug                   true            debug标志
-        FreeMemoryInterval      120000          清理内存间隔时间(毫秒)
-        ...
-        Log.Level               debug           日志等级, debug, info, warn, error, dpanic, panic, fatal
-        Log.WriteToStream       true            输出到屏幕
-        ...
-    plugins:
-        zipkin.A                1               ...
-        zipkin.B                v               ...
-        ...
-    services:
-        Api.Bind                :8080           ...
-        ...
-        Grpc.Bind               :3000           ...
-        ...
-    components:
-        Xorm.default.Driver     mysql           ...
-        ...
-        Redis.default.Address   127.0.0.1:6379  ...
-        ...
-apollo的配置也可以使用json, 如下:
-    frame:
-        Debug                   true            debug标志
-        FreeMemoryInterval      120000          清理内存间隔时间(毫秒)
-        ...
-        Log                     {json配置}
-    plugins:
-        zipkin                  {json配置}
-        ...
-    services:
-        Api                     {json配置}
-        Grpc                    {json配置}
-        ...
-    components:
-        Xorm.default            {json配置}
-        Redis.default           {json配置}
-        ...
+application
+    frame = {"debug": true}
+other
+    key = {"foo": "bar"}
 ```
 
-### apollo配置json支持
+以上apollo配置数据会被解析为以下配置
 
-> 由于配置项越来越多, 扁平化的apollo变得不是很好管理, 我们支持将多个配置key合并为一个json值. apollo配置示例:
-
-    ```toml
-    [frame]
-    Debug = true
-    Log = {
-         "Level": "info",
-         ...
-      }
-    
-    [plugins]
-    zipkin = {
-        ...
-      }
-    
-    [services]
-    Api = {
-        ...
-      }
-    
-    [components]
-    Xorm.default = {
-        ...
-      }
-    ```
+```yaml
+frame:
+    debug: true
+other:
+    key:
+        foo: bar
+```
 
 ## 在配置文件中设置从apollo加载
 
-> 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo_sdk/sdk.go). 从apollo拉取的配置会和文件的配置智能合并, 以apollo配置优先
+> 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo.go). 从apollo拉取的配置会和文件的配置智能合并, 以apollo配置优先
 
-    ```yaml
-    apollo:
-        Address: "http://127.0.0.1:8080"
-        AppId: "your-appid"
-        AccessKey: ""                  # 验证key, 优先级高于基础认证
-        AuthBasicUser: ""              # 基础认证用户名, 可用于nginx的基础认证扩展
-        AuthBasicPassword: ""          # 基础认证密码
-        Cluster: "default"             # 集群名, 默认default
-        AlwaysLoadFromRemote: false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
-        BackupFile: "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
-        NamespacePrefix: ""            # 命名空间前缀, apollo支持的部门前缀
-        Namespaces: ""                 # 其他自定义命名空间, 多个命名空间用英文逗号隔开
-    ```
+```yaml
+apollo:
+    Address: "http://127.0.0.1:8080"
+    AppId: "your-appid"
+    AccessKey: ""                  # 验证key, 优先级高于基础认证
+    AuthBasicUser: ""              # 基础认证用户名, 可用于nginx的基础认证扩展
+    AuthBasicPassword: ""          # 基础认证密码
+    Cluster: "default"             # 集群名, 默认default
+    AlwaysLoadFromRemote: false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
+    BackupFile: "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
+    ApplicationDataType: "yaml"    # application命名空间下key的值的数据类型, 支持yaml,yml,toml,json
+    Namespaces: ""                 # 其他自定义命名空间, 多个命名空间用英文逗号隔开
+    IgnoreNamespaceNotFound: false # 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
+```
 
 # 引用配置文件
 
@@ -247,7 +193,7 @@ import (
 
 func main() {
 	app := zapp.NewApp("test",
-		apollo_provider.WithPlugin(true),
+		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
 		zapp.WithConfigOption(
 			config.WithApollo(&config.ApolloConfig{
               Address:           "http://127.0.0.1:8080", // apollo-api地址, 多个地址用英文逗号连接
