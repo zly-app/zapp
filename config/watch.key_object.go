@@ -39,7 +39,7 @@ func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
 	w.callbacks = append(w.callbacks, items...)
 
 	// 立即触发
-	for _, fn := range w.callbacks {
+	for _, fn := range callback {
 		fn(w, make([]byte, 0), w.GetData()) // 通过GetData重新获取数据保证不会被改变
 	}
 }

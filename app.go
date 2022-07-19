@@ -16,6 +16,7 @@ import (
 	"syscall"
 
 	_ "go.uber.org/automaxprocs"
+	"gopkg.in/yaml.v3"
 
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/core"
@@ -84,6 +85,15 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.makePlugin()
 	// 构建服务
 	app.makeService()
+
+	if app.config.Config().Frame.PrintConfig {
+		data, err := yaml.Marshal(app.config.Config())
+		if err != nil {
+			app.Error("打印配置时序列化失败: %v", err)
+		} else {
+			app.Info("配置数据\n", string(data))
+		}
+	}
 
 	app.Debug("app初始化完毕")
 	app.handler(AfterInitializeHandler)

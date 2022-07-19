@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -44,25 +43,7 @@ var (
 	HttpReqTimeout = time.Second * 3
 	// http请求通知超时
 	HttpReqNotificationTimeout = time.Second * 65
-	// 是否忽略命名空间不存在
-	IgnoreNamespaceNotFound = false
 )
-
-// 命名空间定义
-const (
-	FrameNamespace      = "frame"
-	PluginsNamespace    = "plugins"
-	ServicesNamespace   = "services"
-	ComponentsNamespace = "components"
-)
-
-// 默认需要的的命名空间
-var defaultNamespaces = []string{
-	FrameNamespace,
-	PluginsNamespace,
-	ServicesNamespace,
-	ComponentsNamespace,
-}
 
 // 错误状态码描述
 var errStatusCodesDescribe = map[int]string{
@@ -73,18 +54,21 @@ var errStatusCodesDescribe = map[int]string{
 	500: "服务内部错误",
 }
 
-type ApolloConfig struct {
-	Address              string // apollo-api地址, 多个地址用英文逗号连接
-	AppId                string // 应用名
-	AccessKey            string // 验证key, 优先级高于基础认证
-	AuthBasicUser        string // 基础认证用户名, 可用于nginx的基础认证扩展
-	AuthBasicPassword    string // 基础认证密码
-	Cluster              string // 集群名, 默认default
-	AlwaysLoadFromRemote bool   // 总是从远程获取, 在远程加载失败时不会从备份文件加载
-	BackupFile           string // 备份文件名
-	NamespacePrefix      string // 命名空间前缀, apollo支持的部门前缀
-	Namespaces           string // 其他自定义命名空间, 多个命名空间用英文逗号隔开
-	cache                MultiNamespaceData
+// 默认命名空间, 不会加上 NamespacePrefix
+const ApplicationNamespace = "application"
+
+type ApolloClient struct {
+	Address                 string   // apollo-api地址, 多个地址用英文逗号连接
+	AppId                   string   // 应用名
+	AccessKey               string   // 验证key, 优先级高于基础认证
+	AuthBasicUser           string   // 基础认证用户名, 可用于nginx的基础认证扩展
+	AuthBasicPassword       string   // 基础认证密码
+	Cluster                 string   // 集群名, 默认default
+	AlwaysLoadFromRemote    bool     // 总是从远程获取, 在远程加载失败时不会从备份文件加载
+	BackupFile              string   // 备份文件名
+	Namespaces              []string // 其他自定义命名空间
+	IgnoreNamespaceNotFound bool     // 是否忽略命名空间不存在
+	cache                   MultiNamespaceData
 }
 
 type (
@@ -110,18 +94,18 @@ type (
 	}
 )
 
-func (a *ApolloConfig) clientIP() string {
+func (a *ApolloClient) clientIP() string {
 	return ""
 }
 
-// 获取所有命名空间的数据
-func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
-	namespaces := append([]string{}, defaultNamespaces...)
-	if a.Namespaces != "" {
-		namespaces = append(namespaces, strings.Split(a.Namespaces, ",")...)
-	}
-	a.cache = make(MultiNamespaceData, len(namespaces)) // 结果数据
+func (a *ApolloClient) Init() error {
+	a.cache = make(MultiNamespaceData)
+	return nil
+}
 
+// 获取所有命名空间的数据
+func (a *ApolloClient) GetNamespacesData() (MultiNamespaceData, error) {
+	namespaces := append([]string{ApplicationNamespace}, a.Namespaces...)
 	// 允许从本地备份获取
 	if a.isAllowLoadFromBackupFile() {
 		backupData, err := a.loadDataFromBackupFile()
@@ -160,8 +144,7 @@ func (a *ApolloConfig) GetNamespacesData() (MultiNamespaceData, error) {
 }
 
 // 从远程加载命名空间数据
-func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (data *NamespaceData, changed bool, err error) {
-	namespace = a.NamespacePrefix + namespace
+func (a *ApolloClient) loadNamespaceDataFromRemote(namespace string) (data *NamespaceData, changed bool, err error) {
 	// 检查配置
 	if a.Address == "" {
 		return nil, false, errors.New("apollo的address是空的")
@@ -202,7 +185,7 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (data *Name
 
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound && IgnoreNamespaceNotFound { // 命名空间不存在
+		if resp.StatusCode == http.StatusNotFound && a.IgnoreNamespaceNotFound && namespace != ApplicationNamespace { // 命名空间不存在
 			empty := &NamespaceData{
 				AppId:          a.AppId,
 				Cluster:        a.Cluster,
@@ -238,7 +221,7 @@ func (a *ApolloConfig) loadNamespaceDataFromRemote(namespace string) (data *Name
   如果 oldData 为 nil 会直接获取数据
   如果 oldData.ReleaseKey 不为空则检查是否会改变了
 */
-func (a *ApolloConfig) GetNamespaceData(namespace string) (oldData, newData *NamespaceData, changed bool, err error) {
+func (a *ApolloClient) GetNamespaceData(namespace string) (oldData, newData *NamespaceData, changed bool, err error) {
 	oldData = a.cache[namespace]
 	if oldData == nil {
 		oldData = &NamespaceData{
@@ -260,7 +243,7 @@ func (a *ApolloConfig) GetNamespaceData(namespace string) (oldData, newData *Nam
 /*等待通知
   如果数据未被改变, 此方法会导致挂起直到超时或被改变
 */
-func (a *ApolloConfig) WaitNotification(ctx context.Context, param []*NotificationParam) ([]*NotificationRsp, error) {
+func (a *ApolloClient) WaitNotification(ctx context.Context, param []*NotificationParam) ([]*NotificationRsp, error) {
 	if len(param) == 0 {
 		return nil, nil
 	}
@@ -322,7 +305,7 @@ func (a *ApolloConfig) WaitNotification(ctx context.Context, param []*Notificati
 }
 
 // 保存数据到备份文件
-func (a *ApolloConfig) saveDataToBackupFile() {
+func (a *ApolloClient) saveDataToBackupFile() {
 	if len(a.cache) == 0 || a.BackupFile == "" {
 		return
 	}
@@ -337,7 +320,7 @@ func (a *ApolloConfig) saveDataToBackupFile() {
 }
 
 // 从备份文件加载数据
-func (a *ApolloConfig) loadDataFromBackupFile() (MultiNamespaceData, error) {
+func (a *ApolloClient) loadDataFromBackupFile() (MultiNamespaceData, error) {
 	if a.BackupFile == "" {
 		return nil, nil
 	}
@@ -353,19 +336,19 @@ func (a *ApolloConfig) loadDataFromBackupFile() (MultiNamespaceData, error) {
 }
 
 // 写入缓存
-func (a *ApolloConfig) writeCache(data MultiNamespaceData) {
+func (a *ApolloClient) writeCache(data MultiNamespaceData) {
 	for k, v := range data {
 		a.cache[k] = v
 	}
 }
 
 // 是否允许从本地备份获取
-func (a *ApolloConfig) isAllowLoadFromBackupFile() bool {
+func (a *ApolloClient) isAllowLoadFromBackupFile() bool {
 	return !a.AlwaysLoadFromRemote && a.BackupFile != "" // 不总是从远程获取 并且 存在备份文件
 }
 
 // 官方签名
-func (a *ApolloConfig) officialSignature(req *http.Request) {
+func (a *ApolloClient) officialSignature(req *http.Request) {
 	if a.AccessKey != "" {
 		timestamp := fmt.Sprintf("%v", time.Now().UnixNano()/int64(time.Millisecond))
 		stringToSign := timestamp + "\n" + req.URL.RequestURI()

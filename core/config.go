@@ -79,7 +79,7 @@ type IConfigWatchKeyObject interface {
 	GroupName() string
 	// 获取key名
 	KeyName() string
-	// 添加回调
+	// 添加回调, 即使没有发生变更, 启动时也会触发一次回调
 	AddCallback(callback ...ConfigWatchKeyCallback)
 	// 获取原始数据的副本
 	GetData() []byte
@@ -143,6 +143,8 @@ type FrameConfig struct {
 	Labels map[string]string
 	// log配置
 	Log LogConfig
+	// app初始化完成后是否打印配置
+	PrintConfig bool
 }
 
 type LogConfig struct {

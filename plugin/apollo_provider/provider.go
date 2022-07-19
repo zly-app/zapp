@@ -18,7 +18,7 @@ var WatchErrWaitTime = time.Second * 5
 
 type ApolloProvider struct {
 	app    core.IApp
-	client *config.ApolloConfig
+	client *apollo_sdk.ApolloClient
 
 	watchNamespaces       map[string]int          // 观察的命名空间, value为notificationID
 	namespaceCallbackList map[string]KeyCallbacks // 命名空间回调列表
