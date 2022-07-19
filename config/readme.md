@@ -122,9 +122,11 @@ myconfig: #自定义分片名
 
 ## apollo命名空间和配置说明
 
-zapp会将apollo的`application`命名空间下的key数据解析为顶级配置.
+zapp会将apollo的`application`命名空间下的key作为顶级配置key, 其值按照格式解析后赋予该配置的子级.
 
-其它命名空间的数据会将命名空间名称作为配置顶级key, 将其数据解析为该key的下一级数据.
+其它命名空间的数据会将命名空间名称作为配置顶级key, 其值不解析并设为该配置的下一级数据.
+
+示例 apollo 配置数据:
 
 ```text
 application
@@ -139,8 +141,7 @@ other
 frame:
     debug: true
 other:
-    key:
-        foo: bar
+    key: '{"foo": "bar"}'
 ```
 
 ## 在配置文件中设置从apollo加载
