@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 
 	"github.com/zly-app/zapp/logger"
 )
@@ -310,7 +311,7 @@ func (a *ApolloClient) saveDataToBackupFile() {
 		return
 	}
 
-	bs, err := json.MarshalIndent(a.cache, "", "  ")
+	bs, err := yaml.Marshal(a.cache)
 	if err == nil {
 		err = ioutil.WriteFile(a.BackupFile, bs, 0644)
 	}
@@ -331,7 +332,7 @@ func (a *ApolloClient) loadDataFromBackupFile() (MultiNamespaceData, error) {
 	}
 
 	var result MultiNamespaceData
-	err = json.Unmarshal(bs, &result)
+	err = yaml.Unmarshal(bs, &result)
 	return result, err
 }
 
