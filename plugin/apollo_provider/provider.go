@@ -60,6 +60,9 @@ func NewApolloProvider(app core.IApp) *ApolloProvider {
 
 // 获取
 func (p *ApolloProvider) Get(groupName, keyName string) ([]byte, error) {
+	if groupName == "" {
+		groupName = apollo_sdk.ApplicationNamespace
+	}
 	_, data, _, err := p.client.GetNamespaceData(groupName)
 	if err != nil {
 		return nil, err
