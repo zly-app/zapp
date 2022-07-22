@@ -70,7 +70,7 @@ frame: # 框架配置
         ShowFileAndLinenum: true # 显示文件路径和行号
         ShowFileAndLinenumMinLevel: 'warn' # 最小显示文件路径和行号的等级
         MillisDuration: true # 对zap.Duration转为毫秒
-    PrintConfig: true # app初始化完成后是否打印配置
+    PrintConfig: true # app初始时是否打印配置
 ```
 
 ## 插件配置示例
@@ -122,26 +122,41 @@ myconfig: #自定义分片名
 
 ## apollo命名空间和配置说明
 
-zapp会将apollo的`application`命名空间下的key作为顶级配置key, 其值按照格式解析后赋予该配置的子级.
+zapp会将命名空间的名称作为配置顶级key, 该命名空间的配置会作为二级key和其值.
 
-其它命名空间的数据会将命名空间名称作为配置顶级key, 其值不解析并设为该配置的下一级数据.
+示例 apollo 配置数据:
+
+```text
+namespace1
+    key1 = value
+    key2 = {"foo": "bar"}
+```
+
+以上apollo配置数据会被解析为以下配置
+
+```yaml
+namespace1:
+  key1: 'value'
+  key2: '{"foo": "bar"}'
+```
+
+zapp会将 `applicaiont` 命名空间下的 `frame`,`components`,`plugins`,`services`配置作为配置顶级key, 并将其值按照指定格式解析后赋予其子集.
 
 示例 apollo 配置数据:
 
 ```text
 application
     frame = {"debug": true}
-other
-    key = {"foo": "bar"}
+    otherKey = {"foo": "bar"}
 ```
 
 以上apollo配置数据会被解析为以下配置
 
 ```yaml
 frame:
-    debug: true
-other:
-    key: '{"foo": "bar"}'
+  debug: true
+application:
+  otherKey: '{"foo": "bar"}'
 ```
 
 ## 在配置文件中设置从apollo加载
@@ -159,7 +174,8 @@ apollo:
     AlwaysLoadFromRemote: false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
     BackupFile: "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
     ApplicationDataType: "yaml"    # application命名空间下key的值的数据类型, 支持yaml,yml,toml,json
-    Namespaces: ""                 # 其他自定义命名空间, 多个命名空间用英文逗号隔开
+    ApplicationParseKeys: []       # application命名空间下哪些key数据会被解析, 无论如何默认的key(frame/components/plugins/services)会被解析
+    Namespaces: []                 # 其他自定义命名空间
     IgnoreNamespaceNotFound: false # 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
 ```
 

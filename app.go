@@ -76,6 +76,15 @@ func NewApp(appName string, opts ...Option) core.IApp {
 
 	app.ILogger = logger.NewLogger(appName, app.config, app.opt.LogOpts...)
 
+	if app.config.Config().Frame.PrintConfig {
+		data, err := yaml.Marshal(app.config.GetViper().AllSettings())
+		if err != nil {
+			app.Error("打印配置时序列化失败: %v", err)
+		} else {
+			app.Info("配置数据\n", string(data))
+		}
+	}
+
 	app.handler(BeforeInitializeHandler)
 	app.Debug("app初始化")
 
@@ -85,15 +94,6 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.makePlugin()
 	// 构建服务
 	app.makeService()
-
-	if app.config.Config().Frame.PrintConfig {
-		data, err := yaml.Marshal(app.config.Config())
-		if err != nil {
-			app.Error("打印配置时序列化失败: %v", err)
-		} else {
-			app.Info("配置数据\n", string(data))
-		}
-	}
 
 	app.Debug("app初始化完毕")
 	app.handler(AfterInitializeHandler)

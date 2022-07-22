@@ -143,7 +143,7 @@ type FrameConfig struct {
 	Labels map[string]string
 	// log配置
 	Log LogConfig
-	// app初始化完成后是否打印配置
+	// app初始时是否打印配置
 	PrintConfig bool
 }
 

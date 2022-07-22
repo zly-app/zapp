@@ -22,18 +22,22 @@ import (
 
 const defApplicationDataType = "yaml"
 
+// 默认application命名空间下哪些key数据会被解析
+var defApplicationParseKeys = []string{"frame", "components", "plugins", "services"}
+
 type ApolloConfig struct {
-	Address                 string // apollo-api地址, 多个地址用英文逗号连接
-	AppId                   string // 应用名
-	AccessKey               string // 验证key, 优先级高于基础认证
-	AuthBasicUser           string // 基础认证用户名, 可用于nginx的基础认证扩展
-	AuthBasicPassword       string // 基础认证密码
-	Cluster                 string // 集群名, 默认default
-	AlwaysLoadFromRemote    bool   // 总是从远程获取, 在远程加载失败时不会从备份文件加载
-	BackupFile              string // 备份文件名
-	ApplicationDataType     string // application命名空间下key的值的数据类型, 支持yaml,yml,toml,json
-	Namespaces              string // 其他自定义命名空间, 多个命名空间用英文逗号隔开
-	IgnoreNamespaceNotFound bool   // 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
+	Address                 string   // apollo-api地址, 多个地址用英文逗号连接
+	AppId                   string   // 应用名
+	AccessKey               string   // 验证key, 优先级高于基础认证
+	AuthBasicUser           string   // 基础认证用户名, 可用于nginx的基础认证扩展
+	AuthBasicPassword       string   // 基础认证密码
+	Cluster                 string   // 集群名, 默认default
+	AlwaysLoadFromRemote    bool     // 总是从远程获取, 在远程加载失败时不会从备份文件加载
+	BackupFile              string   // 备份文件名
+	ApplicationDataType     string   // application命名空间下key的值的数据类型, 支持yaml,yml,toml,json
+	ApplicationParseKeys    []string // application命名空间下哪些key数据会被解析, 无论如何默认的key(frame/components/plugins/services)会被解析
+	Namespaces              []string // 其他自定义命名空间
+	IgnoreNamespaceNotFound bool     // 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
 	client                  *apollo_sdk.ApolloClient
 }
 
@@ -79,11 +83,8 @@ func makeApolloConfigFromViper(vi *viper.Viper) (*ApolloConfig, error) {
 		Cluster:                 conf.Cluster,
 		AlwaysLoadFromRemote:    conf.AlwaysLoadFromRemote,
 		BackupFile:              conf.BackupFile,
-		Namespaces:              nil,
+		Namespaces:              append([]string{}, conf.Namespaces...),
 		IgnoreNamespaceNotFound: conf.IgnoreNamespaceNotFound,
-	}
-	if conf.Namespaces != "" {
-		ac.Namespaces = strings.Split(conf.Namespaces, ",")
 	}
 	err := ac.Init()
 	if err != nil {
@@ -104,7 +105,7 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 
 	configs := make(map[string]interface{}, len(dataList))
 	for namespace, data := range dataList {
-		err := analyseApolloConfig(configs, namespace, data.Configurations, conf.ApplicationDataType)
+		err := analyseApolloConfig(configs, namespace, data.Configurations, conf)
 		if err != nil {
 			return nil, fmt.Errorf("分析apollo配置数据失败: %v", err)
 		}
@@ -119,19 +120,43 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 }
 
 // 分析apollo配置
-func analyseApolloConfig(dst map[string]interface{}, namespace string, configurations map[string]string, dType string) error {
+func analyseApolloConfig(dst map[string]interface{}, namespace string, configurations map[string]string, conf *ApolloConfig) error {
 	if namespace != apollo_sdk.ApplicationNamespace {
 		dst[namespace] = configurations
 		fmt.Println(fmt.Sprintf("%s: %+v", namespace, configurations))
 		return nil
 	}
 
+	isParseKey := func(key string) bool {
+		for _, s := range defApplicationParseKeys {
+			if key == s {
+				return true
+			}
+		}
+		for _, s := range conf.ApplicationParseKeys {
+			if key == s {
+				return true
+			}
+		}
+		return false
+	}
+
 	for k, v := range configurations {
+		if !isParseKey(k) {
+			mm, ok := dst[namespace]
+			if !ok {
+				mm = make(map[string]string)
+				dst[namespace] = mm
+			}
+			mm.(map[string]string)[k] = v
+			continue
+		}
+
 		vi := viper.New()
-		vi.SetConfigType(dType)
+		vi.SetConfigType(conf.ApplicationDataType)
 		err := vi.ReadConfig(strings.NewReader(v))
 		if err != nil {
-			return fmt.Errorf("解析数据失败 key: %v, err: %v", k, err)
+			return fmt.Errorf("解析数据失败 key: %v, value: %v, err: %v", k, v, err)
 		}
 		data := vi.AllSettings()
 		dst[k] = data
