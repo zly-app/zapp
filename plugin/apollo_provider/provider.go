@@ -76,6 +76,9 @@ func (p *ApolloProvider) Get(groupName, keyName string) ([]byte, error) {
 
 // watch
 func (p *ApolloProvider) Watch(groupName, keyName string, callback core.ConfigWatchProviderCallback) error {
+	if groupName == "" {
+		groupName = apollo_sdk.ApplicationNamespace
+	}
 	_, data, _, err := p.client.GetNamespaceData(groupName)
 	if err != nil {
 		return err
