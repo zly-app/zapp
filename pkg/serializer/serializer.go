@@ -12,8 +12,12 @@ import (
 type ISerializer interface {
 	// 序列化
 	Marshal(a interface{}, w io.Writer) error
+	// 序列化
+	MarshalBytes(a interface{}) ([]byte, error)
 	// 反序列化
-	Unmarshal(in io.Reader, a interface{}) error
+	Unmarshal(r io.Reader, a interface{}) error
+	// 反序列化
+	UnmarshalBytes(data []byte, a interface{}) error
 }
 
 var serializers = map[string]ISerializer{

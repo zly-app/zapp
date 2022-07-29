@@ -11,10 +11,20 @@ const JsonIterStandardSerializerName = "jsoniter_standard"
 
 type jsonIterStandardSerializer struct{}
 
+var jsonIterStandard = jsoniter.ConfigCompatibleWithStandardLibrary
+
 func (jsonIterStandardSerializer) Marshal(a interface{}, w io.Writer) error {
-	return jsoniter.ConfigCompatibleWithStandardLibrary.NewEncoder(w).Encode(a)
+	return jsonIterStandard.NewEncoder(w).Encode(a)
 }
 
-func (jsonIterStandardSerializer) Unmarshal(in io.Reader, a interface{}) error {
-	return jsoniter.ConfigCompatibleWithStandardLibrary.NewDecoder(in).Decode(a)
+func (s jsonIterStandardSerializer) MarshalBytes(a interface{}) ([]byte, error) {
+	return jsonIterStandard.Marshal(a)
+}
+
+func (jsonIterStandardSerializer) Unmarshal(r io.Reader, a interface{}) error {
+	return jsonIterStandard.NewDecoder(r).Decode(a)
+}
+
+func (s jsonIterStandardSerializer) UnmarshalBytes(data []byte, a interface{}) error {
+	return jsonIterStandard.Unmarshal(data, a)
 }
