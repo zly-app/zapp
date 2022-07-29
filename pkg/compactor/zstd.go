@@ -1,6 +1,7 @@
 package compactor
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/klauspost/compress/zstd"
@@ -10,7 +11,7 @@ const ZStdCompactorName = "zstd"
 
 type ZStdCompactor struct{}
 
-func (Z ZStdCompactor) Compress(in io.Reader, out io.Writer) error {
+func (z ZStdCompactor) Compress(in io.Reader, out io.Writer) error {
 	opts := []zstd.EOption{
 		zstd.WithEncoderLevel(zstd.SpeedFastest), // 最快压缩
 	}
@@ -26,7 +27,16 @@ func (Z ZStdCompactor) Compress(in io.Reader, out io.Writer) error {
 	return enc.Close()
 }
 
-func (Z ZStdCompactor) UnCompress(in io.Reader, out io.Writer) error {
+func (z ZStdCompactor) CompressBytes(in []byte) (out []byte, err error) {
+	var outIO bytes.Buffer
+	err = z.Compress(bytes.NewReader(in), &outIO)
+	if err != nil {
+		return nil, err
+	}
+	return outIO.Bytes(), nil
+}
+
+func (z ZStdCompactor) UnCompress(in io.Reader, out io.Writer) error {
 	d, err := zstd.NewReader(in)
 	if err != nil {
 		return err
@@ -35,6 +45,15 @@ func (Z ZStdCompactor) UnCompress(in io.Reader, out io.Writer) error {
 
 	_, err = io.Copy(out, d)
 	return err
+}
+
+func (z ZStdCompactor) UnCompressBytes(in []byte) (out []byte, err error) {
+	var outIO bytes.Buffer
+	err = z.UnCompress(bytes.NewReader(in), &outIO)
+	if err != nil {
+		return nil, err
+	}
+	return outIO.Bytes(), nil
 }
 
 func NewZStdCompactor() ICompactor {

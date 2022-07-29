@@ -11,8 +11,12 @@ import (
 type ICompactor interface {
 	// 压缩
 	Compress(in io.Reader, out io.Writer) error
+	// 压缩
+	CompressBytes(in []byte) (out []byte, err error)
 	// 解压缩
 	UnCompress(in io.Reader, out io.Writer) error
+	// 解压缩
+	UnCompressBytes(in []byte) (out []byte, err error)
 }
 
 var compactorList = map[string]ICompactor{

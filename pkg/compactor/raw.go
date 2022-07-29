@@ -14,9 +14,17 @@ func (r RawCompactor) Compress(in io.Reader, out io.Writer) error {
 	return err
 }
 
+func (r RawCompactor) CompressBytes(in []byte) (out []byte, err error) {
+	return in, nil
+}
+
 func (r RawCompactor) UnCompress(in io.Reader, out io.Writer) error {
 	_, err := io.Copy(out, in)
 	return err
+}
+
+func (r RawCompactor) UnCompressBytes(in []byte) (out []byte, err error) {
+	return in, nil
 }
 
 func NewRawCompactor() ICompactor {

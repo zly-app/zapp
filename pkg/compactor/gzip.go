@@ -1,6 +1,7 @@
 package compactor
 
 import (
+	"bytes"
 	"compress/gzip"
 	"io"
 )
@@ -18,6 +19,15 @@ func (r GzipCompactor) Compress(in io.Reader, out io.Writer) error {
 	return w.Close()
 }
 
+func (r GzipCompactor) CompressBytes(in []byte) (out []byte, err error) {
+	var outIO bytes.Buffer
+	err = r.Compress(bytes.NewReader(in), &outIO)
+	if err != nil {
+		return nil, err
+	}
+	return outIO.Bytes(), nil
+}
+
 func (r GzipCompactor) UnCompress(in io.Reader, out io.Writer) error {
 	read, err := gzip.NewReader(in)
 	if err != nil {
@@ -28,6 +38,15 @@ func (r GzipCompactor) UnCompress(in io.Reader, out io.Writer) error {
 		return err
 	}
 	return read.Close()
+}
+
+func (r GzipCompactor) UnCompressBytes(in []byte) (out []byte, err error) {
+	var outIO bytes.Buffer
+	err = r.UnCompress(bytes.NewReader(in), &outIO)
+	if err != nil {
+		return nil, err
+	}
+	return outIO.Bytes(), nil
 }
 
 func NewGzipCompactor() ICompactor {
