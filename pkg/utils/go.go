@@ -18,6 +18,7 @@ func (goCli) GoAndWait(fns ...func() error) error {
 	for _, fn := range fns {
 		wg.Add(1)
 		go func(fn func() error) {
+			defer wg.Done()
 			if e := Recover.WrapCall(fn); e != nil {
 				once.Do(func() {
 					err = e
@@ -25,6 +26,6 @@ func (goCli) GoAndWait(fns ...func() error) error {
 			}
 		}(fn)
 	}
-	wg.Done()
+	wg.Wait()
 	return err
 }
