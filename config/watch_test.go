@@ -13,8 +13,9 @@ import (
 
 // 测试提供者
 type TestWatchProvider struct {
-	data map[string]map[string][]byte // 表示组下的key的数据
-	mx   sync.Mutex
+	data              map[string]map[string][]byte // 表示组下的key的数据
+	changeDataHandler func(oldData []byte) []byte
+	mx                sync.Mutex
 }
 
 // 创建测试提供者
@@ -55,17 +56,13 @@ func (t *TestWatchProvider) Set(groupName, keyName string, data []byte) error {
 }
 func (t *TestWatchProvider) Watch(groupName, keyName string, callback core.ConfigWatchProviderCallback) error {
 	go func(groupName, keyName string, callback core.ConfigWatchProviderCallback) {
-		for {
-			time.Sleep(time.Second * 2)
-			t.mx.Lock()
-			oldData := t.getData(groupName, keyName)
-			newData := make([]byte, len(oldData)*2)
-			copy(newData, oldData)
-			copy(newData[len(oldData):], oldData)
-			t.data[groupName][keyName] = newData
-			t.mx.Unlock()
-			callback(groupName, keyName, oldData, newData)
-		}
+		time.Sleep(time.Millisecond * 200)
+		t.mx.Lock()
+		oldData := t.getData(groupName, keyName)
+		newData := t.changeDataHandler(oldData)
+		t.data[groupName][keyName] = newData
+		t.mx.Unlock()
+		callback(groupName, keyName, oldData, newData)
 	}(groupName, keyName, callback)
 	return nil
 }
@@ -81,6 +78,12 @@ var testProvider *TestWatchProvider
 
 func init() {
 	p := NewTestWatchProvider(map[string]map[string][]byte{})
+	p.changeDataHandler = func(oldData []byte) []byte {
+		newData := make([]byte, len(oldData)*2)
+		copy(newData, oldData)
+		copy(newData[len(oldData):], oldData)
+		return newData
+	}
 	testProvider = p
 	RegistryConfigWatchProvider("test", p)
 	SetDefaultConfigWatchProvider(p)
@@ -128,17 +131,28 @@ func TestWatch(t *testing.T) {
 	require.Nil(t, err)
 
 	var isCallback bool
-	keyObj.AddCallback(func(k core.IConfigWatchKeyObject, oldData, newData []byte) {
+	expectFirst := true
+	expectOldData := ""
+	expectNewData := "2"
+	keyObj.AddCallback(func(k core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
 		isCallback = true
-		require.Equal(t, "", string(oldData))
-		require.Equal(t, "2", string(newData))
+		require.Equal(t, expectFirst, first)
+		require.Equal(t, expectOldData, string(oldData))
+		require.Equal(t, expectNewData, string(newData))
 		require.Equal(t, keyObj, k)
 	})
 	require.Nil(t, err)
 
-	time.Sleep(time.Millisecond * 100)
 	require.True(t, isCallback)
-	require.Equal(t, "2", keyObj.GetString())
+	require.Equal(t, expectNewData, keyObj.GetString())
+
+	isCallback = false
+	expectFirst = false
+	expectOldData = "2"
+	expectNewData = "22"
+	time.Sleep(time.Millisecond * 300)
+	require.True(t, isCallback)
+	require.Equal(t, expectNewData, keyObj.GetString())
 }
 
 func TestExpect(t *testing.T) {
@@ -278,4 +292,146 @@ b:
 	require.Nil(t, err)
 	require.Equal(t, 1, a.A)
 	require.Equal(t, []string{"x", "y", "z"}, a.B.C)
+}
+
+func TestGenericSDKJson(t *testing.T) {
+	testGroupName := "g1"
+	testKeyName := "k1"
+
+	rawData := []byte(`{"a":1}`)
+	err := testProvider.Set(testGroupName, testKeyName, rawData)
+	require.Nil(t, err)
+
+	type AA struct {
+		A int `json:"a"`
+	}
+	_, err = newWatchKeyStruct[*AA](testGroupName, testKeyName)
+	require.NotNil(t, err)
+
+	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName)
+	require.Nil(t, err)
+	require.NotNil(t, keyObj)
+	require.Equal(t, 1, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
+}
+
+func TestGenericSDKYaml(t *testing.T) {
+	testGroupName := "g1"
+	testKeyName := "k1"
+
+	rawData := []byte(`a: 1`)
+	err := testProvider.Set(testGroupName, testKeyName, rawData)
+	require.Nil(t, err)
+
+	type AA struct {
+		A int `yaml:"a"`
+	}
+	_, err = newWatchKeyStruct[*AA](testGroupName, testKeyName, WithWatchStructYaml())
+	require.NotNil(t, err)
+
+	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName, WithWatchStructYaml())
+	require.Nil(t, err)
+	require.NotNil(t, keyObj)
+	require.Equal(t, 1, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
+}
+
+func TestGenericWatchJson(t *testing.T) {
+	testGroupName := "g1"
+	testKeyName := "k1"
+
+	rawData := []byte(`{"a":1}`)
+	err := testProvider.Set(testGroupName, testKeyName, rawData)
+	require.Nil(t, err)
+
+	type AA struct {
+		A int `json:"a"`
+	}
+
+	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName)
+	require.Nil(t, err)
+	require.NotNil(t, keyObj)
+	require.Equal(t, 1, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
+
+	var isCallback bool
+	expectFirst := true
+	expectOldData := 0
+	expectNewData := 1
+	keyObj.AddCallback(func(k core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
+		isCallback = true
+		require.Equal(t, expectFirst, first)
+		require.Equal(t, expectOldData, oldData.A)
+		require.Equal(t, expectNewData, newData.A)
+		require.Equal(t, keyObj, k)
+	})
+	require.Nil(t, err)
+
+	require.True(t, isCallback)
+	require.Equal(t, expectNewData, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
+
+	rawData = []byte(`{"a":2}`)
+	testProvider.changeDataHandler = func(oldData []byte) []byte {
+		return rawData
+	}
+
+	isCallback = false
+	expectFirst = false
+	expectOldData = 1
+	expectNewData = 2
+	time.Sleep(time.Millisecond * 300)
+	require.True(t, isCallback)
+	require.Equal(t, expectNewData, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
+}
+
+func TestGenericWatchYaml(t *testing.T) {
+	testGroupName := "g1"
+	testKeyName := "k1"
+
+	rawData := []byte(`a: 1`)
+	err := testProvider.Set(testGroupName, testKeyName, rawData)
+	require.Nil(t, err)
+
+	type AA struct {
+		A int `yaml:"a"`
+	}
+
+	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName, WithWatchStructYaml())
+	require.Nil(t, err)
+	require.NotNil(t, keyObj)
+	require.Equal(t, 1, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
+
+	var isCallback bool
+	expectFirst := true
+	expectOldData := 0
+	expectNewData := 1
+	keyObj.AddCallback(func(k core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
+		isCallback = true
+		require.Equal(t, expectFirst, first)
+		require.Equal(t, expectOldData, oldData.A)
+		require.Equal(t, expectNewData, newData.A)
+		require.Equal(t, keyObj, k)
+	})
+	require.Nil(t, err)
+
+	require.True(t, isCallback)
+	require.Equal(t, expectNewData, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
+
+	rawData = []byte(`a: 2`)
+	testProvider.changeDataHandler = func(oldData []byte) []byte {
+		return rawData
+	}
+
+	isCallback = false
+	expectFirst = false
+	expectOldData = 1
+	expectNewData = 2
+	time.Sleep(time.Millisecond * 300)
+	require.True(t, isCallback)
+	require.Equal(t, expectNewData, keyObj.Get().A)
+	require.Equal(t, rawData, keyObj.GetData())
 }

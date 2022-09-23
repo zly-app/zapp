@@ -233,7 +233,7 @@ func main() {
 	)
 	defer app.Exit()
 
-	callback := func(w core.IConfigWatchKeyObject, oldData, newData []byte) {
+	callback := func(w core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
 		app.Info("回调",
 			zap.String("groupName", w.GroupName()),
 			zap.String("keyName", w.KeyName()),
@@ -241,9 +241,9 @@ func main() {
 			zap.String("newData", string(newData)),
 		)
 	}
-	app.GetConfig().WatchKey("watch", "a").AddCallback(callback)
-	app.GetConfig().WatchKey("watch", "b").AddCallback(callback)
-	app.GetConfig().WatchKey("watch2", "a").AddCallback(callback)
+	config.WatchKey("watch", "a").AddCallback(callback)
+	config.WatchKey("watch", "b").AddCallback(callback)
+	config.WatchKey("watch2", "a").AddCallback(callback)
 
 	app.Run()
 }

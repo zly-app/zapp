@@ -19,7 +19,7 @@ func main() {
 	keyObj := app.GetConfig().WatchKey("group_name", "key_name")
 
 	// 添加回调函数
-	keyObj.AddCallback(func(w core.IConfigWatchKeyObject, oldData, newData []byte) {
+	keyObj.AddCallback(func(w core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
 		fmt.Printf("callback 回调: oldData: %s, newData: %s\n", string(oldData), string(newData))
 	})
 

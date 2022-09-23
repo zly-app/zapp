@@ -8,6 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
 	"github.com/zly-app/zapp/core"
@@ -16,7 +17,8 @@ import (
 
 // 观察选项
 type watchKeyObject struct {
-	p core.IConfigWatchProvider
+	p    core.IConfigWatchProvider
+	opts *watchOptions
 
 	groupName string
 	keyName   string
@@ -25,6 +27,10 @@ type watchKeyObject struct {
 	watchMx   sync.Mutex // 用于锁 callback
 
 	data atomic.Value
+}
+
+func (w *watchKeyObject) Opts() *watchOptions {
+	return w.opts
 }
 
 func (w *watchKeyObject) GroupName() string { return w.groupName }
@@ -39,16 +45,14 @@ func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
 	w.callbacks = append(w.callbacks, items...)
 
 	// 立即触发
+	data := w.getRawData()
 	for _, fn := range callback {
-		fn(w, make([]byte, 0), w.GetData()) // 通过GetData重新获取数据保证不会被改变
+		fn(w, true, nil, data) // 这里无法保证 data 被 callback 函数修改数据
 	}
 }
 
 func (w *watchKeyObject) GetData() []byte {
-	data := w.getRawData()
-	copyData := make([]byte, len(data))
-	copy(copyData, data)
-	return copyData
+	return w.getRawData()
 }
 
 // 检查是否复合预期的值
@@ -249,16 +253,6 @@ func (w *watchKeyObject) ParseYaml(outPtr interface{}) error {
 	return yaml.Unmarshal(w.getRawData(), outPtr)
 }
 
-// 检查状态
-func (w *watchKeyObject) check() {
-	if w.p == nil {
-		w.p = GetDefaultConfigWatchProvider()
-	}
-	if w.p == nil {
-		logger.Log.Fatal("默认配置观察提供者不存在")
-	}
-}
-
 // 获取原始数据
 func (w *watchKeyObject) getRawData() []byte {
 	data := w.data.Load().([]byte)
@@ -272,12 +266,12 @@ func (w *watchKeyObject) watchCallback(_, _ string, _, newData []byte) {
 		return
 	}
 
-	data := make([]byte, len(newData))
-	copy(data, newData)
-	w.resetData(data)
+	w.resetData(newData)
 
+	w.watchMx.Lock()
+	defer w.watchMx.Unlock()
 	for _, fn := range w.callbacks {
-		go fn(w, oldData, w.GetData()) // 通过GetData重新获取数据保证不会被改变
+		go fn(w, false, oldData, newData) // 这里无法保证 newData 被 callback 函数修改数据
 	}
 }
 
@@ -289,16 +283,13 @@ func (w *watchKeyObject) resetData(data []byte) {
 	w.data.Store(data)
 }
 
-func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption) (core.IConfigWatchKeyObject, error) {
+func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption) (*watchKeyObject, error) {
 	w := &watchKeyObject{
 		groupName: groupName,
 		keyName:   keyName,
+		opts:      newWatchOptions(opts),
 	}
-	for _, opt := range opts {
-		opt(w)
-	}
-
-	w.check()
+	w.p = w.opts.Provider
 
 	// 立即获取
 	data, err := w.p.Get(groupName, keyName)
@@ -313,4 +304,17 @@ func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption
 		return nil, fmt.Errorf("watch配置失败: %v", err)
 	}
 	return w, nil
+}
+
+// 观察key, 失败会fatal
+func WatchKey(groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyObject {
+	w, err := newWatchKeyObject(groupName, keyName, opts...)
+	if err != nil {
+		logger.Log.Fatal("观察key失败",
+			zap.String("groupName", groupName),
+			zap.String("keyName", keyName),
+			zap.Error(err),
+		)
+	}
+	return w
 }

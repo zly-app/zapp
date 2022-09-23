@@ -71,7 +71,7 @@ type IConfig interface {
 }
 
 // 配置观察选项
-type ConfigWatchOption func(w interface{})
+type ConfigWatchOption func(opts interface{})
 
 // 配置观察key对象
 type IConfigWatchKeyObject interface {
@@ -79,7 +79,7 @@ type IConfigWatchKeyObject interface {
 	GroupName() string
 	// 获取key名
 	KeyName() string
-	// 添加回调, 即使没有发生变更, 启动时也会触发一次回调
+	// 添加回调, 即使没有发生变更, 启动时会立即触发一次回调
 	AddCallback(callback ...ConfigWatchKeyCallback)
 	// 获取原始数据的副本
 	GetData() []byte
@@ -111,8 +111,25 @@ type IConfigWatchKeyObject interface {
 	ParseYaml(outPtr interface{}) error
 }
 
-// 配置观察key对象回调
-type ConfigWatchKeyCallback func(w IConfigWatchKeyObject, oldData, newData []byte)
+// 配置观察key对象回调, 如果是第一次触发, oldData 为 nil
+type ConfigWatchKeyCallback func(w IConfigWatchKeyObject, first bool, oldData, newData []byte)
+
+// 配置观察key对象, 用于结构化
+type IConfigWatchKeyStruct[T any] interface {
+	// 获取组名
+	GroupName() string
+	// 获取key名
+	KeyName() string
+	// 添加回调, 即使没有发生变更, 启动时也会触发一次回调
+	AddCallback(callback ...ConfigWatchKeyStructCallback[T])
+	// 获取原始数据的副本
+	GetData() []byte
+	// 获取结构
+	Get() T
+}
+
+// 配置观察key对象回调, 如果是第一次触发, oldData 为其类型零值
+type ConfigWatchKeyStructCallback[T any] func(w IConfigWatchKeyStruct[T], first bool, oldData, newData T)
 
 // 配置观察提供者
 type IConfigWatchProvider interface {
