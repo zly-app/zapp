@@ -17,10 +17,12 @@ type ExampleProvider struct {
 
 // 实现必须的函数
 func (t *ExampleProvider) Inject(a ...interface{}) {}
+
 // 实现必须的函数
-func (t *ExampleProvider) Start() error            { return nil }
+func (t *ExampleProvider) Start() error { return nil }
+
 // 实现必须的函数
-func (t *ExampleProvider) Close() error            { return nil }
+func (t *ExampleProvider) Close() error { return nil }
 
 func NewExamplePlugin(app core.IApp) *ExampleProvider {
 	p := &ExampleProvider{
@@ -31,7 +33,8 @@ func NewExamplePlugin(app core.IApp) *ExampleProvider {
 	// 下面的代码是填充一些默认数据
 	data := map[string]map[string][]byte{
 		"group_name": {
-			"key_name": []byte("1"),
+			"key_name":    []byte("1"),
+			"generic_key": []byte(`{"a":1}`),
 		},
 	}
 	p.data = data
@@ -77,13 +80,13 @@ func (t *ExampleProvider) Set(groupName, keyName string, data []byte) error {
 func (t *ExampleProvider) Watch(groupName, keyName string,
 	callback core.ConfigWatchProviderCallback) error {
 	go func(groupName, keyName string, callback core.ConfigWatchProviderCallback) {
+		i := 1
 		for {
-			time.Sleep(time.Second * 2)
+			i++
+			time.Sleep(time.Second * 1)
 			t.mx.Lock()
 			oldData := t.getData(groupName, keyName)
-			newData := make([]byte, len(oldData)+1)
-			copy(newData, oldData)
-			newData[len(newData)-1] = 't'
+			newData := []byte(fmt.Sprintf(`{"a":%d}`, i))
 			t.data[groupName][keyName] = newData
 			t.mx.Unlock()
 			callback(groupName, keyName, oldData, newData)

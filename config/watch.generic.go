@@ -35,10 +35,9 @@ func (w *watchKeyGeneric[T]) AddCallback(callback ...core.ConfigWatchKeyStructCa
 	w.callbacks = append(w.callbacks, items...)
 
 	// 立即触发
-	oldData := *new(T)
 	data := w.Get()
 	for _, fn := range callback {
-		fn(w, true, oldData, data) // 这里无法保证 data 被 callback 函数修改数据
+		fn(w, true, data, data) // 这里无法保证 data 被 callback 函数修改数据
 	}
 }
 

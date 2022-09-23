@@ -47,7 +47,7 @@ func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
 	// 立即触发
 	data := w.getRawData()
 	for _, fn := range callback {
-		fn(w, true, nil, data) // 这里无法保证 data 被 callback 函数修改数据
+		fn(w, true, data, data) // 这里无法保证 data 被 callback 函数修改数据
 	}
 }
 

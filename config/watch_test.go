@@ -132,7 +132,7 @@ func TestWatch(t *testing.T) {
 
 	var isCallback bool
 	expectFirst := true
-	expectOldData := ""
+	expectOldData := "2"
 	expectNewData := "2"
 	keyObj.AddCallback(func(k core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
 		isCallback = true
@@ -356,7 +356,7 @@ func TestGenericWatchJson(t *testing.T) {
 
 	var isCallback bool
 	expectFirst := true
-	expectOldData := 0
+	expectOldData := 1
 	expectNewData := 1
 	keyObj.AddCallback(func(k core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
 		isCallback = true
@@ -406,7 +406,7 @@ func TestGenericWatchYaml(t *testing.T) {
 
 	var isCallback bool
 	expectFirst := true
-	expectOldData := 0
+	expectOldData := 1
 	expectNewData := 1
 	keyObj.AddCallback(func(k core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
 		isCallback = true

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zly-app/zapp"
+	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/config/watch_example/example_provider"
 )
 
@@ -14,7 +15,7 @@ func main() {
 	defer app.Exit()
 
 	// 获取key对象
-	keyObj := app.GetConfig().WatchKey("group_name", "key_name")
+	keyObj := config.WatchKey("group_name", "key_name")
 
 	// 获取原始数据
 	y1 := keyObj.GetString()

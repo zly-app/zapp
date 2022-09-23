@@ -15,19 +15,23 @@ func main() {
 	)
 	defer app.Exit()
 
-	// 获取key对象
-	keyObj := config.WatchKey("group_name", "key_name")
+	type AA struct {
+		A int `json:"a"`
+	}
 
-	// 添加回调函数
-	keyObj.AddCallback(func(w core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
+	// 获取key对象
+	keyObj := config.WatchKeyStruct[AA]("group_name", "generic_key", config.WithWatchStructJson())
+	a := keyObj.Get()
+	app.Info("数据", a)
+
+	keyObj.AddCallback(func(w core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
 		app.Info("回调",
 			zap.String("groupName", w.GroupName()),
 			zap.String("keyName", w.KeyName()),
 			zap.Bool("first", first),
-			zap.String("oldData", string(oldData)),
-			zap.String("newData", string(newData)),
+			zap.Any("oldData", oldData),
+			zap.Any("newData", newData),
 		)
 	})
-
 	app.Run()
 }

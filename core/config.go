@@ -111,7 +111,7 @@ type IConfigWatchKeyObject interface {
 	ParseYaml(outPtr interface{}) error
 }
 
-// 配置观察key对象回调, 如果是第一次触发, oldData 为 nil
+// 配置观察key对象回调, 如果是第一次触发, first 为 true
 type ConfigWatchKeyCallback func(w IConfigWatchKeyObject, first bool, oldData, newData []byte)
 
 // 配置观察key对象, 用于结构化
@@ -128,7 +128,7 @@ type IConfigWatchKeyStruct[T any] interface {
 	Get() T
 }
 
-// 配置观察key对象回调, 如果是第一次触发, oldData 为其类型零值
+// 配置观察key对象回调, 如果是第一次触发, first 为 true
 type ConfigWatchKeyStructCallback[T any] func(w IConfigWatchKeyStruct[T], first bool, oldData, newData T)
 
 // 配置观察提供者

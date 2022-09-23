@@ -134,11 +134,10 @@ zapp会将命名空间的名称作为配置顶级key, 该命名空间的配置�
 
 示例 apollo 配置数据:
 
-```text
-namespace1
-    key1 = value
-    key2 = {"foo": "bar"}
-```
+ | 命名空间   | field | value          |
+ | ---------- | ----- | -------------- |
+ | namespace1 | key1  | value          |
+ | namespace1 | key2  | {"foo": "bar"} |
 
 以上apollo配置数据会被解析为以下配置
 
@@ -152,24 +151,35 @@ zapp会将 `applicaiont` 命名空间下的 `frame`,`components`,`plugins`,`serv
 
 示例 apollo 配置数据:
 
-```text
-application
-    frame = {"debug": true}
-    otherKey = {"foo": "bar"}
-```
+ | 命名空间    | field    | value                                     |
+ | ----------- | -------- | ----------------------------------------- |
+ | application | frame    | {"debug": true, "log": {"level": "info"}} |
+ | application | otherKey | {"debug": true, "log": {"level": "info"}} |
 
 以上apollo配置数据会被解析为以下配置
 
 ```yaml
 frame:
   debug: true
+  log:
+    level: 'info'
 application:
-  otherKey: '{"foo": "bar"}'
+  otherKey: '{"debug": true, "log": {"level": "info"}}'
 ```
 
 ## 在配置文件中设置从apollo加载
 
 > 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo.go). 从apollo拉取的配置会和文件的配置智能合并, 以apollo配置优先
+
+最小配置
+
+```yaml
+apollo:
+    Address: "http://127.0.0.1:8080"
+    AppId: "your-appid"
+```
+
+完整配置
 
 ```yaml
 apollo:
@@ -219,17 +229,46 @@ import (
 func main() {
 	app := zapp.NewApp("test",
 		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
-		zapp.WithConfigOption(
-			config.WithApollo(&config.ApolloConfig{
-              Address:           "http://127.0.0.1:8080", // apollo-api地址, 多个地址用英文逗号连接
-              AppId:             "test",                  // 应用名
-              AccessKey:         "",                      // 验证key, 优先级高于基础认证
-              AuthBasicUser:     "",                      // 基础认证用户名, 可用于nginx的基础认证扩展
-              AuthBasicPassword: "",                      // 基础认证密码
-              Cluster:           "default",               // 集群名, 默认default
-              NamespacePrefix:   "",                      // 命名空间前缀, apollo支持的部门前缀
-			}),
-		),
+	)
+	defer app.Exit()
+
+	type AA struct {
+		A int `json:"a"`
+	}
+
+	// 获取key对象
+	keyObj := config.WatchKeyStruct[AA]("group_name", "generic_key", config.WithWatchStructJson())
+	a := keyObj.Get()
+	app.Info("数据", a)
+
+	keyObj.AddCallback(func(w core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
+		app.Info("回调",
+			zap.String("groupName", w.GroupName()),
+			zap.String("keyName", w.KeyName()),
+			zap.Bool("first", first),
+			zap.Any("oldData", oldData),
+			zap.Any("newData", newData),
+		)
+	})
+	app.Run()
+}
+```
+
+```go
+package main
+
+import (
+	"go.uber.org/zap"
+
+	"github.com/zly-app/zapp"
+	"github.com/zly-app/zapp/config"
+	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/plugin/apollo_provider"
+)
+
+func main() {
+	app := zapp.NewApp("test",
+		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
 	)
 	defer app.Exit()
 
@@ -237,6 +276,7 @@ func main() {
 		app.Info("回调",
 			zap.String("groupName", w.GroupName()),
 			zap.String("keyName", w.KeyName()),
+			zap.Bool("first", first),
 			zap.String("oldData", string(oldData)),
 			zap.String("newData", string(newData)),
 		)
