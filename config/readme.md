@@ -38,7 +38,7 @@
 + 一般使用yaml作为配置文件, 可以使用命令行 `-c` 手动指定配置文件, 如果有多个配置文件用英文逗号分隔
 + 可以使用 `WithFiles` 在代码中指定配置文件
 + 多个配置文件如果存在同配置分片会智能合并
-+ 如果下面的某个配置文件存在, 会按从上到下的优先级自动加载**一个**配置文件.
++ 如果下面的某个配置文件存在, 会按从上到下的优先级自动加载<b><font color='red'>一个</font></b>配置文件.
 
    ```
    ./configs/default.yaml
@@ -48,6 +48,8 @@
    ```
 
 ## 框架配置示例
+
+以下所有配置字段都是可选的
 
 ```yaml
 frame: # 框架配置
@@ -98,10 +100,13 @@ services: # 服务配置
 ```
 
 ## 组件配置示例
+
 ```yaml
 components: # 组件配置
     cache: # 组件类型
-        default: # 组件名
+        cacheName1: # 组件名, 比如提供多个redis客户端连接不同的redis集群
+            CacheDB: memory # 示例, 不代表真实插件配置情况
+        cacheName2: # 组件名, 比如提供多个redis客户端连接不同的redis集群
             CacheDB: memory # 示例, 不代表真实插件配置情况
 ```
 
@@ -147,14 +152,15 @@ namespace1:
   key2: '{"foo": "bar"}'
 ```
 
-zapp会将 `applicaiont` 命名空间下的 `frame`,`components`,`plugins`,`services`配置作为配置顶级key, 并将其值按照指定格式解析后赋予其子集.
+zapp会将 `applicaiont` 命名空间下的 `frame`,`components`,`plugins`,`services`配置作为配置顶级key, 并将其值按照指定格式解析后赋予其子集(默认是`yaml`格式解析, 需要在apollo配置中设为你需要的格式).
 
 示例 apollo 配置数据:
 
- | 命名空间    | field    | value                                     |
- | ----------- | -------- | ----------------------------------------- |
- | application | frame    | {"debug": true, "log": {"level": "info"}} |
- | application | otherKey | {"debug": true, "log": {"level": "info"}} |
+ | 命名空间    | field    | value                                     | 备注                   |
+ | ----------- | -------- | ----------------------------------------- | ---------------------- |
+ | application | frame    | {"debug": true, "log": {"level": "info"}} | 会按照指定格式解析其值 |
+ | application | plugins  | {"myplugin": {"foo": "bar"}}              | 会按照指定格式解析其值 |
+ | application | otherKey | {"debug": true, "log": {"level": "info"}} | 不会解析其值           |
 
 以上apollo配置数据会被解析为以下配置
 
@@ -163,6 +169,8 @@ frame:
   debug: true
   log:
     level: 'info'
+plugins:
+  foo: 'bar'
 application:
   otherKey: '{"debug": true, "log": {"level": "info"}}'
 ```
@@ -214,6 +222,8 @@ include:
 
 ## 内置apollo提供者示例
 
+自动解析泛型结构示例
+
 ```go
 package main
 
@@ -253,6 +263,8 @@ func main() {
 	app.Run()
 }
 ```
+
+手动解析配置数据示例
 
 ```go
 package main
