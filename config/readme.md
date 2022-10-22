@@ -16,7 +16,7 @@
         - [apollo配置中心命名空间和配置说明](#apollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E5%92%8C%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
         - [在配置文件中设置从apollo配置中心加载](#%E5%9C%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E8%AE%BE%E7%BD%AE%E4%BB%8Eapollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%8A%A0%E8%BD%BD)
 - [配置观察](#%E9%85%8D%E7%BD%AE%E8%A7%82%E5%AF%9F)
-    - [内置apollo提供者示例](#%E5%86%85%E7%BD%AEapollo%E6%8F%90%E4%BE%9B%E8%80%85%E7%A4%BA%E4%BE%8B)
+    - [使用示例](#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B)
     - [自动解析泛型结构示例-强烈推荐用法](#%E8%87%AA%E5%8A%A8%E8%A7%A3%E6%9E%90%E6%B3%9B%E5%9E%8B%E7%BB%93%E6%9E%84%E7%A4%BA%E4%BE%8B-%E5%BC%BA%E7%83%88%E6%8E%A8%E8%8D%90%E7%94%A8%E6%B3%95)
 
 <!-- /TOC -->
