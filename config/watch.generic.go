@@ -19,8 +19,9 @@ type watchKeyGeneric[T any] struct {
 	callbacks []core.ConfigWatchKeyStructCallback[T] // 必须自己管理, 因为 watchKeyObject 是通过协程调用的 callback
 	watchMx   sync.Mutex                             // 用于锁 callback
 
-	rawData atomic.Value // 这里只保留成功解析的数据
-	data    atomic.Value
+	rawData  atomic.Value // 这里只保留成功解析的数据
+	data     atomic.Value
+	dataType reflect.Type
 }
 
 func (w *watchKeyGeneric[T]) GroupName() string { return w.w.GroupName() }
@@ -37,7 +38,7 @@ func (w *watchKeyGeneric[T]) AddCallback(callback ...core.ConfigWatchKeyStructCa
 	// 立即触发
 	data := w.Get()
 	for _, fn := range callback {
-		fn(w, true, data, data) // 这里无法保证 data 被 callback 函数修改数据
+		fn(true, data, data) // 这里无法保证 data 被 callback 函数修改数据
 	}
 }
 
@@ -47,13 +48,13 @@ func (w *watchKeyGeneric[T]) GetData() []byte {
 }
 
 func (w *watchKeyGeneric[T]) Get() T {
-	data := w.data.Load().(*T)
-	return *data
+	data := w.data.Load().(T)
+	return data
 }
 
 // 重新解析数据
 func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
-	data := new(T)
+	data := reflect.New(w.dataType).Interface()
 	var err error
 	switch t := w.w.Opts().StructType; t {
 	case Json:
@@ -81,7 +82,7 @@ func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
 	w.watchMx.Lock()
 	defer w.watchMx.Unlock()
 	for _, fn := range w.callbacks {
-		go fn(w, false, oldData, *data) // 这里无法保证 newData 被 callback 函数修改数据
+		go fn(false, oldData, data.(T)) // 这里无法保证 newData 被 callback 函数修改数据
 	}
 	return nil
 }
@@ -109,10 +110,10 @@ func (w *watchKeyGeneric[T]) watchCallback(_ core.IConfigWatchKeyObject, first b
 
 func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatchOption) (
 	core.IConfigWatchKeyStruct[T], error) {
-	temp := new(T)
-	vTemp := reflect.ValueOf(temp).Elem() // 消除new指针
-	if vTemp.Kind() == reflect.Ptr {
-		return nil, fmt.Errorf("泛型类型不能是指针, T=%T", *temp)
+	temp := *new(T) // 消除new指针
+	vTemp := reflect.TypeOf(temp)
+	if vTemp.Kind() != reflect.Ptr {
+		return nil, fmt.Errorf("泛型类型必须是指针, T=%T", temp)
 	}
 
 	w, err := newWatchKeyObject(groupName, keyName, opts...)
@@ -120,7 +121,8 @@ func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatc
 		return nil, fmt.Errorf("观察key失败: %v", err)
 	}
 	warp := &watchKeyGeneric[T]{
-		w: w,
+		w:        w,
+		dataType: vTemp.Elem(), // 实际结构
 	}
 	// 这里会立即触发, 所以下一步可以立即返回 warp
 	w.AddCallback(warp.watchCallback)

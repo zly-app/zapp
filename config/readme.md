@@ -234,7 +234,6 @@ import (
 
 	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/config"
-	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/plugin/apollo_provider"
 )
 
@@ -249,14 +248,12 @@ func main() {
 	}
 
 	// 获取key对象
-	keyObj := config.WatchKeyStruct[AA]("group_name", "generic_key", config.WithWatchStructJson())
+	keyObj := config.WatchKeyStruct[*AA]("group_name", "generic_key", config.WithWatchStructJson())
 	a := keyObj.Get()
 	app.Info("数据", a)
 
-	keyObj.AddCallback(func(w core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
+	keyObj.AddCallback(func(first bool, oldData, newData *AA) {
 		app.Info("回调",
-			zap.String("groupName", w.GroupName()),
-			zap.String("keyName", w.KeyName()),
 			zap.Bool("first", first),
 			zap.Any("oldData", oldData),
 			zap.Any("newData", newData),

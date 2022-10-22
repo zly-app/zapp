@@ -129,7 +129,7 @@ type IConfigWatchKeyStruct[T any] interface {
 }
 
 // 配置观察key对象回调, 如果是第一次触发, first 为 true
-type ConfigWatchKeyStructCallback[T any] func(w IConfigWatchKeyStruct[T], first bool, oldData, newData T)
+type ConfigWatchKeyStructCallback[T any] func(first bool, oldData, newData T)
 
 // 配置观察提供者
 type IConfigWatchProvider interface {
