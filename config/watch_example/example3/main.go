@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/zly-app/zapp"
-	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/config/watch_example/example_provider"
 )
 
@@ -13,7 +12,7 @@ type MyConfig struct {
 }
 
 // 可以在定义变量时初始化
-var MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
+var MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("group_name", "generic_key")
 
 func main() {
 	app := zapp.NewApp("test",
@@ -22,7 +21,7 @@ func main() {
 	defer app.Exit()
 
 	// 也可以在这里初始化
-	//MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
+	//MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("group_name", "generic_key")
 
 	// 获取数据
 	for {

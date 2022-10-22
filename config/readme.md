@@ -231,7 +231,7 @@ apollo:
 + 自动监听配置变更, 每次获取时拿到的是最新的配置数据
 + 只有当第一次获取配置数据的时候才会与配置中心进行链接和监听, 也就是如果不获取数据就不会使用不必要的资源
 
-## 内置apollo提供者示例
+## 使用示例
 
 ```go
 package main
@@ -240,21 +240,39 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp"
-	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/plugin/apollo_provider"
 )
 
 // 可以在定义变量时初始化
-var MyConfigWatch = config.WatchKey("group_name", "key_name")
+var MyConfigWatch = zapp.WatchConfigKey("group_name", "key_name")
 
 func main() {
 	app := zapp.NewApp("test",
-		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
+		// 使用apollo配置中心作为配置提供者并设置为默认的配置提供者
+		apollo_provider.WithPlugin(true),
 	)
 	defer app.Exit()
 
 	// 也可以在这里初始化
-	//MyConfigWatch = config.WatchKey("group_name", "key_name")
+	//MyConfigWatch = zapp.WatchConfigKey("group_name", "key_name")
+
+	// 获取原始数据
+	y1 := MyConfigWatch.GetString()
+	app.Info(y1) // 1
+
+	// 转为 int 值
+	y2 := MyConfigWatch.GetInt()
+	app.Info(y2) // 1
+
+	// 转为 boolean 值
+	y3 := MyConfigWatch.GetBool()
+	app.Info(y3) // true
+
+	// 检查复合预期
+	b1 := MyConfigWatch.Expect("1")
+	b2 := MyConfigWatch.Expect(1)
+	b3 := MyConfigWatch.Expect(true)
+	app.Info(b1, b2, b3) // true, true, true
 
 	// 添加回调函数
 	MyConfigWatch.AddCallback(func(first bool, oldData, newData []byte) {
@@ -284,7 +302,6 @@ import (
 	"time"
 
 	"github.com/zly-app/zapp"
-	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/plugin/apollo_provider"
 )
 
@@ -293,16 +310,17 @@ type MyConfig struct {
 }
 
 // 可以在定义变量时初始化
-var MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
+var MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("group_name", "generic_key")
 
 func main() {
 	app := zapp.NewApp("test",
-		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
+		// 使用apollo配置中心作为配置提供者并设置为默认的配置提供者
+		apollo_provider.WithPlugin(true),
 	)
 	defer app.Exit()
 
 	// 也可以在这里初始化
-	//MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
+	//MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("group_name", "generic_key")
 
 	// 获取数据
 	for {
