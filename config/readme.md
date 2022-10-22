@@ -224,6 +224,8 @@ include:
 
 自动解析泛型结构示例
 
+通过 `config.WatchKeyStruct` 观察一个key数值变更, 每次变更时会自动解析一次数据. 当解析失败会忽略该数据并打印一个错误日志, 返回的配置数据不会产生变化.
+
 ```go
 package main
 

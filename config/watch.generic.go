@@ -127,7 +127,7 @@ func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatc
 	return warp, nil
 }
 
-// 观察key结构化数据, 失败会fatal
+// 观察key结构化数据, 失败会fatal, 默认为json格式
 func WatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyStruct[T] {
 	w, err := newWatchKeyStruct[T](groupName, keyName, opts...)
 	if err != nil {
