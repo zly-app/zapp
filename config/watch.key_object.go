@@ -22,11 +22,41 @@ type watchKeyObject struct {
 
 	groupName string
 	keyName   string
+	initOpts  []core.ConfigWatchOption
 
 	callbacks []core.ConfigWatchKeyCallback
 	watchMx   sync.Mutex // 用于锁 callback
 
-	data atomic.Value
+	data     atomic.Value
+	initOnce sync.Once
+}
+
+// 等待初始化
+func (w *watchKeyObject) waitInit() {
+	w.initOnce.Do(func() {
+		waitAppInit()
+		w.opts = newWatchOptions(w.initOpts)
+		w.p = w.opts.Provider
+
+		// 立即获取
+		data, err := w.p.Get(w.groupName, w.keyName)
+		if err != nil {
+			logger.Log.Fatal("获取配置失败",
+				zap.String("groupName", w.groupName),
+				zap.String("keyName", w.keyName),
+				zap.Error(err))
+		}
+		w.resetData(data)
+
+		// 开始观察
+		err = w.p.Watch(w.groupName, w.keyName, w.watchCallback)
+		if err != nil {
+			logger.Log.Fatal("watch配置失败",
+				zap.String("groupName", w.groupName),
+				zap.String("keyName", w.keyName),
+				zap.Error(err))
+		}
+	})
 }
 
 func (w *watchKeyObject) Opts() *watchOptions {
@@ -37,6 +67,7 @@ func (w *watchKeyObject) GroupName() string { return w.groupName }
 func (w *watchKeyObject) KeyName() string   { return w.keyName }
 
 func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
+	w.waitInit()
 	w.watchMx.Lock()
 	defer w.watchMx.Unlock()
 
@@ -52,11 +83,13 @@ func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
 }
 
 func (w *watchKeyObject) GetData() []byte {
+	w.waitInit()
 	return w.getRawData()
 }
 
 // 检查是否复合预期的值
 func (w *watchKeyObject) Expect(v interface{}) bool {
+	w.waitInit()
 	switch t := v.(type) {
 	case []byte:
 		return bytes.Equal(t, w.getRawData())
@@ -98,7 +131,10 @@ func (w *watchKeyObject) Expect(v interface{}) bool {
 	return false
 }
 
-func (w *watchKeyObject) GetString() string { return string(w.getRawData()) }
+func (w *watchKeyObject) GetString() string {
+	w.waitInit()
+	return string(w.getRawData())
+}
 func (w *watchKeyObject) getBool() (bool, error) {
 	switch v := w.GetString(); v {
 	case "1", "t", "T", "true", "TRUE", "True", "y", "Y", "yes", "YES", "Yes",
@@ -116,6 +152,7 @@ func (w *watchKeyObject) getBool() (bool, error) {
 	}
 }
 func (w *watchKeyObject) GetBool(def ...bool) bool {
+	w.waitInit()
 	v, err := w.getBool()
 	if err == nil {
 		return v
@@ -126,6 +163,7 @@ func (w *watchKeyObject) GetBool(def ...bool) bool {
 	return false
 }
 func (w *watchKeyObject) GetInt(def ...int) int {
+	w.waitInit()
 	v, err := strconv.Atoi(w.GetString())
 	if err == nil {
 		return v
@@ -136,6 +174,7 @@ func (w *watchKeyObject) GetInt(def ...int) int {
 	return 0
 }
 func (w *watchKeyObject) GetInt8(def ...int8) int8 {
+	w.waitInit()
 	v, err := strconv.ParseInt(w.GetString(), 10, 8)
 	if err == nil {
 		return int8(v)
@@ -146,6 +185,7 @@ func (w *watchKeyObject) GetInt8(def ...int8) int8 {
 	return 0
 }
 func (w *watchKeyObject) GetInt16(def ...int16) int16 {
+	w.waitInit()
 	v, err := strconv.ParseInt(w.GetString(), 10, 16)
 	if err == nil {
 		return int16(v)
@@ -156,6 +196,7 @@ func (w *watchKeyObject) GetInt16(def ...int16) int16 {
 	return 0
 }
 func (w *watchKeyObject) GetInt32(def ...int32) int32 {
+	w.waitInit()
 	v, err := strconv.ParseInt(w.GetString(), 10, 32)
 	if err == nil {
 		return int32(v)
@@ -166,6 +207,7 @@ func (w *watchKeyObject) GetInt32(def ...int32) int32 {
 	return 0
 }
 func (w *watchKeyObject) GetInt64(def ...int64) int64 {
+	w.waitInit()
 	v, err := strconv.ParseInt(w.GetString(), 10, 64)
 	if err == nil {
 		return v
@@ -176,6 +218,7 @@ func (w *watchKeyObject) GetInt64(def ...int64) int64 {
 	return 0
 }
 func (w *watchKeyObject) GetUint(def ...uint) uint {
+	w.waitInit()
 	v, err := strconv.ParseUint(w.GetString(), 10, 64)
 	if err == nil {
 		return uint(v)
@@ -186,6 +229,7 @@ func (w *watchKeyObject) GetUint(def ...uint) uint {
 	return 0
 }
 func (w *watchKeyObject) GetUint8(def ...uint8) uint8 {
+	w.waitInit()
 	v, err := strconv.ParseUint(w.GetString(), 10, 8)
 	if err == nil {
 		return uint8(v)
@@ -196,6 +240,7 @@ func (w *watchKeyObject) GetUint8(def ...uint8) uint8 {
 	return 0
 }
 func (w *watchKeyObject) GetUint16(def ...uint16) uint16 {
+	w.waitInit()
 	v, err := strconv.ParseUint(w.GetString(), 10, 16)
 	if err == nil {
 		return uint16(v)
@@ -206,6 +251,7 @@ func (w *watchKeyObject) GetUint16(def ...uint16) uint16 {
 	return 0
 }
 func (w *watchKeyObject) GetUint32(def ...uint32) uint32 {
+	w.waitInit()
 	v, err := strconv.ParseUint(w.GetString(), 10, 32)
 	if err == nil {
 		return uint32(v)
@@ -216,6 +262,7 @@ func (w *watchKeyObject) GetUint32(def ...uint32) uint32 {
 	return 0
 }
 func (w *watchKeyObject) GetUint64(def ...uint64) uint64 {
+	w.waitInit()
 	v, err := strconv.ParseUint(w.GetString(), 10, 64)
 	if err == nil {
 		return v
@@ -226,6 +273,7 @@ func (w *watchKeyObject) GetUint64(def ...uint64) uint64 {
 	return 0
 }
 func (w *watchKeyObject) GetFloat32(def ...float32) float32 {
+	w.waitInit()
 	v, err := strconv.ParseFloat(w.GetString(), 32)
 	if err == nil {
 		return float32(v)
@@ -236,6 +284,7 @@ func (w *watchKeyObject) GetFloat32(def ...float32) float32 {
 	return 0
 }
 func (w *watchKeyObject) GetFloat64(def ...float64) float64 {
+	w.waitInit()
 	v, err := strconv.ParseFloat(w.GetString(), 64)
 	if err == nil {
 		return v
@@ -247,9 +296,11 @@ func (w *watchKeyObject) GetFloat64(def ...float64) float64 {
 }
 
 func (w *watchKeyObject) ParseJSON(outPtr interface{}) error {
+	w.waitInit()
 	return json.Unmarshal(w.getRawData(), outPtr)
 }
 func (w *watchKeyObject) ParseYaml(outPtr interface{}) error {
+	w.waitInit()
 	return yaml.Unmarshal(w.getRawData(), outPtr)
 }
 
@@ -283,38 +334,17 @@ func (w *watchKeyObject) resetData(data []byte) {
 	w.data.Store(data)
 }
 
-func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption) (*watchKeyObject, error) {
+func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption) *watchKeyObject {
 	w := &watchKeyObject{
 		groupName: groupName,
 		keyName:   keyName,
-		opts:      newWatchOptions(opts),
+		initOpts:  opts,
 	}
-	w.p = w.opts.Provider
-
-	// 立即获取
-	data, err := w.p.Get(groupName, keyName)
-	if err != nil {
-		return nil, fmt.Errorf("获取配置失败: %v", err)
-	}
-	w.resetData(data)
-
-	// 开始观察
-	err = w.p.Watch(groupName, keyName, w.watchCallback)
-	if err != nil {
-		return nil, fmt.Errorf("watch配置失败: %v", err)
-	}
-	return w, nil
+	return w
 }
 
 // 观察key, 失败会fatal
 func WatchKey(groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyObject {
-	w, err := newWatchKeyObject(groupName, keyName, opts...)
-	if err != nil {
-		logger.Log.Fatal("观察key失败",
-			zap.String("groupName", groupName),
-			zap.String("keyName", keyName),
-			zap.Error(err),
-		)
-	}
+	w := newWatchKeyObject(groupName, keyName, opts...)
 	return w
 }

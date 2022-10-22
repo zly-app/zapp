@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go.uber.org/zap"
+	"time"
 
 	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/config"
@@ -24,18 +24,10 @@ func main() {
 	// 也可以在这里初始化
 	//MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
 
-	// 获取key对象
-	a := MyConfigWatch.Get()
-	app.Info("数据", a)
-
-	// 添加回调
-	MyConfigWatch.AddCallback(func(first bool, oldData, newData *MyConfig) {
-		app.Info("回调",
-			zap.Bool("first", first),
-			zap.Any("oldData", oldData),
-			zap.Any("newData", newData),
-		)
-	})
-
-	app.Run()
+	// 获取数据
+	for {
+		a := MyConfigWatch.Get()
+		app.Info("数据", a)
+		time.Sleep(time.Second)
+	}
 }

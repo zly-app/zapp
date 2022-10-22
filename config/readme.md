@@ -1,42 +1,41 @@
 
 <!-- TOC -->
 
-- [我们不需要任何配置就能跑起来](#%E6%88%91%E4%BB%AC%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BB%BB%E4%BD%95%E9%85%8D%E7%BD%AE%E5%B0%B1%E8%83%BD%E8%B7%91%E8%B5%B7%E6%9D%A5)
-- [服务,插件和组件配置说明](#%E6%9C%8D%E5%8A%A1%E6%8F%92%E4%BB%B6%E5%92%8C%E7%BB%84%E4%BB%B6%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
-- [从文件加载配置](#%E4%BB%8E%E6%96%87%E4%BB%B6%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
-    - [框架配置示例](#%E6%A1%86%E6%9E%B6%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
-    - [插件配置示例](#%E6%8F%92%E4%BB%B6%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
-    - [服务配置示例](#%E6%9C%8D%E5%8A%A1%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
-    - [组件配置示例](#%E7%BB%84%E4%BB%B6%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
-    - [其它配置](#%E5%85%B6%E5%AE%83%E9%85%8D%E7%BD%AE)
-- [从viper加载配置](#%E4%BB%8Eviper%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
-- [从配置结构体加载配置](#%E4%BB%8E%E9%85%8D%E7%BD%AE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
-- [从apollo加载配置](#%E4%BB%8Eapollo%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
-    - [apollo命名空间和配置说明](#apollo%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E5%92%8C%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
-    - [在配置文件中设置从apollo加载](#%E5%9C%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E8%AE%BE%E7%BD%AE%E4%BB%8Eapollo%E5%8A%A0%E8%BD%BD)
-- [引用配置文件](#%E5%BC%95%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
-- [远程配置变更观察](#%E8%BF%9C%E7%A8%8B%E9%85%8D%E7%BD%AE%E5%8F%98%E6%9B%B4%E8%A7%82%E5%AF%9F)
+- [配置说明](#%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
+- [配置加载方式](#%E9%85%8D%E7%BD%AE%E5%8A%A0%E8%BD%BD%E6%96%B9%E5%BC%8F)
+    - [从文件加载配置](#%E4%BB%8E%E6%96%87%E4%BB%B6%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
+        - [框架配置示例](#%E6%A1%86%E6%9E%B6%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
+        - [插件配置示例](#%E6%8F%92%E4%BB%B6%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
+        - [服务配置示例](#%E6%9C%8D%E5%8A%A1%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
+        - [组件配置示例](#%E7%BB%84%E4%BB%B6%E9%85%8D%E7%BD%AE%E7%A4%BA%E4%BE%8B)
+        - [其它配置](#%E5%85%B6%E5%AE%83%E9%85%8D%E7%BD%AE)
+    - [从viper加载配置](#%E4%BB%8Eviper%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
+    - [从配置结构体加载配置](#%E4%BB%8E%E9%85%8D%E7%BD%AE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
+    - [引用配置文件](#%E5%BC%95%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+    - [从apollo配置中心加载配置](#%E4%BB%8Eapollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
+        - [apollo配置中心命名空间和配置说明](#apollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E5%92%8C%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
+        - [在配置文件中设置从apollo配置中心加载](#%E5%9C%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E8%AE%BE%E7%BD%AE%E4%BB%8Eapollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%8A%A0%E8%BD%BD)
+- [配置观察](#%E9%85%8D%E7%BD%AE%E8%A7%82%E5%AF%9F)
     - [内置apollo提供者示例](#%E5%86%85%E7%BD%AEapollo%E6%8F%90%E4%BE%9B%E8%80%85%E7%A4%BA%E4%BE%8B)
+    - [自动解析泛型结构示例-强烈推荐用法](#%E8%87%AA%E5%8A%A8%E8%A7%A3%E6%9E%90%E6%B3%9B%E5%9E%8B%E7%BB%93%E6%9E%84%E7%A4%BA%E4%BE%8B-%E5%BC%BA%E7%83%88%E6%8E%A8%E8%8D%90%E7%94%A8%E6%B3%95)
 
 <!-- /TOC -->
 ---
 
-# 我们不需要任何配置就能跑起来
+# 配置说明
+
+我们不需要任何配置就能跑起来
 
 + 配置来源优先级: 命令行`-c`指定文件 > WithViper > WithConfig > WithFiles > WithApollo > 默认配置文件
 + 使用命令 `-t` 来测试你的任何来源的配置是否正确.
 + 任何来源的配置都会构建为 [viper](https://github.com/spf13/viper) 结构, 然后再反序列化为配置结构体 [core.Config](../core/config.go)
 
-# 服务,插件和组件配置说明
+# 配置加载方式
 
-+ 插件配置的key为 `plugins.{pluginType}`, pluginType是插件注册的类型值.
-+ 服务配置的key为 `services.{serviceType}`, serviceType是服务注册的类型值.
-+ 组件配置的key为 `components.{componentType}.{componentName}`, componentType是初始化组件时指定的类型值, componentName是获取组件时传入的名字.
-
-# 从文件加载配置
+## 从文件加载配置
 
 + 一般使用yaml作为配置文件, 可以使用命令行 `-c` 手动指定配置文件, 如果有多个配置文件用英文逗号分隔
-+ 可以使用 `WithFiles` 在代码中指定配置文件
++ 也可以使用 `WithFiles` 在代码中指定配置文件
 + 多个配置文件如果存在同配置分片会智能合并
 + 如果下面的某个配置文件存在, 会按从上到下的优先级自动加载<b><font color='red'>一个</font></b>配置文件.
 
@@ -47,7 +46,13 @@
    ./configs/default.json
    ```
 
-## 框架配置示例
+通用配置写法如下, 某些特定写法根据的`它`的文档为准
+
++ 插件配置的key为 `plugins.{pluginType}`, pluginType是插件注册的类型值.
++ 服务配置的key为 `services.{serviceType}`, serviceType是服务注册的类型值.
++ 组件配置的key为 `components.{componentType}.{componentName}`, componentType是初始化组件时指定的类型值, componentName是获取组件时传入的名字.
+
+### 框架配置示例
 
 以下所有配置字段都是可选的
 
@@ -83,14 +88,14 @@ frame: # 框架配置
     PrintConfig: true # app初始时是否打印配置
 ```
 
-## 插件配置示例
+### 插件配置示例
 ```yaml
 plugins: # 插件配置
     my_plugin: # 插件类型
         Foo: Bar # 示例, 不代表真实插件配置情况
 ```
 
-## 服务配置示例
+### 服务配置示例
 ```yaml
 services: # 服务配置
     api: # 服务类型
@@ -99,7 +104,7 @@ services: # 服务配置
         Bind: :3000 # 示例, 不代表真实插件配置情况
 ```
 
-## 组件配置示例
+### 组件配置示例
 
 ```yaml
 components: # 组件配置
@@ -110,7 +115,7 @@ components: # 组件配置
             CacheDB: memory # 示例, 不代表真实插件配置情况
 ```
 
-## 其它配置
+### 其它配置
 
 > 除了 frame / plugins / services / components 这几类, 还可以添加自定义配置, 然后使用 `Parse` 方法将配置读取到变量中
 
@@ -121,19 +126,32 @@ myconfig: #自定义分片名
 
 + 更多配置说明阅读源码 [core.Config](../core/config.go)
 
-# 从viper加载配置
+## 从viper加载配置
 
 > 使用 `WithViper` 设置 [viper](https://github.com/spf13/viper) 结构
 
-# 从配置结构体加载配置
+## 从配置结构体加载配置
 
 > 使用 `WithConfig` 设置配置结构体 [core.Config](../core/config.go)
 
-# 从apollo加载配置
+## 引用配置文件
+
++ 可以在配置中引用另一个配置文件, 允许使用相对路径, 它相对于程序运行时当前目录.
++ 被引用的配置文件中不能再添加引用了, 它不会被识别.
++ 引用的配置文件必须存在
+
+示例:
+
+```yaml
+include:
+    files: './1.toml,./2.toml'
+```
+
+## 从`apollo`配置中心加载配置
 
 > 使用 `WithApollo` 设置apollo来源和如何加载
 
-## apollo命名空间和配置说明
+### `apollo`配置中心命名空间和配置说明
 
 zapp会将命名空间的名称作为配置顶级key, 该命名空间的配置会作为二级key和其值.
 
@@ -175,7 +193,7 @@ application:
   otherKey: '{"debug": true, "log": {"level": "info"}}'
 ```
 
-## 在配置文件中设置从apollo加载
+### 在配置文件中设置从`apollo`配置中心加载
 
 > 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo.go). 从apollo拉取的配置会和文件的配置智能合并, 以apollo配置优先
 
@@ -205,37 +223,65 @@ apollo:
     IgnoreNamespaceNotFound: false # 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
 ```
 
-# 引用配置文件
+# 配置观察
 
-可以在配置中引用另一个配置文件, 可以使用相对路径, 相对于程序运行时当前目录.
-
-被引用的配置文件中不能再添加引用了, 它不会被识别.
-
-引用的配置文件必须存在.
-
-```yaml
-include:
-    files: './1.toml,./2.toml'
-```
-
-# 远程配置变更观察
-
-## 内置apollo提供者示例
-
-自动解析泛型结构示例`(强烈推荐用法)` , 通过 `config.WatchKeyStruct` 观察一个key数值变更, 拥有以下特性
+拥有以下特性
 
 + <b>一行代码接入配置中心, 解放心智负担</b>
-+ 自动将配置数据作为`json`或`yaml`解析到一个类型中, 通过`Get`能直接拿到想要的配置数据
 + 自动监听配置变更, 每次获取时拿到的是最新的配置数据
-+ 只有配置变更时才会解析数据, 并不是每次获取数据都解析一次
-+ 只有当第一次获取配置数据的时候才会与配置中心进行链接和监听, 也就是如果你不用就不会使用不必要的资源
-+ 当首次解析失败会立即打印`Fatal`日志并退出程序, 但是后续的解析失败并不会这样, 而是打印一个`Error`日志并忽略该配置变更(获取到的配置是上一次正确的配置数据)
++ 只有当第一次获取配置数据的时候才会与配置中心进行链接和监听, 也就是如果不获取数据就不会使用不必要的资源
+
+## 内置apollo提供者示例
 
 ```go
 package main
 
 import (
 	"go.uber.org/zap"
+
+	"github.com/zly-app/zapp"
+	"github.com/zly-app/zapp/config"
+	"github.com/zly-app/zapp/plugin/apollo_provider"
+)
+
+// 可以在定义变量时初始化
+var MyConfigWatch = config.WatchKey("group_name", "key_name")
+
+func main() {
+	app := zapp.NewApp("test",
+		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
+	)
+	defer app.Exit()
+
+	// 也可以在这里初始化
+	//MyConfigWatch = config.WatchKey("group_name", "key_name")
+
+	// 添加回调函数
+	MyConfigWatch.AddCallback(func(first bool, oldData, newData []byte) {
+		app.Info("回调",
+			zap.Bool("first", first),
+			zap.String("oldData", string(oldData)),
+			zap.String("newData", string(newData)),
+		)
+	})
+
+	app.Run()
+}
+```
+
+## 自动解析泛型结构示例-`(强烈推荐用法)`
+
+通过 `config.WatchKeyStruct` 观察一个key数值变更, 拥有以下额外特性
+
++ 自动将配置数据作为指定格式解析到一个类型中, 通过`Get`能直接拿到想要的配置数据
++ 只有配置变更时才会解析数据, 并不是每次获取数据都解析一次
++ 开始watch时会立即对数据结构进行解析, 如果失败会立即打印`Fatal`日志并退出程序. 当配置变更时如果解析失败会打印一个`Error`日志并忽略该配置变更(获取到的配置是上一次正确解析的配置数据)
+
+```go
+package main
+
+import (
+	"time"
 
 	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/config"
@@ -258,54 +304,12 @@ func main() {
 	// 也可以在这里初始化
 	//MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
 
-	// 获取key对象
-	a := MyConfigWatch.Get()
-	app.Info("数据", a)
-
-	// 添加回调
-	MyConfigWatch.AddCallback(func(first bool, oldData, newData *MyConfig) {
-		app.Info("回调",
-			zap.Bool("first", first),
-			zap.Any("oldData", oldData),
-			zap.Any("newData", newData),
-		)
-	})
-
-	app.Run()
-}
-```
-
-手动解析配置数据示例
-
-```go
-package main
-
-import (
-	"go.uber.org/zap"
-
-	"github.com/zly-app/zapp"
-	"github.com/zly-app/zapp/config"
-	"github.com/zly-app/zapp/plugin/apollo_provider"
-)
-
-func main() {
-	app := zapp.NewApp("test",
-		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
-	)
-	defer app.Exit()
-
-	callback := func(first bool, oldData, newData []byte) {
-		app.Info("回调",
-			zap.Bool("first", first),
-			zap.String("oldData", string(oldData)),
-			zap.String("newData", string(newData)),
-		)
+	// 获取数据
+	for {
+		a := MyConfigWatch.Get()
+		app.Info("数据", a)
+		time.Sleep(time.Second)
 	}
-	config.WatchKey("watch", "a").AddCallback(callback)
-	config.WatchKey("watch", "b").AddCallback(callback)
-	config.WatchKey("watch2", "a").AddCallback(callback)
-
-	app.Run()
 }
 ```
 

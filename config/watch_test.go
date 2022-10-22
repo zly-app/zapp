@@ -100,8 +100,7 @@ func TestSDK(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("1"))
 	require.Nil(t, err)
 
-	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := newWatchKeyObject(testGroupName, testKeyName)
 
 	// 获取原始数据
 	y1 := keyObj.GetString()
@@ -131,8 +130,7 @@ func TestWatch(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("2"))
 	require.Nil(t, err)
 
-	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := newWatchKeyObject(testGroupName, testKeyName)
 
 	var isCallback bool
 	expectFirst := true
@@ -165,8 +163,7 @@ func TestExpect(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("1"))
 	require.Nil(t, err)
 
-	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := newWatchKeyObject(testGroupName, testKeyName)
 
 	var tests = []struct {
 		expect interface{}
@@ -220,8 +217,7 @@ func TestConvert(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte("4"))
 	require.Nil(t, err)
 
-	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := newWatchKeyObject(testGroupName, testKeyName)
 
 	require.Equal(t, []byte("4"), keyObj.GetData())
 	require.Equal(t, "4", keyObj.GetString())
@@ -249,8 +245,7 @@ func TestParseJSON(t *testing.T) {
 	err := testProvider.Set(testGroupName, testKeyName, []byte(value))
 	require.Nil(t, err)
 
-	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := newWatchKeyObject(testGroupName, testKeyName)
 
 	require.Equal(t, keyObj.GetString(), value)
 
@@ -280,8 +275,7 @@ b:
 	err := testProvider.Set(testGroupName, testKeyName, []byte(value))
 	require.Nil(t, err)
 
-	keyObj, err := newWatchKeyObject(testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := newWatchKeyObject(testGroupName, testKeyName)
 
 	require.Equal(t, keyObj.GetString(), value)
 

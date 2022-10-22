@@ -16,10 +16,6 @@ import (
 type watchKeyGeneric[T any] struct {
 	keyObject *watchKeyObject
 
-	groupName string
-	keyName   string
-	initOpts  []core.ConfigWatchOption
-
 	callbacks []core.ConfigWatchKeyStructCallback[T] // 必须自己管理, 因为 watchKeyObject 是通过协程调用的 callback
 	watchMx   sync.Mutex                             // 用于锁 callback
 
@@ -30,8 +26,8 @@ type watchKeyGeneric[T any] struct {
 	initOnce sync.Once
 }
 
-func (w *watchKeyGeneric[T]) GroupName() string { return w.groupName }
-func (w *watchKeyGeneric[T]) KeyName() string   { return w.keyName }
+func (w *watchKeyGeneric[T]) GroupName() string { return w.keyObject.GroupName() }
+func (w *watchKeyGeneric[T]) KeyName() string   { return w.keyObject.KeyName() }
 
 func (w *watchKeyGeneric[T]) AddCallback(callback ...core.ConfigWatchKeyStructCallback[T]) {
 	w.waitInit()
@@ -120,16 +116,7 @@ func (w *watchKeyGeneric[T]) watchCallback(first bool, _, newData []byte) {
 // 等待初始化
 func (w *watchKeyGeneric[T]) waitInit() {
 	w.initOnce.Do(func() {
-		waitAppInit()
-		super, err := newWatchKeyObject(w.groupName, w.keyName, w.initOpts...)
-		if err != nil {
-			logger.Log.Fatal("观察key失败",
-				zap.String("groupName", w.groupName),
-				zap.String("keyName", w.keyName),
-				zap.Error(err))
-		}
-		w.keyObject = super
-		super.AddCallback(w.watchCallback) // 这里底层的w会立即触发回调
+		w.keyObject.AddCallback(w.watchCallback) // 等待app初始化完毕后, 这里底层的w会立即触发回调
 	})
 }
 
@@ -141,10 +128,8 @@ func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatc
 	}
 
 	warp := &watchKeyGeneric[T]{
+		keyObject: newWatchKeyObject(groupName, keyName, opts...),
 		dataType:  vTemp.Elem(), // 实际结构
-		groupName: groupName,
-		keyName:   keyName,
-		initOpts:  opts,
 	}
 	return warp
 }
