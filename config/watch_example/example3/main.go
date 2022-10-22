@@ -8,27 +8,34 @@ import (
 	"github.com/zly-app/zapp/config/watch_example/example_provider"
 )
 
+type MyConfig struct {
+	A int `json:"a"`
+}
+
+// 可以在定义变量时初始化
+var MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
+
 func main() {
 	app := zapp.NewApp("test",
 		example_provider.WithPlugin(true), // 启用插件并设为默认提供者
 	)
 	defer app.Exit()
 
-	type AA struct {
-		A int `json:"a"`
-	}
+	// 也可以在这里初始化
+	//MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
 
 	// 获取key对象
-	keyObj := config.WatchKeyStruct[*AA]("group_name", "generic_key", config.WithWatchStructJson())
-	a := keyObj.Get()
+	a := MyConfigWatch.Get()
 	app.Info("数据", a)
 
-	keyObj.AddCallback(func(first bool, oldData, newData *AA) {
+	// 添加回调
+	MyConfigWatch.AddCallback(func(first bool, oldData, newData *MyConfig) {
 		app.Info("回调",
 			zap.Bool("first", first),
 			zap.Any("oldData", oldData),
 			zap.Any("newData", newData),
 		)
 	})
+
 	app.Run()
 }

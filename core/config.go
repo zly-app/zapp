@@ -112,7 +112,7 @@ type IConfigWatchKeyObject interface {
 }
 
 // 配置观察key对象回调, 如果是第一次触发, first 为 true
-type ConfigWatchKeyCallback func(w IConfigWatchKeyObject, first bool, oldData, newData []byte)
+type ConfigWatchKeyCallback func(first bool, oldData, newData []byte)
 
 // 配置观察key对象, 用于结构化
 type IConfigWatchKeyStruct[T any] interface {

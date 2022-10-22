@@ -21,7 +21,7 @@ func SetPluginType(t core.PluginType) {
 	nowPluginType = t
 }
 
-// 启用插件
+// 启用插件, 用于设置配置观察的提供者
 func WithPlugin(setDefaultProvider ...bool) zapp.Option {
 	plugin.RegisterCreatorFunc(nowPluginType, func(app core.IApp) core.IPlugin {
 		p := NewApolloProvider(app)

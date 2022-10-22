@@ -222,9 +222,14 @@ include:
 
 ## 内置apollo提供者示例
 
-自动解析泛型结构示例
+自动解析泛型结构示例`(强烈推荐用法)` , 通过 `config.WatchKeyStruct` 观察一个key数值变更, 拥有以下特性
 
-通过 `config.WatchKeyStruct` 观察一个key数值变更, 每次变更时会自动解析一次数据. 当解析失败会忽略该数据并打印一个错误日志, 返回的配置数据不会产生变化.
++ <b>一行代码接入配置中心, 解放心智负担</b>
++ 自动将配置数据作为`json`或`yaml`解析到一个类型中, 通过`Get`能直接拿到想要的配置数据
++ 自动监听配置变更, 每次获取时拿到的是最新的配置数据
++ 只有配置变更时才会解析数据, 并不是每次获取数据都解析一次
++ 只有当第一次获取配置数据的时候才会与配置中心进行链接和监听, 也就是如果你不用就不会使用不必要的资源
++ 当首次解析失败会立即打印`Fatal`日志并退出程序, 但是后续的解析失败并不会这样, 而是打印一个`Error`日志并忽略该配置变更(获取到的配置是上一次正确的配置数据)
 
 ```go
 package main
@@ -237,28 +242,35 @@ import (
 	"github.com/zly-app/zapp/plugin/apollo_provider"
 )
 
+type MyConfig struct {
+	A int `json:"a"`
+}
+
+// 可以在定义变量时初始化
+var MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
+
 func main() {
 	app := zapp.NewApp("test",
 		apollo_provider.WithPlugin(true), // 启用apollo配置提供者并设置为默认提供者
 	)
 	defer app.Exit()
 
-	type AA struct {
-		A int `json:"a"`
-	}
+	// 也可以在这里初始化
+	//MyConfigWatch = config.WatchJson[*MyConfig]("group_name", "generic_key")
 
 	// 获取key对象
-	keyObj := config.WatchKeyStruct[*AA]("group_name", "generic_key", config.WithWatchStructJson())
-	a := keyObj.Get()
+	a := MyConfigWatch.Get()
 	app.Info("数据", a)
 
-	keyObj.AddCallback(func(first bool, oldData, newData *AA) {
+	// 添加回调
+	MyConfigWatch.AddCallback(func(first bool, oldData, newData *MyConfig) {
 		app.Info("回调",
 			zap.Bool("first", first),
 			zap.Any("oldData", oldData),
 			zap.Any("newData", newData),
 		)
 	})
+
 	app.Run()
 }
 ```
@@ -273,7 +285,6 @@ import (
 
 	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/config"
-	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/plugin/apollo_provider"
 )
 
@@ -283,10 +294,8 @@ func main() {
 	)
 	defer app.Exit()
 
-	callback := func(w core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
+	callback := func(first bool, oldData, newData []byte) {
 		app.Info("回调",
-			zap.String("groupName", w.GroupName()),
-			zap.String("keyName", w.KeyName()),
 			zap.Bool("first", first),
 			zap.String("oldData", string(oldData)),
 			zap.String("newData", string(newData)),

@@ -6,7 +6,6 @@ import (
 	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/config/watch_example/example_provider"
-	"github.com/zly-app/zapp/core"
 )
 
 func main() {
@@ -19,10 +18,8 @@ func main() {
 	keyObj := config.WatchKey("group_name", "key_name")
 
 	// 添加回调函数
-	keyObj.AddCallback(func(w core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
+	keyObj.AddCallback(func(first bool, oldData, newData []byte) {
 		app.Info("回调",
-			zap.String("groupName", w.GroupName()),
-			zap.String("keyName", w.KeyName()),
 			zap.Bool("first", first),
 			zap.String("oldData", string(oldData)),
 			zap.String("newData", string(newData)),

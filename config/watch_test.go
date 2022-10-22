@@ -11,6 +11,10 @@ import (
 	"github.com/zly-app/zapp/core"
 )
 
+func init() {
+	watchWaitWG.Done()
+}
+
 // 测试提供者
 type TestWatchProvider struct {
 	data              map[string]map[string][]byte // 表示组下的key的数据
@@ -134,12 +138,11 @@ func TestWatch(t *testing.T) {
 	expectFirst := true
 	expectOldData := "2"
 	expectNewData := "2"
-	keyObj.AddCallback(func(k core.IConfigWatchKeyObject, first bool, oldData, newData []byte) {
+	keyObj.AddCallback(func(first bool, oldData, newData []byte) {
 		isCallback = true
 		require.Equal(t, expectFirst, first)
 		require.Equal(t, expectOldData, string(oldData))
 		require.Equal(t, expectNewData, string(newData))
-		require.Equal(t, keyObj, k)
 	})
 	require.Nil(t, err)
 
@@ -305,11 +308,8 @@ func TestGenericSDKJson(t *testing.T) {
 	type AA struct {
 		A int `json:"a"`
 	}
-	_, err = newWatchKeyStruct[*AA](testGroupName, testKeyName)
-	require.NotNil(t, err)
 
-	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := WatchJson[*AA](testGroupName, testKeyName)
 	require.NotNil(t, keyObj)
 	require.Equal(t, 1, keyObj.Get().A)
 	require.Equal(t, rawData, keyObj.GetData())
@@ -326,11 +326,8 @@ func TestGenericSDKYaml(t *testing.T) {
 	type AA struct {
 		A int `yaml:"a"`
 	}
-	_, err = newWatchKeyStruct[*AA](testGroupName, testKeyName, WithWatchStructYaml())
-	require.NotNil(t, err)
 
-	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName, WithWatchStructYaml())
-	require.Nil(t, err)
+	keyObj := WatchYaml[*AA](testGroupName, testKeyName)
 	require.NotNil(t, keyObj)
 	require.Equal(t, 1, keyObj.Get().A)
 	require.Equal(t, rawData, keyObj.GetData())
@@ -348,8 +345,7 @@ func TestGenericWatchJson(t *testing.T) {
 		A int `json:"a"`
 	}
 
-	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName)
-	require.Nil(t, err)
+	keyObj := WatchJson[*AA](testGroupName, testKeyName)
 	require.NotNil(t, keyObj)
 	require.Equal(t, 1, keyObj.Get().A)
 	require.Equal(t, rawData, keyObj.GetData())
@@ -358,12 +354,11 @@ func TestGenericWatchJson(t *testing.T) {
 	expectFirst := true
 	expectOldData := 1
 	expectNewData := 1
-	keyObj.AddCallback(func(k core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
+	keyObj.AddCallback(func(first bool, oldData, newData *AA) {
 		isCallback = true
 		require.Equal(t, expectFirst, first)
 		require.Equal(t, expectOldData, oldData.A)
 		require.Equal(t, expectNewData, newData.A)
-		require.Equal(t, keyObj, k)
 	})
 	require.Nil(t, err)
 
@@ -398,8 +393,7 @@ func TestGenericWatchYaml(t *testing.T) {
 		A int `yaml:"a"`
 	}
 
-	keyObj, err := newWatchKeyStruct[AA](testGroupName, testKeyName, WithWatchStructYaml())
-	require.Nil(t, err)
+	keyObj := WatchYaml[*AA](testGroupName, testKeyName)
 	require.NotNil(t, keyObj)
 	require.Equal(t, 1, keyObj.Get().A)
 	require.Equal(t, rawData, keyObj.GetData())
@@ -408,12 +402,11 @@ func TestGenericWatchYaml(t *testing.T) {
 	expectFirst := true
 	expectOldData := 1
 	expectNewData := 1
-	keyObj.AddCallback(func(k core.IConfigWatchKeyStruct[AA], first bool, oldData, newData AA) {
+	keyObj.AddCallback(func(first bool, oldData, newData *AA) {
 		isCallback = true
 		require.Equal(t, expectFirst, first)
 		require.Equal(t, expectOldData, oldData.A)
 		require.Equal(t, expectNewData, newData.A)
-		require.Equal(t, keyObj, k)
 	})
 	require.Nil(t, err)
 

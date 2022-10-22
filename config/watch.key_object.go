@@ -47,7 +47,7 @@ func (w *watchKeyObject) AddCallback(callback ...core.ConfigWatchKeyCallback) {
 	// 立即触发
 	data := w.getRawData()
 	for _, fn := range callback {
-		fn(w, true, data, data) // 这里无法保证 data 被 callback 函数修改数据
+		fn(true, data, data) // 这里无法保证 data 被 callback 函数修改数据
 	}
 }
 
@@ -271,7 +271,7 @@ func (w *watchKeyObject) watchCallback(_, _ string, _, newData []byte) {
 	w.watchMx.Lock()
 	defer w.watchMx.Unlock()
 	for _, fn := range w.callbacks {
-		go fn(w, false, oldData, newData) // 这里无法保证 newData 被 callback 函数修改数据
+		go fn(false, oldData, newData) // 这里无法保证 newData 被 callback 函数修改数据
 	}
 }
 

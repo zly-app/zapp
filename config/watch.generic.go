@@ -14,7 +14,11 @@ import (
 
 // 观察选项
 type watchKeyGeneric[T any] struct {
-	w *watchKeyObject
+	keyObject *watchKeyObject
+
+	groupName string
+	keyName   string
+	initOpts  []core.ConfigWatchOption
 
 	callbacks []core.ConfigWatchKeyStructCallback[T] // 必须自己管理, 因为 watchKeyObject 是通过协程调用的 callback
 	watchMx   sync.Mutex                             // 用于锁 callback
@@ -22,12 +26,15 @@ type watchKeyGeneric[T any] struct {
 	rawData  atomic.Value // 这里只保留成功解析的数据
 	data     atomic.Value
 	dataType reflect.Type
+
+	initOnce sync.Once
 }
 
-func (w *watchKeyGeneric[T]) GroupName() string { return w.w.GroupName() }
-func (w *watchKeyGeneric[T]) KeyName() string   { return w.w.KeyName() }
+func (w *watchKeyGeneric[T]) GroupName() string { return w.groupName }
+func (w *watchKeyGeneric[T]) KeyName() string   { return w.keyName }
 
 func (w *watchKeyGeneric[T]) AddCallback(callback ...core.ConfigWatchKeyStructCallback[T]) {
+	w.waitInit()
 	w.watchMx.Lock()
 	defer w.watchMx.Unlock()
 
@@ -43,11 +50,13 @@ func (w *watchKeyGeneric[T]) AddCallback(callback ...core.ConfigWatchKeyStructCa
 }
 
 func (w *watchKeyGeneric[T]) GetData() []byte {
+	w.waitInit()
 	data := w.rawData.Load().([]byte)
 	return data
 }
 
 func (w *watchKeyGeneric[T]) Get() T {
+	w.waitInit()
 	data := w.data.Load().(T)
 	return data
 }
@@ -56,11 +65,11 @@ func (w *watchKeyGeneric[T]) Get() T {
 func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
 	data := reflect.New(w.dataType).Interface()
 	var err error
-	switch t := w.w.Opts().StructType; t {
+	switch t := w.keyObject.Opts().StructType; t {
 	case Json:
-		err = w.w.ParseJSON(data)
+		err = w.keyObject.ParseJSON(data)
 	case Yaml:
-		err = w.w.ParseYaml(data)
+		err = w.keyObject.ParseYaml(data)
 	default:
 		err = fmt.Errorf("未定义的解析类型: %v", t)
 	}
@@ -87,13 +96,13 @@ func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
 	return nil
 }
 
-func (w *watchKeyGeneric[T]) watchCallback(_ core.IConfigWatchKeyObject, first bool, _, newData []byte) {
+func (w *watchKeyGeneric[T]) watchCallback(first bool, _, newData []byte) {
 	err := w.reset(first, newData)
 	if err == nil {
 		return
 	}
 	if first {
-		logger.Log.Fatal("重置数据失败",
+		logger.Log.Fatal("解析数据失败",
 			zap.String("groupName", w.GroupName()),
 			zap.String("keyName", w.KeyName()),
 			zap.String("newData", string(newData)),
@@ -108,36 +117,54 @@ func (w *watchKeyGeneric[T]) watchCallback(_ core.IConfigWatchKeyObject, first b
 	)
 }
 
-func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatchOption) (
-	core.IConfigWatchKeyStruct[T], error) {
+// 等待初始化
+func (w *watchKeyGeneric[T]) waitInit() {
+	w.initOnce.Do(func() {
+		waitAppInit()
+		super, err := newWatchKeyObject(w.groupName, w.keyName, w.initOpts...)
+		if err != nil {
+			logger.Log.Fatal("观察key失败",
+				zap.String("groupName", w.groupName),
+				zap.String("keyName", w.keyName),
+				zap.Error(err))
+		}
+		w.keyObject = super
+		super.AddCallback(w.watchCallback) // 这里底层的w会立即触发回调
+	})
+}
+
+func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyStruct[T] {
 	temp := *new(T) // 消除new指针
 	vTemp := reflect.TypeOf(temp)
 	if vTemp.Kind() != reflect.Ptr {
-		return nil, fmt.Errorf("泛型类型必须是指针, T=%T", temp)
+		logger.Log.Fatal("泛型类型必须是指针", zap.String("T", fmt.Sprintf("%T", temp)))
 	}
 
-	w, err := newWatchKeyObject(groupName, keyName, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("观察key失败: %v", err)
-	}
 	warp := &watchKeyGeneric[T]{
-		w:        w,
-		dataType: vTemp.Elem(), // 实际结构
+		dataType:  vTemp.Elem(), // 实际结构
+		groupName: groupName,
+		keyName:   keyName,
+		initOpts:  opts,
 	}
-	// 这里会立即触发, 所以下一步可以立即返回 warp
-	w.AddCallback(warp.watchCallback)
-	return warp, nil
+	return warp
 }
 
 // 观察key结构化数据, 失败会fatal, 默认为json格式
 func WatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyStruct[T] {
-	w, err := newWatchKeyStruct[T](groupName, keyName, opts...)
-	if err != nil {
-		logger.Log.Fatal("观察key失败",
-			zap.String("groupName", groupName),
-			zap.String("keyName", keyName),
-			zap.Error(err),
-		)
-	}
+	w := newWatchKeyStruct[T](groupName, keyName, opts...)
 	return w
+}
+
+// 观察json配置数据, 失败会fatal
+func WatchJson[T any](groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyStruct[T] {
+	opts = append(make([]core.ConfigWatchOption, 0, len(opts)+1), opts...)
+	opts = append(opts, WithWatchStructJson())
+	return newWatchKeyStruct[T](groupName, keyName, opts...)
+}
+
+// 观察yaml配置数据, 失败会fatal
+func WatchYaml[T any](groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyStruct[T] {
+	opts = append(make([]core.ConfigWatchOption, 0, len(opts)+1), opts...)
+	opts = append(opts, WithWatchStructYaml())
+	return newWatchKeyStruct[T](groupName, keyName, opts...)
 }

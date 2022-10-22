@@ -16,7 +16,7 @@ func init() {
 	})
 }
 
-// 等待直到app初始化成功
+// 等待直到NewApp成功
 func waitAppInit() {
 	watchWaitWG.Wait()
 }
