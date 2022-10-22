@@ -1,49 +1,38 @@
-/*
--------------------------------------------------
-   Author :       zlyuancn
-   date：         2020/8/22
-   Description :
--------------------------------------------------
-*/
-
 package zapp
 
 import (
-	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/handler"
 )
 
-type Handler func(app core.IApp, handlerType HandlerType)
-
-var handlers = map[HandlerType][]Handler{}
+type Handler = handler.Handler
 
 // handler类型
-type HandlerType int
+type HandlerType = handler.HandlerType
 
 const (
 	// 在app初始化前
-	BeforeInitializeHandler HandlerType = iota + 1
+	BeforeInitializeHandler = handler.BeforeInitializeHandler
 	// 在app初始化后
-	AfterInitializeHandler
+	AfterInitializeHandler = handler.AfterInitializeHandler
 	// 在app启动前
-	BeforeStartHandler
+	BeforeStartHandler = handler.BeforeStartHandler
 	// 在app启动后
-	AfterStartHandler
+	AfterStartHandler = handler.AfterStartHandler
 	// 在app退出前
-	BeforeExitHandler
+	BeforeExitHandler = handler.BeforeExitHandler
 	// 在app退出后
-	AfterExitHandler
+	AfterExitHandler = handler.AfterExitHandler
 )
 
+// 添加handler, 和WithHandler不同的是, 它可以在NewApp之前执行, 并且它的执行顺序优先于WithHandler
+// 这个函数是兼容旧逻辑
+func AddHandler(t HandlerType, hs ...Handler) {
+	handler.AddHandler(t, hs...)
+}
+
 func (app *appCli) handler(t HandlerType) {
-	for _, h := range handlers[t] {
-		h(app, t)
-	}
+	handler.Trigger(app, t)
 	for _, h := range app.opt.Handlers[t] {
 		h(app, t)
 	}
-}
-
-// 添加handler, 和WithHandler不同的是, 它可以在NewApp之前执行, 并且它的执行顺序优先于WithHandler
-func AddHandler(t HandlerType, hs ...Handler) {
-	handlers[t] = append(handlers[t], hs...)
 }
