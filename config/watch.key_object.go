@@ -27,13 +27,13 @@ type watchKeyObject struct {
 	callbacks []core.ConfigWatchKeyCallback
 	watchMx   sync.Mutex // 用于锁 callback
 
-	data     atomic.Value
-	initOnce sync.Once
+	data   atomic.Value
+	initWG sync.WaitGroup
 }
 
-// 等待初始化
-func (w *watchKeyObject) waitInit() {
-	w.initOnce.Do(func() {
+func (w *watchKeyObject) init() {
+	w.initWG.Add(1)
+	go func() {
 		waitAppInit()
 		w.opts = newWatchOptions(w.initOpts)
 		w.p = w.opts.Provider
@@ -56,7 +56,14 @@ func (w *watchKeyObject) waitInit() {
 				zap.String("keyName", w.keyName),
 				zap.Error(err))
 		}
-	})
+
+		w.initWG.Done()
+	}()
+}
+
+// 等待初始化
+func (w *watchKeyObject) waitInit() {
+	w.initWG.Wait()
 }
 
 func (w *watchKeyObject) Opts() *watchOptions {
@@ -340,6 +347,7 @@ func newWatchKeyObject(groupName, keyName string, opts ...core.ConfigWatchOption
 		keyName:   keyName,
 		initOpts:  opts,
 	}
+	w.init()
 	return w
 }
 

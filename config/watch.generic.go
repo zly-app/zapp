@@ -23,7 +23,7 @@ type watchKeyGeneric[T any] struct {
 	data     atomic.Value
 	dataType reflect.Type
 
-	initOnce sync.Once
+	initWG sync.WaitGroup
 }
 
 func (w *watchKeyGeneric[T]) GroupName() string { return w.keyObject.GroupName() }
@@ -113,11 +113,17 @@ func (w *watchKeyGeneric[T]) watchCallback(first bool, _, newData []byte) {
 	)
 }
 
+func (w *watchKeyGeneric[T]) init() {
+	w.initWG.Add(1)
+	go func() {
+		w.keyObject.AddCallback(w.watchCallback) // 等待app初始化完毕后, 这里底层的w会立即触发回调
+		w.initWG.Done()
+	}()
+}
+
 // 等待初始化
 func (w *watchKeyGeneric[T]) waitInit() {
-	w.initOnce.Do(func() {
-		w.keyObject.AddCallback(w.watchCallback) // 等待app初始化完毕后, 这里底层的w会立即触发回调
-	})
+	w.initWG.Wait()
 }
 
 func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatchOption) core.IConfigWatchKeyStruct[T] {
@@ -131,6 +137,7 @@ func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatc
 		keyObject: newWatchKeyObject(groupName, keyName, opts...),
 		dataType:  vTemp.Elem(), // 实际结构
 	}
+	warp.init()
 	return warp
 }
 
