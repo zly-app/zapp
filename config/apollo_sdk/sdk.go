@@ -218,11 +218,13 @@ func (a *ApolloClient) loadNamespaceDataFromRemote(namespace string) (data *Name
 	return &result, true, nil
 }
 
-/*获取命名空间数据
-  如果 oldData 为 nil 会直接获取数据
-  如果 oldData.ReleaseKey 不为空则检查是否会改变了
+/*
+获取命名空间数据
+
+	如果 oldData 为 nil 会直接获取数据
+	如果 oldData.ReleaseKey 不为空则检查是否会改变了
 */
-func (a *ApolloClient) GetNamespaceData(namespace string) (oldData, newData *NamespaceData, changed bool, err error) {
+func (a *ApolloClient) GetNamespaceData(namespace string, ignoreRemoteErr bool) (oldData, newData *NamespaceData, changed bool, err error) {
 	oldData = a.cache[namespace]
 	if oldData == nil {
 		oldData = &NamespaceData{
@@ -234,6 +236,13 @@ func (a *ApolloClient) GetNamespaceData(namespace string) (oldData, newData *Nam
 	}
 
 	newData, changed, err = a.loadNamespaceDataFromRemote(namespace)
+	if err != nil && ignoreRemoteErr {
+		logger.Log.Error("获取远程命名空间数据失败",
+			zap.String("namespace", namespace),
+			zap.Error(err),
+		)
+		return oldData, oldData, false, nil
+	}
 	if changed {
 		a.cache[namespace] = newData
 		a.saveDataToBackupFile()
@@ -241,8 +250,10 @@ func (a *ApolloClient) GetNamespaceData(namespace string) (oldData, newData *Nam
 	return
 }
 
-/*等待通知
-  如果数据未被改变, 此方法会导致挂起直到超时或被改变
+/*
+等待通知
+
+	如果数据未被改变, 此方法会导致挂起直到超时或被改变
 */
 func (a *ApolloClient) WaitNotification(ctx context.Context, param []*NotificationParam) ([]*NotificationRsp, error) {
 	if len(param) == 0 {
@@ -333,7 +344,15 @@ func (a *ApolloClient) loadDataFromBackupFile() (MultiNamespaceData, error) {
 
 	var result MultiNamespaceData
 	err = yaml.Unmarshal(bs, &result)
-	return result, err
+	if err != nil {
+		return nil, err
+	}
+	for k, d := range result {
+		if d == nil || d.Namespace != k {
+			return nil, fmt.Errorf("配置<%s>不正确", k)
+		}
+	}
+	return result, nil
 }
 
 // 写入缓存

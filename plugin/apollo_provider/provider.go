@@ -11,6 +11,7 @@ import (
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/config/apollo_sdk"
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/logger"
 )
 
 // 观察失败等待时间
@@ -63,7 +64,7 @@ func (p *ApolloProvider) Get(groupName, keyName string) ([]byte, error) {
 	if groupName == "" {
 		groupName = apollo_sdk.ApplicationNamespace
 	}
-	_, data, _, err := p.client.GetNamespaceData(groupName)
+	_, data, _, err := p.client.GetNamespaceData(groupName, true)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +80,7 @@ func (p *ApolloProvider) Watch(groupName, keyName string, callback core.ConfigWa
 	if groupName == "" {
 		groupName = apollo_sdk.ApplicationNamespace
 	}
-	_, data, _, err := p.client.GetNamespaceData(groupName)
+	_, data, _, err := p.client.GetNamespaceData(groupName, true)
 	if err != nil {
 		return err
 	}
@@ -130,6 +131,7 @@ func (p *ApolloProvider) startWatchNamespace() {
 			param := p.makeNotificationParam()
 			rsp, err := p.client.WaitNotification(p.watchCtx, param)
 			if err != nil {
+				logger.Log.Error("创建观察apollo通知失败", zap.Any("param", param), zap.Error(err))
 				time.Sleep(WatchErrWaitTime)
 				continue
 			}
@@ -170,7 +172,7 @@ func (p *ApolloProvider) parseNotificationRsp(rsp []*apollo_sdk.NotificationRsp)
 
 // 重新请求命名空间数据
 func (p *ApolloProvider) ReReqNamespaceData(namespace string) {
-	oldData, newData, changed, err := p.client.GetNamespaceData(namespace)
+	oldData, newData, changed, err := p.client.GetNamespaceData(namespace, true)
 	if err != nil {
 		p.app.Error("重新请求apollo命名空间数据失败", zap.String("namespace", namespace), zap.Error(err))
 		return

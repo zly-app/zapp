@@ -15,9 +15,11 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/config/apollo_sdk"
 	"github.com/zly-app/zapp/consts"
+	"github.com/zly-app/zapp/logger"
 )
 
 const defApplicationDataType = "yaml"
@@ -123,7 +125,10 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 func analyseApolloConfig(dst map[string]interface{}, namespace string, configurations map[string]string, conf *ApolloConfig) error {
 	if namespace != apollo_sdk.ApplicationNamespace {
 		dst[namespace] = configurations
-		fmt.Println(fmt.Sprintf("%s: %+v", namespace, configurations))
+		logger.Log.Info("分析apollo配置数据",
+			zap.String("namespace", namespace),
+			zap.Any("configurations", configurations),
+		)
 		return nil
 	}
 

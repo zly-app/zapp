@@ -92,22 +92,23 @@ func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
 	return nil
 }
 
-func (w *watchKeyGeneric[T]) watchCallback(first bool, _, newData []byte) {
+func (w *watchKeyGeneric[T]) watchCallback(first bool, oldData, newData []byte) {
 	err := w.reset(first, newData)
 	if err == nil {
 		return
 	}
 	if first {
-		logger.Log.Fatal("解析数据失败",
+		logger.Log.Fatal("首次解析数据失败",
 			zap.String("groupName", w.GroupName()),
 			zap.String("keyName", w.KeyName()),
-			zap.String("newData", string(newData)),
+			zap.String("data", string(newData)),
 			zap.Error(err),
 		)
 	}
 	logger.Log.Error("重置数据失败",
 		zap.String("groupName", w.GroupName()),
 		zap.String("keyName", w.KeyName()),
+		zap.String("oldData", string(oldData)),
 		zap.String("newData", string(newData)),
 		zap.Error(err),
 	)

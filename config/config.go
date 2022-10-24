@@ -128,7 +128,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	c.checkDefaultConfig(c.c)
 
 	if *testFlag {
-		fmt.Println("配置文件测试成功")
+		logger.Log.Info("配置文件测试成功")
 		os.Exit(0)
 	}
 

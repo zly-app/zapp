@@ -325,6 +325,12 @@ func (w *watchKeyObject) watchCallback(_, _ string, _, newData []byte) {
 	}
 
 	w.resetData(newData)
+	logger.Log.Info("配置数据变更",
+		zap.String("groupName", w.groupName),
+		zap.String("keyName", w.keyName),
+		zap.String("oldData", string(oldData)),
+		zap.String("newData", string(newData)),
+	)
 
 	w.watchMx.Lock()
 	defer w.watchMx.Unlock()
