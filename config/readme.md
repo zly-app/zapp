@@ -83,7 +83,7 @@ frame: # 框架配置
         CapitalLevel: false # 是否大写日志等级
         DevelopmentMode: true # 开发者模式, 在开发者模式下日志记录器在写完DPanic消息后程序会感到恐慌
         ShowFileAndLinenum: true # 显示文件路径和行号
-        ShowFileAndLinenumMinLevel: 'warn' # 最小显示文件路径和行号的等级
+        ShowFileAndLinenumMinLevel: 'debug' # 最小显示文件路径和行号的等级. 推荐所有等级都打印代码行, 相对于能快速定位问题来说, 这点性能损耗无关紧要
         MillisDuration: true # 对zap.Duration转为毫秒
     PrintConfig: true # app初始时是否打印配置
 ```

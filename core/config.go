@@ -109,7 +109,7 @@ type LogConfig struct {
 	CapitalLevel               bool   // 是否大写日志等级
 	DevelopmentMode            bool   // 开发者模式, 在开发者模式下日志记录器在写完DPanic消息后程序会感到恐慌
 	ShowFileAndLinenum         bool   // 显示文件路径和行号
-	ShowFileAndLinenumMinLevel string // 最小显示文件路径和行号的等级
+	ShowFileAndLinenumMinLevel string // 最小显示文件路径和行号的等级. 推荐所有等级都打印代码行, 相对于能快速定位问题来说, 这点性能损耗无关紧要
 	MillisDuration             bool   // 对zap.Duration转为毫秒
 }
 

@@ -62,6 +62,6 @@ var DefaultConfig = core.LogConfig{
 	CapitalLevel:               false,
 	DevelopmentMode:            true,
 	ShowFileAndLinenum:         true,
-	ShowFileAndLinenumMinLevel: "warn",
+	ShowFileAndLinenumMinLevel: "debug", // 推荐所有等级都打印代码行, 相对于能快速定位问题来说, 这点性能损耗无关紧要
 	MillisDuration:             true,
 }
