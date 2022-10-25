@@ -82,8 +82,19 @@ func (l *logWrap) makeBody(v []interface{}) (string, []zap.Field) {
 			fields = append(fields, val)
 		case *zap.Field:
 			fields = append(fields, *val)
-		default:
+		case context.Context:
+			span := utils.Trace.GetSpan(val)
+			traceID := utils.Trace.GetTraceID(span)
+			if traceID != "" {
+				fields = append(fields, zap.String(logTraceIdKey, traceID))
+			}
+		case string, bool,
+			int, int8, int16, int32, int64,
+			uint, uint8, uint16, uint32, uint64,
+			float32, float64:
 			args = append(args, value)
+		default:
+			fields = append(fields, zap.Any("logData", value))
 		}
 	}
 	return fmt.Sprint(args...), fields
@@ -119,8 +130,10 @@ func (l *logWrap) AddFields(fields ...zap.Field) {
 	l.fields = append(append([]zap.Field{}, l.fields...), fields...)
 }
 
-/*为log移除一些field, 返回移除的个数
-  count	移除key的个数, <1表示所有
+/*
+为log移除一些field, 返回移除的个数
+
+	count	移除key的个数, <1表示所有
 */
 func (l *logWrap) RemoveFields(count int, fieldKeys ...string) int {
 	if len(l.fields) == 0 || len(fieldKeys) == 0 {
@@ -183,6 +196,9 @@ func (l *logWrap) NewSessionLogger(fields ...zap.Field) core.ILogger {
 // 创建一个带链路id的log
 func (l *logWrap) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.ILogger {
 	span := utils.Trace.GetSpan(ctx)
+	if span == nil {
+		span = utils.Trace.StartSpan("Undefined")
+	}
 	traceID := utils.Trace.GetTraceID(span)
 	return &logWrap{
 		log:            l.log,
@@ -210,8 +226,10 @@ func AddFields(l interface{}, fields ...zap.Field) bool {
 	return true
 }
 
-/*为log移除一些field, 返回移除的个数
-  count	移除key的个数, <1表示所有
+/*
+为log移除一些field, 返回移除的个数
+
+	count	移除key的个数, <1表示所有
 */
 func RemoveFields(l interface{}, count int, fieldKeys ...string) (int, bool) {
 	a, ok := l.(*logWrap)

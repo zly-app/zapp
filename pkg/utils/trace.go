@@ -16,9 +16,14 @@ func (*traceCli) SaveSpan(ctx context.Context, span opentracing.Span) context.Co
 	return opentracing.ContextWithSpan(ctx, span)
 }
 
-// 获取span
+// 从ctx中获取span
 func (*traceCli) GetSpan(ctx context.Context) opentracing.Span {
 	return opentracing.SpanFromContext(ctx)
+}
+
+// 开始一个span
+func (*traceCli) StartSpan(operationName string) opentracing.Span {
+	return opentracing.StartSpan(operationName)
 }
 
 // 获取或生成子span
