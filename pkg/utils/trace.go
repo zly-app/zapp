@@ -79,6 +79,20 @@ func (c *traceCli) GetTraceID(span opentracing.Span) string {
 	return traceID
 }
 
+func (c *traceCli) GetTraceIDWithContext(ctx context.Context) string {
+	// 支持 otel 中获取 traceID
+	{
+		sc := Otel.GetSpan(ctx).SpanContext()
+		traceID := sc.TraceID()
+		if traceID != (tracesdk.TraceID{}) {
+			return traceID.String()
+		}
+	}
+
+	span := c.GetSpan(ctx)
+	return c.GetTraceID(span)
+}
+
 func (*traceCli) getJaegerTraceID(carrier opentracing.TextMapCarrier) string {
 	const TraceID = "uber-trace-id"
 	values := strings.SplitN(carrier[TraceID], ":", 2)
