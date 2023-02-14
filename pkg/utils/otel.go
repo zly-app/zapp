@@ -18,6 +18,10 @@ type otelCli struct{}
 type OtelSpanKey = attribute.Key
 type OtelSpanKV = attribute.KeyValue
 
+func (*otelCli) SaveToContext(ctx context.Context, span trace.Span) context.Context {
+	return trace.ContextWithSpan(ctx, span)
+}
+
 // 从ctx中获取span
 func (*otelCli) GetSpan(ctx context.Context) trace.Span {
 	return trace.SpanFromContext(ctx)
