@@ -83,9 +83,12 @@ func (l *logWrap) makeBody(v []interface{}) (string, []zap.Field) {
 		case *zap.Field:
 			fields = append(fields, *val)
 		case context.Context:
-			traceID := utils.Trace.GetTraceIDWithContext(val)
+			traceID, spanID := utils.Trace.GetTraceIDWithContext(val)
 			if traceID != "" {
 				fields = append(fields, zap.String(logTraceIdKey, traceID))
+			}
+			if spanID != "" {
+				fields = append(fields, zap.String(logTraceSpanIdKey, spanID))
 			}
 		case string, bool,
 			int, int8, int16, int32, int64,

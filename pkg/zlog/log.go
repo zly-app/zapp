@@ -25,6 +25,7 @@ import (
 
 const logIdKey = "log_id"
 const logTraceIdKey = "traceID"
+const logTraceSpanIdKey = "spanID"
 
 var DefaultLogger core.ILogger = New(DefaultConfig)
 

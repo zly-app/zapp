@@ -77,17 +77,17 @@ func (c *traceCli) GetTraceID(span opentracing.Span) string {
 	return traceID
 }
 
-func (c *traceCli) GetTraceIDWithContext(ctx context.Context) string {
+func (c *traceCli) GetTraceIDWithContext(ctx context.Context) (string, string) {
 	// 支持 otel 中获取 traceID
 	{
 		sc := Otel.GetSpan(ctx).SpanContext()
 		if sc.IsValid() {
-			return sc.TraceID().String()
+			return sc.TraceID().String(), sc.SpanID().String()
 		}
 	}
 
 	span := c.GetSpan(ctx)
-	return c.GetTraceID(span)
+	return c.GetTraceID(span), ""
 }
 
 func (*traceCli) getJaegerTraceID(carrier opentracing.TextMapCarrier) string {
