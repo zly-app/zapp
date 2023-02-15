@@ -23,7 +23,7 @@ import (
 	"github.com/zly-app/zapp/core"
 )
 
-const logIdKey = "log_id"
+const logIdKey = "logID"
 const logTraceIdKey = "traceID"
 const logTraceSpanIdKey = "spanID"
 
@@ -36,8 +36,8 @@ func New(conf core.LogConfig, opts ...zap.Option) *logWrap {
 
 	opts = makeOpts(&conf, opts...)
 	zapCore := zapcore.NewCore(encoder, ws, level)
-	log := newLogWrap(zap.New(zapCore, opts...), parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)), ws)
-	return log
+	log := newLogCore(zap.New(zapCore, opts...), parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)), ws)
+	return newLogWrap(log)
 }
 
 func makeEncoder(conf *core.LogConfig) zapcore.Encoder {
@@ -115,7 +115,7 @@ func makeLevel(conf *core.LogConfig) zapcore.Level {
 }
 
 func makeOpts(conf *core.LogConfig, o ...zap.Option) []zap.Option {
-	const callerSkipOffset = 2
+	const callerSkipOffset = 3
 
 	opts := []zap.Option{zap.AddCallerSkip(callerSkipOffset)}
 	if conf.DevelopmentMode {
@@ -143,7 +143,7 @@ func parserLogLevel(level Level) zapcore.Level {
 
 // 获取原始ZapLogger
 func GetRawZapLogger(l core.ILogger) (*zap.Logger, bool) {
-	if a, ok := l.(*logWrap); ok {
+	if a, ok := l.(*logCore); ok {
 		return a.log, true
 	}
 	return nil, false
