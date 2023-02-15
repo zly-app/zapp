@@ -45,6 +45,17 @@ func (c *otelCli) GetSpanWithHeaders(ctx context.Context, headers http.Header) (
 	return ctx, c.GetSpan(ctx)
 }
 
+func (*otelCli) SaveToMap(ctx context.Context, mapping map[string]string) {
+	v := propagation.MapCarrier(mapping)
+	otel.GetTextMapPropagator().Inject(ctx, v)
+}
+
+func (c *otelCli) GetSpanWithMap(ctx context.Context, mapping map[string]string) (context.Context, trace.Span) {
+	v := propagation.MapCarrier(mapping)
+	ctx = otel.GetTextMapPropagator().Extract(ctx, v)
+	return ctx, c.GetSpan(ctx)
+}
+
 // 开始一个span
 func (*otelCli) StartSpan(ctx context.Context, spanName string, attributes ...OtelSpanKV) (
 	context.Context, trace.Span) {
