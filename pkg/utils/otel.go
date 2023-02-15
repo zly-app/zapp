@@ -2,11 +2,13 @@ package utils
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -18,6 +20,11 @@ type otelCli struct{}
 type OtelSpanKey = attribute.Key
 type OtelSpanKV = attribute.KeyValue
 
+func (*otelCli) GlobalTrace(name string) trace.Tracer {
+	return otel.Tracer(name)
+}
+
+// 将span存入ctx中
 func (*otelCli) SaveToContext(ctx context.Context, span trace.Span) context.Context {
 	return trace.ContextWithSpan(ctx, span)
 }
@@ -25,6 +32,17 @@ func (*otelCli) SaveToContext(ctx context.Context, span trace.Span) context.Cont
 // 从ctx中获取span
 func (*otelCli) GetSpan(ctx context.Context) trace.Span {
 	return trace.SpanFromContext(ctx)
+}
+
+func (*otelCli) SaveToHeaders(ctx context.Context, headers http.Header) {
+	v := propagation.HeaderCarrier(headers)
+	otel.GetTextMapPropagator().Inject(ctx, v)
+}
+
+func (c *otelCli) GetSpanWithHeaders(ctx context.Context, headers http.Header) (context.Context, trace.Span) {
+	v := propagation.HeaderCarrier(headers)
+	ctx = otel.GetTextMapPropagator().Extract(ctx, v)
+	return ctx, c.GetSpan(ctx)
 }
 
 // 开始一个span

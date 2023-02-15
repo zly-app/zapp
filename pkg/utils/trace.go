@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/opentracing/opentracing-go"
-	tracesdk "go.opentelemetry.io/otel/trace"
 )
 
 var Trace = &traceCli{}
@@ -55,9 +54,8 @@ func (c *traceCli) GetTraceID(span opentracing.Span) string {
 	{
 		ctx := opentracing.ContextWithSpan(context.Background(), span)
 		sc := Otel.GetSpan(ctx).SpanContext()
-		traceID := sc.TraceID()
-		if traceID != (tracesdk.TraceID{}) {
-			return traceID.String()
+		if sc.IsValid() {
+			return sc.TraceID().String()
 		}
 	}
 
@@ -83,9 +81,8 @@ func (c *traceCli) GetTraceIDWithContext(ctx context.Context) string {
 	// 支持 otel 中获取 traceID
 	{
 		sc := Otel.GetSpan(ctx).SpanContext()
-		traceID := sc.TraceID()
-		if traceID != (tracesdk.TraceID{}) {
-			return traceID.String()
+		if sc.IsValid() {
+			return sc.TraceID().String()
 		}
 	}
 
