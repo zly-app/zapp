@@ -50,7 +50,15 @@ func (b bytesSerializer) Unmarshal(r io.Reader, a interface{}) error {
 		return err
 	}
 
-	return b.UnmarshalBytes(bs, a)
+	switch v := a.(type) {
+	case *[]byte:
+		*v = bs
+		return nil
+	case *string:
+		*v = *b.BytesToString(bs)
+		return nil
+	}
+	return fmt.Errorf("a not bytes, it's %T", a)
 }
 
 func (b bytesSerializer) UnmarshalBytes(data []byte, a interface{}) error {
@@ -63,13 +71,13 @@ func (b bytesSerializer) UnmarshalBytes(data []byte, a interface{}) error {
 	case *string:
 		ret := make([]byte, len(data))
 		copy(ret, data)
-		*v = string(ret)
+		*v = *b.BytesToString(ret)
 		return nil
 	}
 	return fmt.Errorf("a not bytes, it's %T", a)
 }
 
-func (b bytesSerializer) StringToBytes(s *string) []byte {
+func (bytesSerializer) StringToBytes(s *string) []byte {
 	sh := (*reflect.StringHeader)(unsafe.Pointer(s))
 	bh := reflect.SliceHeader{
 		Data: sh.Data,
@@ -77,4 +85,7 @@ func (b bytesSerializer) StringToBytes(s *string) []byte {
 		Cap:  sh.Len,
 	}
 	return *(*[]byte)(unsafe.Pointer(&bh))
+}
+func (bytesSerializer) BytesToString(b []byte) *string {
+	return (*string)(unsafe.Pointer(&b))
 }
