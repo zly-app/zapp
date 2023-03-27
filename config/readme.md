@@ -24,7 +24,7 @@
 
 # 配置说明
 
-我们不需要任何配置就能跑起来
+我们不需要任何配置就能直接跑起来, 当然你也可以使用配置
 
 + 配置来源优先级: 命令行`-c`指定文件 > WithViper > WithConfig > WithFiles > WithApollo > 默认配置文件
 + 使用命令 `-t` 来测试你的任何来源的配置是否正确.
@@ -46,7 +46,7 @@
    ./configs/default.json
    ```
 
-通用配置写法如下, 某些特定写法根据的`它`的文档为准
+通用配置写法如下, 某些特定写法根据`它`的文档为准
 
 + 插件配置的key为 `plugins.{pluginType}`, pluginType是插件注册的类型值.
 + 服务配置的key为 `services.{serviceType}`, serviceType是服务注册的类型值.
@@ -60,6 +60,7 @@
 frame: # 框架配置
     debug: true # debug标志
     Name: '' # app名
+    Env: '' # 环境名
     FreeMemoryInterval: 120000 # 主动清理内存间隔时间(毫秒), <= 0 表示禁用
     WaitServiceRunTime: 1000 # 默认等待服务启动阶段, 等待时间(毫秒), 如果时间到未收到服务启动成功信号则将服务标记为不稳定状态然后继续开始工作(我们总不能一直等着吧)
     ServiceUnstableObserveTime: 10000 # 默认服务不稳定观察时间, 等待时间(毫秒), 如果时间到仍未收到服务启动成功信号也将服务标记为启动成功

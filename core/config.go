@@ -74,6 +74,8 @@ type IConfig interface {
 type FrameConfig struct {
 	// debug标志
 	Debug bool
+	// 环境名
+	Env string
 	// app 名
 	Name string
 	// 主动清理内存间隔时间(毫秒), <= 0 表示禁用
