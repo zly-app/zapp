@@ -59,13 +59,13 @@ func (w *watchKeyGeneric[T]) Get() T {
 
 // 重新解析数据
 func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
-	data := reflect.New(w.dataType).Interface()
+	replica := reflect.New(w.dataType).Interface()
 	var err error
 	switch t := w.keyObject.Opts().StructType; t {
 	case Json:
-		err = w.keyObject.ParseJSON(data)
+		err = w.keyObject.ParseJSON(replica)
 	case Yaml:
-		err = w.keyObject.ParseYaml(data)
+		err = w.keyObject.ParseYaml(replica)
 	default:
 		err = fmt.Errorf("未定义的解析类型: %v", t)
 	}
@@ -77,17 +77,26 @@ func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
 	if !first {
 		oldData = w.Get()
 	}
-	w.data.Store(data)
-	w.rawData.Store(newData)
 
-	if first {
-		return nil
+	// 最终注入的hook
+	resultData := newData
+	var cancel bool
+	for _, hook := range resetInjectStructuredHooks {
+		if replica, resultData, cancel = hook(replica, resultData); cancel {
+			logger.Log.Warn(fmt.Sprintf(
+				"注入对象已被解析, 但是被拦截了! group: %s, key: %s, obj: %+v",
+				w.GroupName(), w.KeyName(), replica))
+			return nil
+		}
 	}
+
+	w.data.Store(replica)
+	w.rawData.Store(resultData)
 
 	w.watchMx.Lock()
 	defer w.watchMx.Unlock()
 	for _, fn := range w.callbacks {
-		go fn(false, oldData, data.(T)) // 这里无法保证 newData 被 callback 函数修改数据
+		go fn(first, oldData, replica.(T)) // 这里无法保证 newData 被 callback 函数修改数据
 	}
 	return nil
 }
