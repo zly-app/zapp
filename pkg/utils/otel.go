@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
@@ -25,6 +26,12 @@ func (*otelCli) GlobalTrace(name string) trace.Tracer {
 }
 
 // 将span存入ctx中
+func (*otelCli) SaveSpan(ctx context.Context, span trace.Span) context.Context {
+	return trace.ContextWithSpan(ctx, span)
+}
+
+// 将span存入ctx中
+// Deprecated: use SaveSpan
 func (*otelCli) SaveToContext(ctx context.Context, span trace.Span) context.Context {
 	return trace.ContextWithSpan(ctx, span)
 }
@@ -53,6 +60,15 @@ func (*otelCli) SaveToMap(ctx context.Context, mapping map[string]string) {
 func (c *otelCli) GetSpanWithMap(ctx context.Context, mapping map[string]string) (context.Context, trace.Span) {
 	v := propagation.MapCarrier(mapping)
 	ctx = otel.GetTextMapPropagator().Extract(ctx, v)
+	return ctx, c.GetSpan(ctx)
+}
+
+func (*otelCli) SaveToTextMapCarrier(ctx context.Context, carrier propagation.TextMapCarrier) {
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+}
+
+func (c *otelCli) GetSpanWithTextMapCarrier(ctx context.Context, carrier propagation.TextMapCarrier) (context.Context, trace.Span) {
+	ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
 	return ctx, c.GetSpan(ctx)
 }
 
@@ -86,4 +102,56 @@ func (*otelCli) EndSpan(span trace.Span) {
 func (*otelCli) GetOTELTraceID(ctx context.Context) (traceID string, spanID string) {
 	sc := trace.SpanContextFromContext(ctx)
 	return sc.TraceID().String(), sc.SpanID().String()
+}
+
+// 根据超时ctx获取一个OtelSpanKV描述
+func (*otelCli) GetSpanKVWithDeadline(ctx context.Context) OtelSpanKV {
+	deadline, deadlineOK := ctx.Deadline()
+	if !deadlineOK {
+		return OtelSpanKey("ctx.deadline").Bool(false)
+	}
+	d := deadline.Sub(time.Now()) // 剩余时间
+	return OtelSpanKey("ctx.deadline").String(d.String())
+}
+
+// 创建一个OtelSpanKV描述
+func (*otelCli) AttrKey(key string) OtelSpanKey {
+	return OtelSpanKey(key)
+}
+
+func (c *otelCli) CtxStart(ctx context.Context, name string, attributes ...OtelSpanKV) context.Context {
+	// 生成新的 span
+	ctx, _ = c.StartSpan(ctx, name, attributes...)
+	return ctx
+}
+
+func (c *otelCli) CtxEvent(ctx context.Context, name string, attributes ...OtelSpanKV) {
+	span := c.GetSpan(ctx)
+	attr := []OtelSpanKV{
+		c.GetSpanKVWithDeadline(ctx),
+	}
+	attr = append(attr, attributes...)
+	c.AddSpanEvent(span, name, attr...)
+}
+
+func (c *otelCli) CtxErrEvent(ctx context.Context, name string, err error, attributes ...OtelSpanKV) {
+	span := c.GetSpan(ctx)
+	attr := []OtelSpanKV{
+		c.GetSpanKVWithDeadline(ctx),
+		OtelSpanKey("err.detail").String(err.Error()),
+	}
+	if Recover.IsRecoverError(err) {
+		c.SetSpanAttributes(span, OtelSpanKey("panic").Bool(true))
+		panicErrs := Recover.GetRecoverErrors(err)
+		attr = append(attr, OtelSpanKey("detail").StringSlice(panicErrs))
+	}
+
+	attr = append(attr, attributes...)
+	c.AddSpanEvent(span, name+" err", attr...)
+	c.MarkSpanAnError(span, true)
+}
+
+func (c *otelCli) CtxEnd(ctx context.Context) {
+	span := c.GetSpan(ctx)
+	c.EndSpan(span)
 }

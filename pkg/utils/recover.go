@@ -65,6 +65,11 @@ var Recover = new(recoverCli)
 
 type recoverCli struct{}
 
+func (*recoverCli) IsRecoverError(err error) bool {
+	_, ok := err.(RecoverError)
+	return ok
+}
+
 // 包装函数, 捕获panic
 func (*recoverCli) WrapCall(fn func() error) (err error) {
 	// 包装执行, 拦截panic
@@ -92,6 +97,22 @@ func (*recoverCli) WrapCall(fn func() error) (err error) {
 func (*recoverCli) GetRecoverError(err error) (RecoverError, bool) {
 	re, ok := err.(RecoverError)
 	return re, ok
+}
+
+// 获取 recover 错误的详情
+func (*recoverCli) GetRecoverErrors(err error) []string {
+	re, ok := err.(RecoverError)
+	if !ok {
+		return []string{err.Error()}
+	}
+
+	var callers []string
+	callers = make([]string, len(re.Callers())+1)
+	callers[0] = err.Error()
+	for i, c := range re.Callers() {
+		callers[i+1] = fmt.Sprintf("%s:%d", c.File, c.Line)
+	}
+	return callers
 }
 
 // 获取 recover 错误的详情
