@@ -9,9 +9,12 @@
 package gpool
 
 import (
+	"errors"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGo(t *testing.T) {
@@ -111,6 +114,28 @@ func TestClose(t *testing.T) {
 		return nil
 	}, nil)
 	g.Close() // 此时worker已被占用, 会走到获取 worker 下的stop那里
+}
+
+func TestGoAndWait(t *testing.T) {
+	g := NewGPool(new(GPoolConfig))
+	defer g.Close()
+
+	err := g.GoAndWait()
+	require.Nil(t, err)
+
+	err = g.GoAndWait(func() error {
+		return nil
+	})
+	require.Nil(t, err)
+
+	err = g.GoAndWait(func() error {
+		return nil
+	}, func() error {
+		return errors.New("2")
+	}, func() error {
+		return errors.New("3")
+	})
+	require.NotNil(t, err)
 }
 
 func TestWait(t *testing.T) {

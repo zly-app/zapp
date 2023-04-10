@@ -134,6 +134,34 @@ func (g *gpool) TryGoSync(fn func() error) (result error, ok bool) {
 	return
 }
 
+// 执行等待所有函数完成
+func (g *gpool) GoAndWait(fn ...func() error) error {
+	if len(fn) == 0 {
+		return nil
+	}
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(fn))
+
+	for _, f := range fn {
+		wg.Add(1)
+		g.Go(f, func(err error) {
+			if err != nil {
+				errChan <- err
+			}
+			wg.Done()
+		})
+	}
+	wg.Wait()
+
+	var err error
+	select {
+	case err = <-errChan:
+	default:
+	}
+	return err
+}
+
 // 等待队列中所有的任务结束
 func (g *gpool) Wait() {
 	g.wg.Wait()

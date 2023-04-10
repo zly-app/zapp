@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 type NoPool struct {
@@ -39,6 +40,10 @@ func (n *NoPool) TryGoSync(fn func() error) (result error, ok bool) {
 	n.wg.Add(1)
 	defer n.wg.Done()
 	return fn(), true
+}
+
+func (n *NoPool) GoAndWait(fn ...func() error) error {
+	return utils.Go.GoAndWait(fn...)
 }
 
 func (n *NoPool) Wait() {
