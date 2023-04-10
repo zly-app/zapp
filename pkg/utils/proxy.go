@@ -29,8 +29,10 @@ func (s *Socks5Proxy) DialContext(ctx context.Context, network, address string) 
 	return s.dialContext(ctx, network, address)
 }
 
-/*创建一个socks5代理
-  address 代理地址. 支持socks5, socks5h. 示例: socks5://127.0.0.1:1080 socks5://user:pwd@127.0.0.1:1080
+/*
+创建一个socks5代理
+
+	address 代理地址. 支持socks5, socks5h. 示例: socks5://127.0.0.1:1080 socks5://user:pwd@127.0.0.1:1080
 */
 func NewSocks5Proxy(address string) (ISocks5Proxy, error) {
 	// 解析地址
@@ -71,7 +73,7 @@ func NewSocks5Proxy(address string) (ISocks5Proxy, error) {
 		}
 		return sp, nil
 	}
-	return nil, fmt.Errorf("address的scheme不支持: %s")
+	return nil, fmt.Errorf("address的scheme不支持: %s", scheme)
 }
 
 type IHttpProxy interface {
@@ -92,8 +94,10 @@ func (h *HttpProxy) SetProxy(transport *http.Transport) {
 	transport.Proxy = h.p
 }
 
-/*创建一个http代理
-  address 代理地址. 支持 http, https, socks5, socks5h. 示例: https://127.0.0.1:1080 https://user:pwd@127.0.0.1:1080
+/*
+创建一个http代理
+
+	address 代理地址. 支持 http, https, socks5, socks5h. 示例: https://127.0.0.1:1080 https://user:pwd@127.0.0.1:1080
 */
 func NewHttpProxy(address string) (IHttpProxy, error) {
 	// 解析地址
@@ -116,5 +120,5 @@ func NewHttpProxy(address string) (IHttpProxy, error) {
 		}
 		return &HttpProxy{s5: s5}, nil
 	}
-	return nil, fmt.Errorf("address的scheme不支持: %s")
+	return nil, fmt.Errorf("address的scheme不支持: %s", scheme)
 }
