@@ -11,16 +11,16 @@ const BytesSerializerName = "bytes"
 
 type bytesSerializer struct{}
 
-func (b bytesSerializer) toBytes(a interface{}) ([]byte, error) {
+func (bytesSerializer) toBytes(a interface{}) ([]byte, error) {
 	switch v := a.(type) {
 	case []byte:
 		return v, nil
 	case *[]byte:
 		return *v, nil
 	case string:
-		return b.StringToBytes(&v), nil
+		return StringToBytes(&v), nil
 	case *string:
-		return b.StringToBytes(v), nil
+		return StringToBytes(v), nil
 	}
 	return nil, fmt.Errorf("a not bytes, it's %T", a)
 }
@@ -44,7 +44,7 @@ func (b bytesSerializer) MarshalBytes(a interface{}) ([]byte, error) {
 	return ret, nil
 }
 
-func (b bytesSerializer) Unmarshal(r io.Reader, a interface{}) error {
+func (bytesSerializer) Unmarshal(r io.Reader, a interface{}) error {
 	bs, err := io.ReadAll(r)
 	if err != nil {
 		return err
@@ -55,13 +55,13 @@ func (b bytesSerializer) Unmarshal(r io.Reader, a interface{}) error {
 		*v = bs
 		return nil
 	case *string:
-		*v = *b.BytesToString(bs)
+		*v = *BytesToString(bs)
 		return nil
 	}
 	return fmt.Errorf("a not bytes, it's %T", a)
 }
 
-func (b bytesSerializer) UnmarshalBytes(data []byte, a interface{}) error {
+func (bytesSerializer) UnmarshalBytes(data []byte, a interface{}) error {
 	switch v := a.(type) {
 	case *[]byte:
 		ret := make([]byte, len(data))
@@ -71,13 +71,13 @@ func (b bytesSerializer) UnmarshalBytes(data []byte, a interface{}) error {
 	case *string:
 		ret := make([]byte, len(data))
 		copy(ret, data)
-		*v = *b.BytesToString(ret)
+		*v = *BytesToString(ret)
 		return nil
 	}
 	return fmt.Errorf("a not bytes, it's %T", a)
 }
 
-func (bytesSerializer) StringToBytes(s *string) []byte {
+func StringToBytes(s *string) []byte {
 	sh := (*reflect.StringHeader)(unsafe.Pointer(s))
 	bh := reflect.SliceHeader{
 		Data: sh.Data,
@@ -86,6 +86,6 @@ func (bytesSerializer) StringToBytes(s *string) []byte {
 	}
 	return *(*[]byte)(unsafe.Pointer(&bh))
 }
-func (bytesSerializer) BytesToString(b []byte) *string {
+func BytesToString(b []byte) *string {
 	return (*string)(unsafe.Pointer(&b))
 }

@@ -21,6 +21,7 @@ type ISerializer interface {
 }
 
 var serializers = map[string]ISerializer{
+	BaseSerializerName:             NewBaseSerializer(jsonIterStandard.Marshal, jsonIterStandard.Unmarshal),
 	BytesSerializerName:            bytesSerializer{},
 	JsonSerializerName:             jsonSerializer{},
 	JsonIterSerializerName:         jsonIterSerializer{},
