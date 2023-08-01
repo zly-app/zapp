@@ -1,6 +1,8 @@
 package zlog
 
 import (
+	"context"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -43,6 +45,18 @@ func (l *logWrap) Panic(v ...interface{}) {
 
 func (l *logWrap) Fatal(v ...interface{}) {
 	l.logCore.Fatal(v...)
+}
+
+// 创建一个会话log
+func (l *logWrap) NewSessionLogger(fields ...zap.Field) core.ILogger {
+	c := l.logCore.NewSessionLogger(fields...)
+	return &logWrap{logCore: c.(*logCore)}
+}
+
+// 创建一个带链路id的log
+func (l *logWrap) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.ILogger {
+	c := l.logCore.NewTraceLogger(ctx, fields...)
+	return &logWrap{logCore: c.(*logCore)}
 }
 
 // 获取日志输出合成器
