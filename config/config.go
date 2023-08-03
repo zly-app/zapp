@@ -59,9 +59,13 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		o(opt)
 	}
 
-	confText := flag.String("c", "", "配置文件,多个文件用逗号隔开,同名配置分片会完全覆盖之前的分片")
-	testFlag := flag.Bool("t", false, "测试配置文件")
-	flag.Parse()
+	confText := new(string)
+	testFlag := new(bool)
+	if !opt.disableFlag {
+		confText = flag.String("c", "", "配置文件,多个文件用逗号隔开,同名配置分片会完全覆盖之前的分片")
+		testFlag = flag.Bool("t", false, "测试配置文件")
+		flag.Parse()
+	}
 
 	var rawVi *viper.Viper
 	var err error

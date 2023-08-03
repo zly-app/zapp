@@ -21,6 +21,7 @@ type Options struct {
 	conf         *core.Config  // 配置结构
 	files        []string      // 配置文件
 	apolloConfig *ApolloConfig // apollo配置结构
+	disableFlag  bool          // 不启用flag
 }
 
 func newOptions() *Options {
@@ -52,5 +53,12 @@ func WithFiles(files ...string) Option {
 func WithApollo(conf *ApolloConfig) Option {
 	return func(o *Options) {
 		o.apolloConfig = conf
+	}
+}
+
+// 不启用 flag
+func WithoutFlag(conf *ApolloConfig) Option {
+	return func(o *Options) {
+		o.disableFlag = true
 	}
 }
