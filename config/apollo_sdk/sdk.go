@@ -55,7 +55,6 @@ var errStatusCodesDescribe = map[int]string{
 	500: "服务内部错误",
 }
 
-// 默认命名空间, 不会加上 NamespacePrefix
 const ApplicationNamespace = "application"
 
 type ApolloClient struct {
@@ -186,7 +185,7 @@ func (a *ApolloClient) loadNamespaceDataFromRemote(namespace string) (data *Name
 
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound && a.IgnoreNamespaceNotFound && namespace != ApplicationNamespace { // 命名空间不存在
+		if resp.StatusCode == http.StatusNotFound && a.IgnoreNamespaceNotFound { // 命名空间不存在
 			empty := &NamespaceData{
 				AppId:          a.AppId,
 				Cluster:        a.Cluster,

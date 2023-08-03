@@ -39,7 +39,7 @@ type ApolloConfig struct {
 	ApplicationDataType     string   // application命名空间下key的值的数据类型, 支持yaml,yml,toml,json
 	ApplicationParseKeys    []string // application命名空间下哪些key数据会被解析, 无论如何默认的key(frame/components/plugins/services)会被解析
 	Namespaces              []string // 其他自定义命名空间
-	IgnoreNamespaceNotFound bool     // 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
+	IgnoreNamespaceNotFound bool     // 是否忽略命名空间不存在
 	client                  *apollo_sdk.ApolloClient
 }
 
