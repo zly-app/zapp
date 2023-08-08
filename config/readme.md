@@ -333,5 +333,12 @@ func main() {
 }
 ```
 
+对于 `apollo` 中的非 `properties` 类型命名空间, 其 `group_name={{namespace}}.{{type}}` 其 `key=content`. 如:
+
+```go
+// 先创建一个命名空间为 watch 的 json 类型. 其key固定为"content"
+var MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("watch.json", "content")
+```
+
 [其它示例代码](./watch_example)
 
