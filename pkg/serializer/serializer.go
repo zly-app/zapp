@@ -21,11 +21,13 @@ type ISerializer interface {
 }
 
 var serializers = map[string]ISerializer{
-	BaseSerializerName:             NewBaseSerializer(jsonIterStandard.Marshal, jsonIterStandard.Unmarshal),
+	BaseSerializerName:             NewBaseSerializer(sonicStd.Marshal, sonicStd.Unmarshal),
 	BytesSerializerName:            bytesSerializer{},
 	JsonSerializerName:             jsonSerializer{},
 	JsonIterSerializerName:         jsonIterSerializer{},
 	JsonIterStandardSerializerName: jsonIterStandardSerializer{},
+	SonicSerializerName:            sonicSerializer{},
+	SonicStdSerializerName:         sonicStdSerializer{},
 	MsgPackSerializerName:          msgPackSerializer{},
 	YamlSerializerName:             yamlSerializer{},
 }
