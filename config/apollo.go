@@ -77,17 +77,24 @@ func makeApolloConfigFromViper(vi *viper.Viper) (*ApolloConfig, error) {
 	}
 
 	ac := &apollo_sdk.ApolloClient{
-		Address:                 conf.Address,
-		AppId:                   conf.AppId,
-		AccessKey:               conf.AccessKey,
-		AuthBasicUser:           conf.AuthBasicUser,
-		AuthBasicPassword:       conf.AuthBasicPassword,
-		Cluster:                 conf.Cluster,
-		AlwaysLoadFromRemote:    conf.AlwaysLoadFromRemote,
-		BackupFile:              conf.BackupFile,
-		Namespaces:              append([]string{}, conf.Namespaces...),
-		IgnoreNamespaceNotFound: conf.IgnoreNamespaceNotFound,
+		Address:              conf.Address,
+		AppId:                conf.AppId,
+		AccessKey:            conf.AccessKey,
+		AuthBasicUser:        conf.AuthBasicUser,
+		AuthBasicPassword:    conf.AuthBasicPassword,
+		Cluster:              conf.Cluster,
+		AlwaysLoadFromRemote: conf.AlwaysLoadFromRemote,
+		BackupFile:           conf.BackupFile,
+		Namespaces:           append([]string{}, conf.Namespaces...),
 	}
+	switch v := strings.ToLower(conf.ApplicationDataType); v {
+	case "yaml", "yml", "json":
+		for i := range defApplicationParseKeys {
+			name := fmt.Sprintf("%s.%s", defApplicationParseKeys[i], v)
+			ac.Namespaces = append(ac.Namespaces, name)
+		}
+	}
+
 	err := ac.Init()
 	if err != nil {
 		return nil, err
@@ -113,6 +120,15 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 		}
 	}
 
+	// 检查命名空间必须存在
+	if !conf.IgnoreNamespaceNotFound {
+		for i := range conf.Namespaces {
+			if _, ok := configs[conf.Namespaces[i]]; !ok {
+				return nil, fmt.Errorf("命名空间<%s>不存在", conf.Namespaces[i])
+			}
+		}
+	}
+
 	// 构建viper
 	vi := viper.New()
 	if err = vi.MergeConfigMap(configs); err != nil {
@@ -124,11 +140,37 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 // 分析apollo配置
 func analyseApolloConfig(dst map[string]interface{}, namespace string, configurations map[string]string, conf *ApolloConfig) error {
 	if namespace != apollo_sdk.ApplicationNamespace {
-		dst[namespace] = configurations
-		logger.Log.Info("分析apollo配置数据",
-			zap.String("namespace", namespace),
-			zap.Any("configurations", configurations),
-		)
+		needParse := false
+		parsedName := ""
+		switch v := strings.ToLower(conf.ApplicationDataType); v {
+		case "yaml", "yml", "json":
+			for i := range defApplicationParseKeys {
+				name := fmt.Sprintf("%s.%s", defApplicationParseKeys[i], v)
+				if namespace == name {
+					needParse = true
+					parsedName = defApplicationParseKeys[i]
+					break
+				}
+			}
+		}
+
+		if !needParse {
+			dst[namespace] = configurations
+			logger.Log.Info("分析apollo配置数据",
+				zap.String("namespace", namespace),
+				zap.Any("configurations", configurations),
+			)
+			return nil
+		}
+		content := configurations["content"]
+		vi := viper.New()
+		vi.SetConfigType(conf.ApplicationDataType)
+		err := vi.ReadConfig(strings.NewReader(content))
+		if err != nil {
+			return fmt.Errorf("解析数据失败 namespace: %v, value: %v, err: %v", namespace, content, err)
+		}
+		data := vi.AllSettings()
+		dst[parsedName] = data
 		return nil
 	}
 
@@ -161,7 +203,7 @@ func analyseApolloConfig(dst map[string]interface{}, namespace string, configura
 		vi.SetConfigType(conf.ApplicationDataType)
 		err := vi.ReadConfig(strings.NewReader(v))
 		if err != nil {
-			return fmt.Errorf("解析数据失败 key: %v, value: %v, err: %v", k, v, err)
+			return fmt.Errorf("解析数据失败 namespace: %v, key: %v, value: %v, err: %v", namespace, k, v, err)
 		}
 		data := vi.AllSettings()
 		dst[k] = data

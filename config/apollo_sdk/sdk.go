@@ -58,17 +58,16 @@ var errStatusCodesDescribe = map[int]string{
 const ApplicationNamespace = "application"
 
 type ApolloClient struct {
-	Address                 string   // apollo-api地址, 多个地址用英文逗号连接
-	AppId                   string   // 应用名
-	AccessKey               string   // 验证key, 优先级高于基础认证
-	AuthBasicUser           string   // 基础认证用户名, 可用于nginx的基础认证扩展
-	AuthBasicPassword       string   // 基础认证密码
-	Cluster                 string   // 集群名, 默认default
-	AlwaysLoadFromRemote    bool     // 总是从远程获取, 在远程加载失败时不会从备份文件加载
-	BackupFile              string   // 备份文件名
-	Namespaces              []string // 其他自定义命名空间
-	IgnoreNamespaceNotFound bool     // 是否忽略命名空间不存在
-	cache                   MultiNamespaceData
+	Address              string   // apollo-api地址, 多个地址用英文逗号连接
+	AppId                string   // 应用名
+	AccessKey            string   // 验证key, 优先级高于基础认证
+	AuthBasicUser        string   // 基础认证用户名, 可用于nginx的基础认证扩展
+	AuthBasicPassword    string   // 基础认证密码
+	Cluster              string   // 集群名, 默认default
+	AlwaysLoadFromRemote bool     // 总是从远程获取, 在远程加载失败时不会从备份文件加载
+	BackupFile           string   // 备份文件名
+	Namespaces           []string // 其他自定义命名空间
+	cache                MultiNamespaceData
 }
 
 type (
@@ -185,7 +184,7 @@ func (a *ApolloClient) loadNamespaceDataFromRemote(namespace string) (data *Name
 
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound && a.IgnoreNamespaceNotFound { // 命名空间不存在
+		if resp.StatusCode == http.StatusNotFound { // 命名空间不存在
 			empty := &NamespaceData{
 				AppId:          a.AppId,
 				Cluster:        a.Cluster,
