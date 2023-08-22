@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -127,6 +128,15 @@ func (a *ApolloClient) GetNamespacesData() (MultiNamespaceData, error) {
 			continue
 		}
 
+		// 如果远程命名空间不存在则使用本地配置
+		if err == os.ErrNotExist {
+			localData, ok := a.cache[namespace]
+			if ok {
+				a.cache[namespace] = localData
+			}
+			continue
+		}
+
 		// 如果总是从远程获取则返回错误
 		if a.AlwaysLoadFromRemote {
 			return nil, fmt.Errorf("从远程获取命名空间<%s>的数据失败: %s", namespace, err)
@@ -185,13 +195,7 @@ func (a *ApolloClient) loadNamespaceDataFromRemote(namespace string) (data *Name
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound { // 命名空间不存在
-			empty := &NamespaceData{
-				AppId:          a.AppId,
-				Cluster:        a.Cluster,
-				Namespace:      namespace,
-				Configurations: make(map[string]string),
-			}
-			return empty, true, nil // 视为空配置数据
+			return nil, false, os.ErrNotExist
 		}
 		if resp.StatusCode == http.StatusNotModified { // 未改变
 			return cacheData, false, nil
