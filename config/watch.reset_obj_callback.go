@@ -20,10 +20,10 @@ func AddResetInjectStructuredHook(hooks ...ResetInjectStructuredHook) {
 var resetInjectObjCallbacks = make(map[reflect.Type]func(injectObj interface{}, isField bool))
 
 /*
-添加重设结构注入结构回调, 只有注入结构是指针才有效
+添加当watch对象发生变化时的回调
 
-如果注入结构实现了 T, 则会调用回调函数并传入注入结构的值, 其isField为false
-如果注入结构是一个struct, 则会遍历其导出字段(包括继承)判断实现了 T , 则会调用回调函数并传入其字段的值, 其isField为true.
+如果watch对象实现了T, 则会调用回调函数并传入watch对象的值, 其isField为false
+如果watch对象是一个struct, 则会遍历其导出字段(包括继承)判断实现了 T, 则会调用回调函数并传入其字段的值, 其isField为true.
 */
 func AddResetInjectObjCallback[T any](callback func(obj T, isField bool)) {
 	o := new(T)
