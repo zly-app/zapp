@@ -38,17 +38,26 @@ func resetInjectObjCallback(injectObj interface{}, newData []byte) (result inter
 	resultData = newData
 	cancel = false
 
-	match := func(t reflect.Type, isField bool, get func() interface{}) {
+	ignoreAnonymousMark := make(map[reflect.Type]struct{}) // 如果在外层处理了, 那么当内部为匿名字段时要忽略处理
+	match := func(matchType func(t reflect.Type) bool, isField, isAnonymous bool, get func() interface{}) {
 		for rt, callback := range resetInjectObjCallbacks {
-			if t.AssignableTo(rt) {
-				callback(get(), isField)
+			if !matchType(rt) {
+				continue
 			}
+			if !isField {
+				ignoreAnonymousMark[rt] = struct{}{} // 标记已被外层处理
+			} else if isAnonymous {
+				if _, ok := ignoreAnonymousMark[rt]; ok { // 已被外层处理过了
+					continue
+				}
+			}
+			callback(get(), isField)
 		}
 	}
 
 	rv := reflect.ValueOf(injectObj)
 	if rv.Type().Kind() == reflect.Ptr {
-		match(rv.Type(), false, func() interface{} {
+		match(rv.Type().AssignableTo, false, false, func() interface{} {
 			return rv.Interface()
 		})
 	}
@@ -60,11 +69,19 @@ func resetInjectObjCallback(injectObj interface{}, newData []byte) (result inter
 		num := rt.NumField()
 		for i := 0; i < num; i++ {
 			ft := rt.Field(i)
-			if ft.PkgPath != "" || ft.Type.Kind() != reflect.Ptr {
+			fv := rv.Field(i)
+			if !fv.CanAddr() || ft.PkgPath != "" { // 无法获取值 || 未导出
 				continue
 			}
-			match(ft.Type, true, func() interface{} {
-				return rv.Field(i).Interface()
+
+			isPtr := fv.Kind() == reflect.Ptr
+			if !isPtr {
+				match(fv.Addr().CanConvert, true, ft.Anonymous, func() interface{} {
+					return fv.Addr().Interface()
+				})
+			}
+			match(fv.CanConvert, true, ft.Anonymous, func() interface{} {
+				return fv.Interface()
 			})
 		}
 	}
