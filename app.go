@@ -21,6 +21,7 @@ import (
 
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/filter"
 	"github.com/zly-app/zapp/logger"
 )
 
@@ -93,6 +94,8 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.makeComponent()
 	// 构建插件
 	app.makePlugin()
+	// 构建过滤器
+	filter.MakeFilter()
 	// 构建服务
 	app.makeService()
 
@@ -108,6 +111,8 @@ func (app *appCli) run() {
 
 	// 启动插件
 	app.startPlugin()
+	// 启动过滤器
+	filter.StartFilter()
 	// 启动服务
 	app.startService()
 	// 开始释放内存
@@ -133,6 +138,8 @@ func (app *appCli) exit() {
 	app.baseCtxCancel()
 	// 关闭服务
 	app.closeService()
+	// 关闭过滤器
+	filter.CloseFilter()
 	// 关闭插件
 	app.closePlugin()
 	// 释放组件资源

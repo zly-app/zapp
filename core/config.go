@@ -52,6 +52,12 @@ type IConfig interface {
 	  ignoreNotSet 如果未配置key, 则忽略, 默认为false
 	*/
 	ParsePluginConfig(pluginType PluginType, outPtr interface{}, ignoreNotSet ...bool) error
+	/*解析过滤器配置, key的值为 filters.config.{filterType}
+	  filterType 过滤器类型
+	  outPtr 接收配置的变量
+	  ignoreNotSet 如果未配置key, 则忽略, 默认为false
+	*/
+	ParseFilterConfig(filterType PluginType, outPtr interface{}, ignoreNotSet ...bool) error
 	/*解析服务配置, key的值为 services.{serviceType}
 	  serviceType 服务类型
 	  outPtr 接收配置的变量

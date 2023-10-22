@@ -312,6 +312,20 @@ func (c *configCli) ParsePluginConfig(pluginType core.PluginType, outPtr interfa
 	return nil
 }
 
+func (c *configCli) ParseFilterConfig(filterType core.PluginType, outPtr interface{}, ignoreNotSet ...bool) error {
+	key := "filters.config." + string(filterType)
+	if !c.vi.IsSet(key) {
+		if len(ignoreNotSet) > 0 && ignoreNotSet[0] {
+			return nil
+		}
+		return fmt.Errorf("过滤器配置<%s>不存在", filterType)
+	}
+	if err := c.vi.UnmarshalKey(key, outPtr); err != nil {
+		return fmt.Errorf("无法解析<%s>过滤器配置: %s", filterType, err)
+	}
+	return nil
+}
+
 func (c *configCli) ParseServiceConfig(serviceType core.ServiceType, outPtr interface{}, ignoreNotSet ...bool) error {
 	key := "services." + string(serviceType)
 	if !c.vi.IsSet(key) {
