@@ -62,17 +62,22 @@ filter.RegisterFilterCreator("myFilter", nil, serviceFilterCreator)
 ```yaml
 filters:
   service: # 服务过滤器
-    default: # 对没有独立配置的服务设置默认的过滤器
+    default: # 对没有独立配置的服务设置默认的过滤器, 默认包含 log, trace
       - filter1
       - filter2
     myService: # 独立设置服务的过滤器 
       - filter2
   client: # 客户端过滤器
-    default: # 对没有独立配置的客户端设置默认的过滤器
-      - filter1
-      - filter2
-    myService: # 独立设置客户端的过滤器 
-      - filter2
+    default: # 对没有独立配置的服务设置默认的过滤器
+      default:
+        - filter1
+        - filter2
+    sqlx: # sqlx类型
+      default: # sqlx类型中对没有独立配置的客户端设置默认的过滤器
+        - filter1
+        - filter2
+      mySqlx: # 独立设置客户端的过滤器 
+        - filter2
 
   config: # 过滤器配置, 不同过滤器配置不同或不需要配置
     filter1:

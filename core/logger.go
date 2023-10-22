@@ -16,6 +16,7 @@ import (
 
 // 记录器
 type ILogger interface {
+	Log(level string, v ...interface{})
 	Debug(v ...interface{})
 	Info(v ...interface{})
 	Warn(v ...interface{})

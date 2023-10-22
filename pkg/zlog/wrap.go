@@ -19,6 +19,10 @@ func newLogWrap(l *logCore) *logWrap {
 	return &logWrap{l}
 }
 
+func (l *logWrap) Log(level string, v ...interface{}) {
+	l.logCore.Log(level, v...)
+}
+
 func (l *logWrap) Debug(v ...interface{}) {
 	l.logCore.Debug(v...)
 }

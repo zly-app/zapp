@@ -6,8 +6,8 @@ import (
 
 // 过滤器
 type Filter interface {
-	// 启用
-	Start() error
+	// 初始化
+	Init() error
 	// 注射模式
 	HandleInject(ctx context.Context, req, rsp interface{}, next FilterInjectFunc) error
 	// return模式

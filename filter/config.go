@@ -7,15 +7,26 @@ import (
 	"github.com/zly-app/zapp/logger"
 )
 
+const defName = "default"
+
 type Config struct {
 	Service map[string][]string
-	Client  map[string][]string
+	Client  map[string]map[string][]string
 }
 
 func loadConfig() *Config {
+	serviceDefaultKey := "filters.service.default"
+	if !config.Conf.GetViper().IsSet(serviceDefaultKey) {
+		config.Conf.GetViper().Set(serviceDefaultKey, []string{"log", "trace"})
+	}
+	clientDefaultKey := "filters.client.default.default"
+	if !config.Conf.GetViper().IsSet(clientDefaultKey) {
+		config.Conf.GetViper().Set(clientDefaultKey, []string{"log", "trace"})
+	}
+
 	conf := &Config{
 		Service: make(map[string][]string),
-		Client:  make(map[string][]string),
+		Client:  make(map[string]map[string][]string),
 	}
 	err := config.Conf.Parse("filters", conf, true)
 	if err != nil {

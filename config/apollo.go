@@ -25,7 +25,7 @@ import (
 const defApplicationDataType = "yaml"
 
 // 默认application命名空间下哪些key数据会被解析
-var defApplicationParseKeys = []string{"frame", "components", "plugins", "services"}
+var defApplicationParseKeys = []string{"frame", "components", "plugins", "filters", "services"}
 
 type ApolloConfig struct {
 	Address                 string   // apollo-api地址, 多个地址用英文逗号连接

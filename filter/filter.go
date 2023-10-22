@@ -2,61 +2,45 @@ package filter
 
 import (
 	"context"
+	"runtime"
 
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/logger"
-	"github.com/zly-app/zapp/pkg/utils"
 )
 
 // 过滤器链
 type FilterChain []core.Filter
 
 func (c FilterChain) FilterInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
-	nowHandle := func(ctx context.Context, req, rsp interface{}) error {
-		ctx, span := utils.Otel.StartSpan(ctx, "CallFunc")
-		err := next(ctx, req, rsp)
-		span.End()
-		return err
-	}
-
 	for i := len(c) - 1; i >= 0; i-- {
-		nextHandle, curFilter := nowHandle, c[i]
-		nowHandle = func(ctx context.Context, req, rsp interface{}) error {
-			return curFilter.HandleInject(ctx, req, rsp, nextHandle)
+		invoke, curFilter := next, c[i]
+		next = func(ctx context.Context, req, rsp interface{}) error {
+			return curFilter.HandleInject(ctx, req, rsp, invoke)
 		}
 	}
-	return nowHandle(ctx, req, rsp)
+	return next(ctx, req, rsp)
 }
 func (c FilterChain) Filter(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
-	nowHandle := func(ctx context.Context, req interface{}) (rsp interface{}, err error) {
-		ctx, span := utils.Otel.StartSpan(ctx, "CallFunc")
-		rsp, err = next(ctx, req)
-		span.End()
-		return rsp, err
-	}
-
 	for i := len(c) - 1; i >= 0; i-- {
-		nextHandle, curFilter := nowHandle, c[i]
-		nowHandle = func(ctx context.Context, req interface{}) (rsp interface{}, err error) {
-			return curFilter.Handle(ctx, req, nextHandle)
+		invoke, curFilter := next, c[i]
+		next = func(ctx context.Context, req interface{}) (rsp interface{}, err error) {
+			return curFilter.Handle(ctx, req, invoke)
 		}
 	}
-	return nowHandle(ctx, req)
+	return next(ctx, req)
 }
 
 var (
 	clientFilterCreator  = make(map[string]core.FilterCreator)
 	serviceFilterCreator = make(map[string]core.FilterCreator)
 
-	clientFilter   = make(map[string]core.Filter)
-	defClientChain FilterChain            // 默认的链
-	clientChain    map[string]FilterChain // 指定客户端的链
+	clientFilter = make(map[string]core.Filter)
+	clientChain  map[string]map[string]FilterChain // 指定客户端的链
 
-	serviceFilter   = make(map[string]core.Filter)
-	defServiceChain FilterChain            // 默认的链
-	serviceChain    map[string]FilterChain // 指定服务的链
+	serviceFilter = make(map[string]core.Filter)
+	serviceChain  map[string]FilterChain // 指定服务的链
 )
 
 // 注册服务/客户端过滤器建造者
@@ -87,20 +71,24 @@ func MakeFilter() {
 	}
 
 	// 分配
-	clientChain = make(map[string]FilterChain)
-	for name, filterTypes := range conf.Client {
-		filters := make(FilterChain, len(filterTypes))
-		for i, t := range filterTypes {
-			f, ok := clientFilter[t]
-			if !ok {
-				logger.Log.Fatal("client filter is not found", zap.String("filter", t))
-			}
-			filters[i] = f
+	clientChain = make(map[string]map[string]FilterChain)
+	for clientType, clientConf := range conf.Client {
+		chain, ok := clientChain[clientType]
+		if !ok {
+			chain = make(map[string]FilterChain)
+			clientChain[clientType] = chain
 		}
-		if name == "default" {
-			defClientChain = filters
-		} else {
-			clientChain[name] = filters
+
+		for clientName, filterTypes := range clientConf {
+			filters := make(FilterChain, len(filterTypes))
+			for i, t := range filterTypes {
+				f, ok := clientFilter[t]
+				if !ok {
+					logger.Log.Fatal("client filter is not found", zap.String("filter", t))
+				}
+				filters[i] = f
+			}
+			chain[clientName] = filters
 		}
 	}
 
@@ -115,26 +103,22 @@ func MakeFilter() {
 			}
 			filters[i] = f
 		}
-		if name == "default" {
-			defServiceChain = filters
-		} else {
-			serviceChain[name] = filters
-		}
+		serviceChain[name] = filters
 	}
 }
 
-// 启动过滤器
-func StartFilter() {
+// 初始化过滤器
+func InitFilter() {
 	for t, f := range clientFilter {
-		err := f.Start()
+		err := f.Init()
 		if err != nil {
-			logger.Log.Fatal("start client filter err", zap.String("filter", t), zap.Error(err))
+			logger.Log.Fatal("init client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	for t, f := range serviceFilter {
-		err := f.Start()
+		err := f.Init()
 		if err != nil {
-			logger.Log.Fatal("start service filter err", zap.String("filter", t), zap.Error(err))
+			logger.Log.Fatal("init service filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 }
@@ -142,51 +126,85 @@ func StartFilter() {
 // 关闭过滤器
 func CloseFilter() {
 	for t, f := range clientFilter {
-		err := f.Start()
+		err := f.Close()
 		if err != nil {
-			logger.Log.Error("start client filter err", zap.String("filter", t), zap.Error(err))
+			logger.Log.Error("close client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	for t, f := range serviceFilter {
-		err := f.Start()
+		err := f.Close()
 		if err != nil {
-			logger.Log.Error("start service filter err", zap.String("filter", t), zap.Error(err))
+			logger.Log.Error("close service filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 }
 
-// 触发客户端过滤器(inject)
-func TriggerClientFilterInject(ctx context.Context, clientName string, req, rsp interface{}, next core.FilterInjectFunc) error {
-	chain, ok := clientChain[clientName]
+func funcFileLine(skip int) (string, string, int) {
+	const depth = 16
+	var pcs [depth]uintptr
+	n := runtime.Callers(5+skip, pcs[:])
+	ff := runtime.CallersFrames(pcs[:n])
+
+	f, ok := ff.Next()
 	if !ok {
-		chain = defClientChain
+		return "", "", 0
 	}
+	return f.Function, f.File, f.Line
+}
+
+func getClientFilterChain(clientType, clientName string) FilterChain {
+	chainMap, ok := clientChain[clientType]
+	if !ok {
+		chainMap, ok = clientChain[defName]
+		if ok {
+			return chainMap[defName]
+		}
+		return nil
+	}
+
+	chain, ok := chainMap[clientName]
+	if ok {
+		return chain
+	}
+	return chainMap[defName]
+}
+
+// 触发客户端过滤器(inject)
+func TriggerClientFilterInject(ctx context.Context, meta *Meta, req, rsp interface{}, next core.FilterInjectFunc) error {
+	meta.fill(true)
+	chain := getClientFilterChain(meta.ClientType, meta.ClientName)
+	ctx = SaveMataToCtx(ctx, meta)
 	return chain.FilterInject(ctx, req, rsp, next)
 }
 
 // 触发客户端过滤器
-func TriggerClientFilter(ctx context.Context, clientName string, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
-	chain, ok := clientChain[clientName]
-	if !ok {
-		chain = defClientChain
-	}
+func TriggerClientFilter(ctx context.Context, meta *Meta, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
+	meta.fill(true)
+	chain := getClientFilterChain(meta.ClientType, meta.ClientName)
+	ctx = SaveMataToCtx(ctx, meta)
 	return chain.Filter(ctx, req, next)
 }
 
-// 触发服务过滤器(inject)
-func TriggerServiceFilterInject(ctx context.Context, serviceName string, req, rsp interface{}, next core.FilterInjectFunc) error {
+func getServiceFilterChain(serviceName string) FilterChain {
 	chain, ok := serviceChain[serviceName]
-	if !ok {
-		chain = defServiceChain
+	if ok {
+		return chain
 	}
+	return serviceChain[defName]
+}
+
+// 触发服务过滤器(inject)
+func TriggerServiceFilterInject(ctx context.Context, meta *Meta, req, rsp interface{}, next core.FilterInjectFunc) error {
+	meta.fill(false)
+	chain := getServiceFilterChain(meta.ServiceName)
+	ctx = SaveMataToCtx(ctx, meta)
 	return chain.FilterInject(ctx, req, rsp, next)
 }
 
 // 触发服务过滤器
-func TriggerServiceFilter(ctx context.Context, serviceName string, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
-	chain, ok := serviceChain[serviceName]
-	if !ok {
-		chain = defServiceChain
-	}
+func TriggerServiceFilter(ctx context.Context, meta *Meta, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
+	meta.fill(false)
+	chain := getServiceFilterChain(meta.ServiceName)
+	ctx = SaveMataToCtx(ctx, meta)
 	return chain.Filter(ctx, req, next)
 }

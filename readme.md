@@ -120,7 +120,7 @@ zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []
 
 ## 初始化
 
-`app := zapp.NewApp(...)` > 生成`BaseContext` > 加载配置 > 初始化日志记录器 > 构建组件 > 构建插件 > 构建过滤器 > 构建服务   
+`app := zapp.NewApp(...)` > 生成`BaseContext` > 加载配置 > 初始化日志记录器 > 构建组件 > 构建插件 > 构建并初始化过滤器 > 构建服务   
 
 ## 用户操作
 
@@ -128,7 +128,7 @@ zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []
 
 ## 启动
 
-`app.Run()` > 启动插件 > 启动过滤器 > 启动服务 > 启动内存释放任务 > 阻塞等待退出信号
+`app.Run()` > 启动插件 > 启动服务 > 启动内存释放任务 > 阻塞等待退出信号
 
 ## 退出
 

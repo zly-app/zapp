@@ -96,6 +96,8 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	app.makePlugin()
 	// 构建过滤器
 	filter.MakeFilter()
+	// 初始化过滤器
+	filter.InitFilter()
 	// 构建服务
 	app.makeService()
 
@@ -111,8 +113,6 @@ func (app *appCli) run() {
 
 	// 启动插件
 	app.startPlugin()
-	// 启动过滤器
-	filter.StartFilter()
 	// 启动服务
 	app.startService()
 	// 开始释放内存

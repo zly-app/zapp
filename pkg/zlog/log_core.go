@@ -63,24 +63,44 @@ func newLogCore(log *zap.Logger, callerMinLevel zapcore.Level, ws zapcore.WriteS
 }
 
 func (l *logCore) print(level Level, v []interface{}) {
-	msg, fields := l.makeBody(v)
+	msg, fields, customCaller := l.makeBody(v)
 	zapLevel := parserLogLevel(level)
 	if ce := l.log.Check(zapLevel, msg); ce != nil {
-		if zapLevel < l.callerMinLevel {
+		if customCaller != nil {
+			ce.Caller.Function = customCaller.fn
+			ce.Caller.File = customCaller.file
+			ce.Caller.Line = customCaller.line
+			ce.Caller.Defined = true
+		} else if zapLevel < l.callerMinLevel {
 			ce.Caller.Defined = false
 		}
 		ce.Write(fields...)
 	}
 }
 
-func (l *logCore) makeBody(v []interface{}) (string, []zap.Field) {
+func (l *logCore) makeBody(v []interface{}) (string, []zap.Field, *customCaller) {
 	args := make([]interface{}, 0, len(v))
 	fields := append([]zap.Field{}, l.fields...)
+	var cCaller *customCaller
 	for _, value := range v {
 		switch val := value.(type) {
 		case zap.Field:
+			if val.Type == zapcore.ReflectType && val.Key == "caller" {
+				caller, ok := val.Interface.(*customCaller)
+				if ok {
+					cCaller = caller
+					continue
+				}
+			}
 			fields = append(fields, val)
 		case *zap.Field:
+			if val.Type == zapcore.ReflectType && val.Key == "caller" {
+				caller, ok := val.Interface.(*customCaller)
+				if ok {
+					cCaller = caller
+					continue
+				}
+			}
 			fields = append(fields, *val)
 		case context.Context:
 			traceID, spanID := utils.Trace.GetTraceIDWithContext(val)
@@ -99,11 +119,11 @@ func (l *logCore) makeBody(v []interface{}) (string, []zap.Field) {
 			fields = append(fields, zap.Any("logData", value))
 		}
 	}
-	return fmt.Sprint(args...), fields
+	return fmt.Sprint(args...), fields, cCaller
 }
 
-func (l *logCore) Log(level Level, v ...interface{}) {
-	l.print(level, v)
+func (l *logCore) Log(level string, v ...interface{}) {
+	l.print(Level(level), v)
 }
 func (l *logCore) Debug(v ...interface{}) {
 	l.print(DebugLevel, v)
@@ -208,4 +228,17 @@ func (l *logCore) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.
 		callerMinLevel: l.callerMinLevel,
 		ws:             l.ws,
 	}
+}
+
+type customCaller struct {
+	fn, file string
+	line     int
+}
+
+func WithCaller(fn, file string, line int) zap.Field {
+	return zap.Reflect("caller", &customCaller{
+		fn:   fn,
+		file: file,
+		line: line,
+	})
 }
