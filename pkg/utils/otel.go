@@ -127,17 +127,16 @@ func (c *otelCli) CtxStart(ctx context.Context, name string, attributes ...OtelS
 
 func (c *otelCli) CtxEvent(ctx context.Context, name string, attributes ...OtelSpanKV) {
 	span := c.GetSpan(ctx)
-	attr := []OtelSpanKV{
-		c.GetSpanKVWithDeadline(ctx),
-	}
+	span.SetAttributes(c.GetSpanKVWithDeadline(ctx))
+	attr := []OtelSpanKV{}
 	attr = append(attr, attributes...)
 	c.AddSpanEvent(span, name, attr...)
 }
 
 func (c *otelCli) CtxErrEvent(ctx context.Context, name string, err error, attributes ...OtelSpanKV) {
 	span := c.GetSpan(ctx)
+	span.SetAttributes(c.GetSpanKVWithDeadline(ctx))
 	attr := []OtelSpanKV{
-		c.GetSpanKVWithDeadline(ctx),
 		OtelSpanKey("err.detail").String(err.Error()),
 	}
 	if Recover.IsRecoverError(err) {

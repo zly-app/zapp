@@ -13,7 +13,10 @@ import (
 // 过滤器链
 type FilterChain []core.Filter
 
-func (c FilterChain) FilterInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
+func (c FilterChain) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
+	meta := GetCallMeta(ctx)
+	meta.fill()
+
 	for i := len(c) - 1; i >= 0; i-- {
 		invoke, curFilter := next, c[i]
 		next = func(ctx context.Context, req, rsp interface{}) error {
@@ -22,7 +25,10 @@ func (c FilterChain) FilterInject(ctx context.Context, req, rsp interface{}, nex
 	}
 	return next(ctx, req, rsp)
 }
-func (c FilterChain) Filter(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
+func (c FilterChain) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
+	meta := GetCallMeta(ctx)
+	meta.fill()
+
 	for i := len(c) - 1; i >= 0; i-- {
 		invoke, curFilter := next, c[i]
 		next = func(ctx context.Context, req interface{}) (rsp interface{}, err error) {
@@ -141,8 +147,9 @@ func CloseFilter() {
 
 func funcFileLine(skip int) (string, string, int) {
 	const depth = 16
+	const defSkip = 5 // 调试结果
 	var pcs [depth]uintptr
-	n := runtime.Callers(5+skip, pcs[:])
+	n := runtime.Callers(defSkip+skip, pcs[:])
 	ff := runtime.CallersFrames(pcs[:n])
 
 	f, ok := ff.Next()
@@ -154,7 +161,7 @@ func funcFileLine(skip int) (string, string, int) {
 
 func getClientFilterChain(clientType, clientName string) FilterChain {
 	chainMap, ok := clientChain[clientType]
-	if !ok {
+	if !ok { // 没有找到 clientType 则用全局默认
 		chainMap, ok = clientChain[defName]
 		if ok {
 			return chainMap[defName]
@@ -169,20 +176,16 @@ func getClientFilterChain(clientType, clientName string) FilterChain {
 	return chainMap[defName]
 }
 
-// 触发客户端过滤器(inject)
-func TriggerClientFilterInject(ctx context.Context, meta *Meta, req, rsp interface{}, next core.FilterInjectFunc) error {
-	meta.fill(true)
-	chain := getClientFilterChain(meta.ClientType, meta.ClientName)
-	ctx = SaveMataToCtx(ctx, meta)
-	return chain.FilterInject(ctx, req, rsp, next)
-}
-
-// 触发客户端过滤器
-func TriggerClientFilter(ctx context.Context, meta *Meta, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
-	meta.fill(true)
-	chain := getClientFilterChain(meta.ClientType, meta.ClientName)
-	ctx = SaveMataToCtx(ctx, meta)
-	return chain.Filter(ctx, req, next)
+// 获取客户端过滤器
+func GetClientFilter(ctx context.Context, clientType, clientName, methodName string) (context.Context, FilterChain) {
+	chain := getClientFilterChain(clientType, clientName)
+	meta := &CallMeta{
+		isClientMeta:  true,
+		CalleeService: clientType + "/" + clientName,
+		CalleeMethod:  methodName,
+	}
+	ctx = SaveCallMata(ctx, meta)
+	return ctx, chain
 }
 
 func getServiceFilterChain(serviceName string) FilterChain {
@@ -193,18 +196,14 @@ func getServiceFilterChain(serviceName string) FilterChain {
 	return serviceChain[defName]
 }
 
-// 触发服务过滤器(inject)
-func TriggerServiceFilterInject(ctx context.Context, meta *Meta, req, rsp interface{}, next core.FilterInjectFunc) error {
-	meta.fill(false)
-	chain := getServiceFilterChain(meta.ServiceName)
-	ctx = SaveMataToCtx(ctx, meta)
-	return chain.FilterInject(ctx, req, rsp, next)
-}
-
-// 触发服务过滤器
-func TriggerServiceFilter(ctx context.Context, meta *Meta, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
-	meta.fill(false)
-	chain := getServiceFilterChain(meta.ServiceName)
-	ctx = SaveMataToCtx(ctx, meta)
-	return chain.Filter(ctx, req, next)
+// 获取服务过滤器
+func GetServiceFilter(ctx context.Context, serviceName string, methodName string) (context.Context, FilterChain) {
+	chain := getServiceFilterChain(serviceName)
+	meta := &CallMeta{
+		isClientMeta:  false,
+		CalleeService: serviceName,
+		CalleeMethod:  methodName,
+	}
+	ctx = SaveCallMata(ctx, meta)
+	return ctx, chain
 }

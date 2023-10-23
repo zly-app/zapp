@@ -30,7 +30,7 @@ var Conf core.IConfig
 
 type configCli struct {
 	vi     *viper.Viper
-	c      *core.Config
+	conf   *core.Config
 	flags  map[string]struct{}
 	labels map[string]string
 }
@@ -121,31 +121,38 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	}
 
 	c := &configCli{
-		vi: vi,
-		c:  newConfig(appName),
+		vi:   vi,
+		conf: newConfig(appName),
 	}
 	// 解析配置
-	if err = vi.Unmarshal(c.c); err != nil {
+	if err = vi.Unmarshal(c.conf); err != nil {
 		logger.Log.Fatal("配置解析失败", zap.Error(err))
 	}
 
-	c.checkDefaultConfig(c.c)
+	c.checkDefaultConfig(c.conf)
 
 	if *testFlag {
 		logger.Log.Info("配置文件测试成功")
 		os.Exit(0)
 	}
 
-	c.makeFlags()
-	c.makeLabels()
+	c.fill()
 
 	Conf = c
 	return c
 }
 
+func (c *configCli) fill() {
+	if c.conf.Frame.Instance == "" {
+		c.conf.Frame.Instance = utils.GetInstance(c.conf.Frame.Name)
+	}
+	c.makeFlags()
+	c.makeLabels()
+}
+
 func (c *configCli) makeFlags() {
-	c.flags = make(map[string]struct{}, len(c.c.Frame.Flags))
-	for _, flag := range c.c.Frame.Flags {
+	c.flags = make(map[string]struct{}, len(c.conf.Frame.Flags))
+	for _, flag := range c.conf.Frame.Flags {
 		c.flags[strings.ToLower(flag)] = struct{}{}
 	}
 
@@ -153,15 +160,15 @@ func (c *configCli) makeFlags() {
 	for flag := range c.flags {
 		flags = append(flags, flag)
 	}
-	c.c.Frame.Flags = flags
+	c.conf.Frame.Flags = flags
 }
 
 func (c *configCli) makeLabels() {
-	c.labels = make(map[string]string, len(c.c.Frame.Labels))
-	for k, v := range c.c.Frame.Labels {
+	c.labels = make(map[string]string, len(c.conf.Frame.Labels))
+	for k, v := range c.conf.Frame.Labels {
 		c.labels[strings.ToLower(k)] = v
 	}
-	c.c.Frame.Labels = c.labels
+	c.conf.Frame.Labels = c.labels
 }
 
 // 加载默认配置文件, 默认配置文件不存在返回nil
@@ -263,7 +270,7 @@ func (c *configCli) checkDefaultConfig(conf *core.Config) {
 }
 
 func (c *configCli) Config() *core.Config {
-	return c.c
+	return c.conf
 }
 
 func (c *configCli) GetViper() *viper.Viper {
@@ -354,5 +361,5 @@ func (c *configCli) HasFlag(flag string) bool {
 }
 
 func (c *configCli) GetFlags() []string {
-	return c.c.Frame.Flags
+	return c.conf.Frame.Flags
 }
