@@ -71,7 +71,8 @@ func (l *logCore) print(level Level, v []interface{}) {
 			ce.Caller.File = customCaller.file
 			ce.Caller.Line = customCaller.line
 			ce.Caller.Defined = true
-		} else if zapLevel < l.callerMinLevel {
+		}
+		if zapLevel < l.callerMinLevel {
 			ce.Caller.Defined = false
 		}
 		ce.Write(fields...)
