@@ -59,7 +59,7 @@ func (r *timeoutFilter) getServiceTimeout(serviceName string) int64 {
 	}
 	return r.Service[defName]
 }
-func (r *timeoutFilter) getTimeout(ctx context.Context) int64 {
+func (r *timeoutFilter) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 	meta := GetCallMeta(ctx)
 	t := defTimeout
 	if meta.IsClientMeta() {
@@ -67,28 +67,29 @@ func (r *timeoutFilter) getTimeout(ctx context.Context) int64 {
 	} else if meta.IsServiceMeta() {
 		t = r.getServiceTimeout(meta.ServiceName())
 	}
-	return t
+
+	if t <= 0 {
+		return ctx, func() {}
+	}
+
+	deadline, ok := ctx.Deadline()
+	if ok && time.Now().Add(time.Millisecond*time.Duration(t)).After(deadline) { // 如果设置的超时时间在当前截止时间之后, 则设置超时时间是无意义的
+		return ctx, func() {}
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(t))
+	return ctx, cancel
 }
 
 func (r *timeoutFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
-	t := r.getTimeout(ctx)
-	if t > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Millisecond*time.Duration(t))
-		defer cancel()
-	}
-
+	ctx, cancel := r.withTimeout(ctx)
+	defer cancel()
 	return next(ctx, req, rsp)
 }
 
 func (r *timeoutFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
-	t := r.getTimeout(ctx)
-	if t > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Millisecond*time.Duration(t))
-		defer cancel()
-	}
-
+	ctx, cancel := r.withTimeout(ctx)
+	defer cancel()
 	return next(ctx, req)
 }
 
