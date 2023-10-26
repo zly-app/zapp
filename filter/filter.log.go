@@ -15,37 +15,37 @@ import (
 	"github.com/zly-app/zapp/pkg/zlog"
 )
 
-var _ core.Filter = (*LogFilter)(nil)
+var _ core.Filter = (*logFilter)(nil)
 
 func init() {
 	RegisterFilterCreator("log", NewLogFilter, NewLogFilter)
 }
 
-var defLogFilter core.Filter = &LogFilter{}
+var defLogFilter core.Filter = &logFilter{}
 
 func NewLogFilter() core.Filter {
 	return defLogFilter
 }
 
-type LogFilterConfig struct {
+type logFilterConfig struct {
 	Level string
 }
 
-type LogFilter struct {
+type logFilter struct {
 	level string
 }
 
-func (t *LogFilter) getMethodName(meta *CallMeta) string {
+func (t *logFilter) getMethodName(meta *CallMeta) string {
 	return meta.CalleeService + "/" + meta.CalleeMethod
 }
 
-func (t *LogFilter) marshal(a any) string {
+func (t *logFilter) marshal(a any) string {
 	s, _ := sonic.MarshalString(a)
 	return s
 }
 
-func (t *LogFilter) Init() error {
-	conf := &LogFilterConfig{}
+func (t *logFilter) Init() error {
+	conf := &logFilterConfig{}
 	err := config.Conf.ParseFilterConfig("log", conf, true)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func (t *LogFilter) Init() error {
 	return nil
 }
 
-func (t *LogFilter) start(ctx context.Context, req interface{}) (context.Context, *CallMeta, []interface{}) {
+func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context, *CallMeta, []interface{}) {
 	meta := GetCallMeta(ctx)
 
 	eventName := " Send"
@@ -103,7 +103,7 @@ func (t *LogFilter) start(ctx context.Context, req interface{}) (context.Context
 	return ctx, meta, logFields
 }
 
-func (t *LogFilter) end(ctx context.Context, meta *CallMeta, rsp interface{}, err error, logFields []interface{}) error {
+func (t *logFilter) end(ctx context.Context, meta *CallMeta, rsp interface{}, err error, logFields []interface{}) error {
 	code, codeType, replaceErr := DefaultGetErrCodeFunc(ctx, rsp, err)
 	err = replaceErr
 
@@ -140,7 +140,7 @@ func (t *LogFilter) end(ctx context.Context, meta *CallMeta, rsp interface{}, er
 	return err
 }
 
-func (t *LogFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
+func (t *logFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
 	ctx, meta, logFields := t.start(ctx, req)
 
 	err := next(ctx, req, rsp)
@@ -148,7 +148,7 @@ func (t *LogFilter) HandleInject(ctx context.Context, req, rsp interface{}, next
 	return err
 }
 
-func (t *LogFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
+func (t *logFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
 	ctx, meta, logFields := t.start(ctx, req)
 
 	rsp, err := next(ctx, req)
@@ -156,4 +156,4 @@ func (t *LogFilter) Handle(ctx context.Context, req interface{}, next core.Filte
 	return rsp, err
 }
 
-func (t *LogFilter) Close() error { return nil }
+func (t *logFilter) Close() error { return nil }

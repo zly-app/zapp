@@ -48,14 +48,19 @@ func (f filterWrap) Close() error {
 	return nil
 }
 
-// 将多个过滤器包装为一个过滤器
-func Wrap(cc ...core.FilterCreator) core.FilterCreator {
+// 将多个过滤器建造者包装为一个过滤器建造者
+func WrapFilterCreator(cc ...core.FilterCreator) core.FilterCreator {
 	return func() core.Filter {
-		filters := make(filterWrap, len(cc))
+		filters := make([]core.Filter, len(cc))
 		for i, creator := range cc {
 			filter := creator()
 			filters[i] = filter
 		}
-		return filters
+		return WrapFilter(filters...)
 	}
+}
+
+// 将多个过滤器包装为一个过滤器
+func WrapFilter(ff ...core.Filter) core.Filter {
+	return filterWrap(ff)
 }

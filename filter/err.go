@@ -22,8 +22,6 @@ var DefaultGetErrCodeFunc GetErrCodeFunc = func(ctx context.Context, rsp interfa
 	switch err {
 	case context.DeadlineExceeded, context.Canceled:
 		return -1, CodeTypeTimeoutOrCancel, err
-	case context.Canceled:
-		return -1, CodeTypeTimeoutOrCancel, err
 	}
 
 	meta := GetCallMeta(ctx)

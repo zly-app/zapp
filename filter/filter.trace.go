@@ -14,32 +14,32 @@ import (
 	"github.com/zly-app/zapp/pkg/utils"
 )
 
-var _ core.Filter = (*TraceFilter)(nil)
+var _ core.Filter = (*traceFilter)(nil)
 
 func init() {
 	RegisterFilterCreator("trace", NewTraceFilter, NewTraceFilter)
 }
 
-var defTraceFilter core.Filter = TraceFilter{}
+var defTraceFilter core.Filter = traceFilter{}
 
 func NewTraceFilter() core.Filter {
 	return defTraceFilter
 }
 
-type TraceFilter struct {
+type traceFilter struct {
 }
 
-func (t TraceFilter) getSpanName(meta *CallMeta) string {
+func (t traceFilter) getSpanName(meta *CallMeta) string {
 	return meta.CalleeService + "/" + meta.CalleeMethod
 }
-func (t TraceFilter) marshal(a any) string {
+func (t traceFilter) marshal(a any) string {
 	s, _ := sonic.MarshalString(a)
 	return s
 }
 
-func (t TraceFilter) Init() error { return nil }
+func (t traceFilter) Init() error { return nil }
 
-func (t TraceFilter) start(ctx context.Context, req interface{}) (context.Context, trace.Span, *CallMeta) {
+func (t traceFilter) start(ctx context.Context, req interface{}) (context.Context, trace.Span, *CallMeta) {
 	meta := GetCallMeta(ctx)
 	fn, file, line := meta.FuncFileLine()
 
@@ -66,7 +66,7 @@ func (t TraceFilter) start(ctx context.Context, req interface{}) (context.Contex
 	return ctx, span, meta
 }
 
-func (t TraceFilter) end(ctx context.Context, span trace.Span, meta *CallMeta, rsp interface{}, err error) error {
+func (t traceFilter) end(ctx context.Context, span trace.Span, meta *CallMeta, rsp interface{}, err error) error {
 	code, codeType, replaceErr := DefaultGetErrCodeFunc(ctx, rsp, err)
 	err = replaceErr
 
@@ -92,7 +92,7 @@ func (t TraceFilter) end(ctx context.Context, span trace.Span, meta *CallMeta, r
 	return err
 }
 
-func (t TraceFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
+func (t traceFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
 	ctx, span, meta := t.start(ctx, req)
 	defer span.End()
 
@@ -101,7 +101,7 @@ func (t TraceFilter) HandleInject(ctx context.Context, req, rsp interface{}, nex
 	return err
 }
 
-func (t TraceFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
+func (t traceFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
 	ctx, span, meta := t.start(ctx, req)
 	defer span.End()
 
@@ -110,4 +110,4 @@ func (t TraceFilter) Handle(ctx context.Context, req interface{}, next core.Filt
 	return rsp, err
 }
 
-func (t TraceFilter) Close() error { return nil }
+func (t traceFilter) Close() error { return nil }
