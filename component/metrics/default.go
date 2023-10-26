@@ -67,11 +67,12 @@ func GaugeWithLabelValue(name string, labelValues ...string) IGauge {
 
 	name 直方图名, 一般为 需要检测的对象_数值类型_单位
 	help 一段描述文字
+	buckets 桶列表
 	constLabels 固定不变的标签值, 如主机名, ip 等
 	labels 允许使用的标签, 可为nil
 */
-func RegistryHistogram(name, help string, constLabels Labels, labels ...string) {
-	GetClient().RegistryHistogram(name, help, constLabels, labels...)
+func RegistryHistogram(name, help string, buckets []float64, constLabels Labels, labels ...string) {
+	GetClient().RegistryHistogram(name, help, buckets, constLabels, labels...)
 }
 
 // 获取直方图

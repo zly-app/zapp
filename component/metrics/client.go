@@ -70,10 +70,11 @@ type Client interface {
 	/*注册直方图
 	  name 直方图名, 一般为 需要检测的对象_数值类型_单位
 	  help 一段描述文字
+	  buckets 桶列表
 	  constLabels 固定不变的标签值, 如主机名, ip 等
 	  labels 允许使用的标签, 可为nil
 	*/
-	RegistryHistogram(name, help string, constLabels Labels, labels ...string)
+	RegistryHistogram(name, help string, buckets []float64, constLabels Labels, labels ...string)
 	// 获取直方图
 	Histogram(name string, labels Labels) IHistogram
 	// 获取直方图
@@ -342,7 +343,7 @@ func (p *clientCli) GaugeWithLabelValue(name string, labelValues ...string) IGau
 	return gauge
 }
 
-func (p *clientCli) RegistryHistogram(name, help string, constLabels Labels, labels ...string) {
+func (p *clientCli) RegistryHistogram(name, help string, buckets []float64, constLabels Labels, labels ...string) {
 	p.histogramCollectorLocker.Lock()
 	defer p.histogramCollectorLocker.Unlock()
 
@@ -356,6 +357,7 @@ func (p *clientCli) RegistryHistogram(name, help string, constLabels Labels, lab
 		Name:        name,
 		Help:        help,
 		ConstLabels: constLabels,
+		Buckets:     buckets,
 	}, labels)
 	err := p.registryCollector(histogram)
 	if err != nil {
