@@ -16,9 +16,10 @@ import (
 )
 
 type Caller struct {
-	PC   uintptr
-	File string
-	Line int
+	PC       uintptr
+	Function string
+	File     string
+	Line     int
 }
 
 type RecoverError interface {
@@ -42,19 +43,23 @@ func (r recoverError) Callers() []*Caller {
 }
 func newRecoverError(err error) RecoverError {
 	var callers []*Caller
-	for i := 3; ; i++ {
-		pc, file, line, got := runtime.Caller(i)
-		if !got {
+	const depth = 16
+	const defSkip = 4 // 调试结果
+	var pcs [depth]uintptr
+	n := runtime.Callers(defSkip, pcs[:])
+	ff := runtime.CallersFrames(pcs[:n])
+	for {
+		f, ok := ff.Next()
+		if !ok {
 			break
 		}
-
 		callers = append(callers, &Caller{
-			PC:   pc,
-			File: file,
-			Line: line,
+			PC:       f.PC,
+			Function: f.Function,
+			File:     f.File,
+			Line:     f.Line,
 		})
 	}
-
 	return recoverError{
 		err:     err,
 		callers: callers,
@@ -110,7 +115,7 @@ func (*recoverCli) GetRecoverErrors(err error) []string {
 	callers = make([]string, len(re.Callers())+1)
 	callers[0] = err.Error()
 	for i, c := range re.Callers() {
-		callers[i+1] = fmt.Sprintf("%s:%d", c.File, c.Line)
+		callers[i+1] = fmt.Sprintf("%s:%d  %s", c.File, c.Line, c.Function)
 	}
 	return callers
 }
@@ -126,7 +131,7 @@ func (*recoverCli) GetRecoverErrorDetail(err error) string {
 	callers = make([]string, len(re.Callers())+1)
 	callers[0] = err.Error()
 	for i, c := range re.Callers() {
-		callers[i+1] = fmt.Sprintf("%s:%d", c.File, c.Line)
+		callers[i+1] = fmt.Sprintf("%s:%d  %s", c.File, c.Line, c.Function)
 	}
 	return strings.Join(callers, "\n")
 }
