@@ -215,3 +215,8 @@ func GetServiceFilter(ctx context.Context, serviceName string, methodName string
 	ctx = SaveCallMata(ctx, meta)
 	return ctx, chain
 }
+
+func init() {
+	baseFilter := Wrap(NewTraceFilter, NewLogFilter)
+	RegisterFilterCreator("base", baseFilter, baseFilter)
+}

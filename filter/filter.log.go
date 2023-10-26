@@ -18,11 +18,13 @@ import (
 var _ core.Filter = (*LogFilter)(nil)
 
 func init() {
-	RegisterFilterCreator("log", func() core.Filter {
-		return &LogFilter{}
-	}, func() core.Filter {
-		return &LogFilter{}
-	})
+	RegisterFilterCreator("log", NewLogFilter, NewLogFilter)
+}
+
+var defLogFilter core.Filter = &LogFilter{}
+
+func NewLogFilter() core.Filter {
+	return defLogFilter
 }
 
 type LogFilterConfig struct {

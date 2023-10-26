@@ -62,7 +62,7 @@ filter.RegisterFilterCreator("myFilter", nil, serviceFilterCreator)
 ```yaml
 filters:
   service: # 服务过滤器
-    default: # 对没有独立配置的服务设置默认的过滤器, 默认包含 log, trace
+    default: # 对没有独立配置的服务设置默认的过滤器, 默认包含 base
       - filter1
       - filter2
     myService: # 独立设置服务的过滤器 

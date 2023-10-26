@@ -17,11 +17,13 @@ import (
 var _ core.Filter = (*TraceFilter)(nil)
 
 func init() {
-	RegisterFilterCreator("trace", func() core.Filter {
-		return TraceFilter{}
-	}, func() core.Filter {
-		return TraceFilter{}
-	})
+	RegisterFilterCreator("trace", NewTraceFilter, NewTraceFilter)
+}
+
+var defTraceFilter core.Filter = TraceFilter{}
+
+func NewTraceFilter() core.Filter {
+	return defTraceFilter
 }
 
 type TraceFilter struct {
