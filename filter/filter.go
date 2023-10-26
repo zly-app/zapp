@@ -52,10 +52,18 @@ var (
 // 注册服务/客户端过滤器建造者
 func RegisterFilterCreator(filterType string, c core.FilterCreator, s core.FilterCreator) {
 	if c != nil {
+		l := len(clientFilterCreator)
 		clientFilterCreator[filterType] = c
+		if l == len(clientFilterCreator) {
+			logger.Log.Fatal("client filter creator repeat register", zap.String("filterType", filterType))
+		}
 	}
 	if s != nil {
+		l := len(serviceFilterCreator)
 		serviceFilterCreator[filterType] = s
+		if l == len(serviceFilterCreator) {
+			logger.Log.Fatal("service filter creator repeat register", zap.String("filterType", filterType))
+		}
 	}
 }
 
