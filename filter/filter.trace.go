@@ -14,15 +14,13 @@ import (
 	"github.com/zly-app/zapp/pkg/utils"
 )
 
-var _ core.Filter = (*traceFilter)(nil)
-
 func init() {
-	RegisterFilterCreator("trace", NewTraceFilter, NewTraceFilter)
+	RegisterFilterCreator("base.trace", newTraceFilter, newTraceFilter)
 }
 
 var defTraceFilter core.Filter = traceFilter{}
 
-func NewTraceFilter() core.Filter {
+func newTraceFilter() core.Filter {
 	return defTraceFilter
 }
 

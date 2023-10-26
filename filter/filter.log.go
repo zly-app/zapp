@@ -15,15 +15,13 @@ import (
 	"github.com/zly-app/zapp/pkg/zlog"
 )
 
-var _ core.Filter = (*logFilter)(nil)
-
 func init() {
-	RegisterFilterCreator("log", NewLogFilter, NewLogFilter)
+	RegisterFilterCreator("base.log", newLogFilter, newLogFilter)
 }
 
 var defLogFilter core.Filter = &logFilter{}
 
-func NewLogFilter() core.Filter {
+func newLogFilter() core.Filter {
 	return defLogFilter
 }
 
