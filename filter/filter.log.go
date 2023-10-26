@@ -2,7 +2,6 @@ package filter
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -15,26 +14,28 @@ import (
 	"github.com/zly-app/zapp/pkg/zlog"
 )
 
+const defLogLevel = "info"
+
 func init() {
 	RegisterFilterCreator("base.log", newLogFilter, newLogFilter)
 }
 
-var defLogFilter core.Filter = &logFilter{}
+var defLogFilter core.Filter = &logFilter{
+	Client:  make(map[string]map[string]string),
+	Service: make(map[string]string),
+}
 
 func newLogFilter() core.Filter {
 	return defLogFilter
 }
 
-type logFilterConfig struct {
-	Level string
-}
-
 type logFilter struct {
-	level string
+	Client  map[string]map[string]string
+	Service map[string]string
 }
 
-func (t *logFilter) getMethodName(meta *CallMeta) string {
-	return meta.CalleeService + "/" + meta.CalleeMethod
+func (t *logFilter) getMethodName(meta CallMeta) string {
+	return meta.CalleeMethod() + "/" + meta.CalleeMethod()
 }
 
 func (t *logFilter) marshal(a any) string {
@@ -43,46 +44,60 @@ func (t *logFilter) marshal(a any) string {
 }
 
 func (t *logFilter) Init() error {
-	conf := &logFilterConfig{}
-	err := config.Conf.ParseFilterConfig("log", conf, true)
+	err := config.Conf.ParseFilterConfig("base.log", t, true)
 	if err != nil {
 		return err
 	}
-
-	level := zlog.InfoLevel
-	switch strings.ToLower(conf.Level) {
-	case "debug":
-		level = zlog.DebugLevel
-	case "info":
-		level = zlog.InfoLevel
-	case "warn":
-		level = zlog.WarnLevel
-	case "error":
-		level = zlog.ErrorLevel
-	case "dpanic":
-		level = zlog.DPanicLevel
-	case "panic":
-		level = zlog.PanicLevel
-	case "fatal":
-		level = zlog.FatalLevel
-	}
-	t.level = level
 	return nil
 }
 
-func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context, *CallMeta, []interface{}) {
+func (t *logFilter) getClientLevel(clientType, clientName string) string {
+	ct, ok := t.Client[clientType]
+	if !ok { // 没有找到 clientType 则用全局默认
+		ct, ok = t.Client[defName]
+		if ok {
+			return ct[defName]
+		}
+		return defLogLevel
+	}
+
+	l, ok := ct[clientName]
+	if ok {
+		return l
+	}
+	return ct[defName]
+}
+func (t *logFilter) getServiceLevel(serviceName string) string {
+	l, ok := t.Service[serviceName]
+	if ok {
+		return l
+	}
+	return t.Service[defName]
+}
+func (t *logFilter) getLevel(ctx context.Context) string {
+	meta := GetCallMeta(ctx)
+	l := defLogLevel
+	if meta.IsClientMeta() {
+		l = t.getClientLevel(meta.ClientType(), meta.ClientName())
+	} else if meta.IsServiceMeta() {
+		l = t.getServiceLevel(meta.ServiceName())
+	}
+	return l
+}
+
+func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context, CallMeta, []interface{}) {
 	meta := GetCallMeta(ctx)
 
 	eventName := " Send"
-	if !meta.isClientMeta {
+	if meta.IsServiceMeta() {
 		eventName = " Recv"
 	}
 	fn, file, line := meta.FuncFileLine()
 	customCaller := zlog.WithCaller(fn, file, line)
 
 	instance := zap.String("instance", config.Conf.Config().Frame.Instance)
-	calleeService := zap.String("calleeService", meta.CalleeService)
-	calleeMethod := zap.String("calleeMethod", meta.CalleeMethod)
+	calleeService := zap.String("calleeService", meta.CalleeService())
+	calleeMethod := zap.String("calleeMethod", meta.CalleeMethod())
 
 	logFields := []interface{}{
 		customCaller,
@@ -91,7 +106,8 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 		calleeMethod,
 	}
 
-	logger.Log.Log(t.level,
+	level := t.getLevel(ctx)
+	logger.Log.Log(level,
 		customCaller,
 		instance,
 		calleeService,
@@ -101,16 +117,16 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 	return ctx, meta, logFields
 }
 
-func (t *logFilter) end(ctx context.Context, meta *CallMeta, rsp interface{}, err error, logFields []interface{}) error {
+func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error, logFields []interface{}) error {
 	code, codeType, replaceErr := DefaultGetErrCodeFunc(ctx, rsp, err)
 	err = replaceErr
 
 	eventName := " Recv"
-	if !meta.isClientMeta {
+	if meta.IsServiceMeta() {
 		eventName = " Send"
 	}
 
-	duration := meta.GetEndTime() - meta.GetStartTime()
+	duration := meta.EndTime() - meta.StartTime()
 	logFields = append(logFields,
 		ctx,
 		t.getMethodName(meta)+eventName,
@@ -133,7 +149,8 @@ func (t *logFilter) end(ctx context.Context, meta *CallMeta, rsp interface{}, er
 		}
 		logger.Log.Log(zlog.ErrorLevel, logFields...)
 	} else {
-		logger.Log.Log(t.level, logFields...)
+		level := t.getLevel(ctx)
+		logger.Log.Log(level, logFields...)
 	}
 	return err
 }

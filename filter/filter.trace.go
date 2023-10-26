@@ -27,8 +27,8 @@ func newTraceFilter() core.Filter {
 type traceFilter struct {
 }
 
-func (t traceFilter) getSpanName(meta *CallMeta) string {
-	return meta.CalleeService + "/" + meta.CalleeMethod
+func (t traceFilter) getSpanName(meta CallMeta) string {
+	return meta.CalleeService() + "/" + meta.CalleeMethod()
 }
 func (t traceFilter) marshal(a any) string {
 	s, _ := sonic.MarshalString(a)
@@ -37,12 +37,12 @@ func (t traceFilter) marshal(a any) string {
 
 func (t traceFilter) Init() error { return nil }
 
-func (t traceFilter) start(ctx context.Context, req interface{}) (context.Context, trace.Span, *CallMeta) {
+func (t traceFilter) start(ctx context.Context, req interface{}) (context.Context, trace.Span, CallMeta) {
 	meta := GetCallMeta(ctx)
 	fn, file, line := meta.FuncFileLine()
 
 	kind := trace.SpanKindClient
-	if !meta.isClientMeta {
+	if meta.IsServiceMeta() {
 		kind = trace.SpanKindServer
 	}
 	ctx, span := otel.Tracer("").Start(ctx, t.getSpanName(meta),
@@ -50,26 +50,26 @@ func (t traceFilter) start(ctx context.Context, req interface{}) (context.Contex
 			utils.OtelSpanKey("line").String(file+":"+strconv.Itoa(line)),
 			utils.OtelSpanKey("func").String(fn),
 			utils.OtelSpanKey("instance").String(config.Conf.Config().Frame.Instance),
-			utils.OtelSpanKey("calleeService").String(meta.CalleeService),
-			utils.OtelSpanKey("calleeMethod").String(meta.CalleeMethod),
+			utils.OtelSpanKey("calleeService").String(meta.CalleeService()),
+			utils.OtelSpanKey("calleeMethod").String(meta.CalleeMethod()),
 		),
 		trace.WithSpanKind(kind),
 	)
 
 	eventName := "Send"
-	if !meta.isClientMeta {
+	if meta.IsServiceMeta() {
 		eventName = "Recv"
 	}
 	utils.Otel.CtxEvent(ctx, eventName, utils.OtelSpanKey("req").String(t.marshal(req)))
 	return ctx, span, meta
 }
 
-func (t traceFilter) end(ctx context.Context, span trace.Span, meta *CallMeta, rsp interface{}, err error) error {
+func (t traceFilter) end(ctx context.Context, span trace.Span, meta CallMeta, rsp interface{}, err error) error {
 	code, codeType, replaceErr := DefaultGetErrCodeFunc(ctx, rsp, err)
 	err = replaceErr
 
 	// 计时
-	duration := meta.GetEndTime() - meta.GetStartTime()
+	duration := meta.EndTime() - meta.StartTime()
 	span.SetAttributes(
 		utils.OtelSpanKey("duration").Int64(duration),
 		utils.OtelSpanKey("durationText").String(time.Duration(duration).String()),
@@ -78,7 +78,7 @@ func (t traceFilter) end(ctx context.Context, span trace.Span, meta *CallMeta, r
 	)
 
 	eventName := "Recv"
-	if !meta.isClientMeta {
+	if meta.IsServiceMeta() {
 		eventName = "Send"
 	}
 

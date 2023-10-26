@@ -11,7 +11,7 @@ func init() {
 	RegisterFilterCreator("base.recover", newRecoverFilter, newRecoverFilter)
 }
 
-var defRecoverFilter core.Filter = &recoverFilter{}
+var defRecoverFilter core.Filter = recoverFilter{}
 
 func newRecoverFilter() core.Filter {
 	return defRecoverFilter

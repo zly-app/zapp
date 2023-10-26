@@ -15,7 +15,9 @@ type FilterChain []core.Filter
 
 func (c FilterChain) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
 	meta := GetCallMeta(ctx)
-	meta.fill()
+	if v, ok := meta.(*callMeta); ok {
+		v.fill()
+	}
 
 	for i := len(c) - 1; i >= 0; i-- {
 		invoke, curFilter := next, c[i]
@@ -27,7 +29,9 @@ func (c FilterChain) HandleInject(ctx context.Context, req, rsp interface{}, nex
 }
 func (c FilterChain) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
 	meta := GetCallMeta(ctx)
-	meta.fill()
+	if v, ok := meta.(*callMeta); ok {
+		v.fill()
+	}
 
 	for i := len(c) - 1; i >= 0; i-- {
 		invoke, curFilter := next, c[i]
@@ -184,18 +188,6 @@ func getClientFilterChain(clientType, clientName string) FilterChain {
 	return chainMap[defName]
 }
 
-// 获取客户端过滤器
-func GetClientFilter(ctx context.Context, clientType, clientName, methodName string) (context.Context, FilterChain) {
-	chain := getClientFilterChain(clientType, clientName)
-	meta := &CallMeta{
-		isClientMeta:  true,
-		CalleeService: clientType + "/" + clientName,
-		CalleeMethod:  methodName,
-	}
-	ctx = SaveCallMata(ctx, meta)
-	return ctx, chain
-}
-
 func getServiceFilterChain(serviceName string) FilterChain {
 	chain, ok := serviceChain[serviceName]
 	if ok {
@@ -204,19 +196,36 @@ func getServiceFilterChain(serviceName string) FilterChain {
 	return serviceChain[defName]
 }
 
+// 获取客户端过滤器
+func GetClientFilter(ctx context.Context, clientType, clientName, methodName string) (context.Context, FilterChain) {
+	chain := getClientFilterChain(clientType, clientName)
+	meta := &callMeta{
+		isClientMeta: true,
+		clientType:   clientType,
+		clientName:   clientName,
+
+		calleeService: clientType + "/" + clientName,
+		calleeMethod:  methodName,
+	}
+	ctx = SaveCallMata(ctx, meta)
+	return ctx, chain
+}
+
 // 获取服务过滤器
 func GetServiceFilter(ctx context.Context, serviceName string, methodName string) (context.Context, FilterChain) {
 	chain := getServiceFilterChain(serviceName)
-	meta := &CallMeta{
-		isClientMeta:  false,
-		CalleeService: serviceName,
-		CalleeMethod:  methodName,
+	meta := &callMeta{
+		isServiceMeta: true,
+		serviceName:   serviceName,
+
+		calleeService: serviceName,
+		calleeMethod:  methodName,
 	}
 	ctx = SaveCallMata(ctx, meta)
 	return ctx, chain
 }
 
 func init() {
-	baseFilter := WrapFilterCreator(newTraceFilter, newLogFilter, newRecoverFilter)
+	baseFilter := WrapFilterCreator(newTimeoutFilter, newTraceFilter, newLogFilter, newRecoverFilter)
 	RegisterFilterCreator("base", baseFilter, baseFilter)
 }
