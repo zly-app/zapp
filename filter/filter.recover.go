@@ -19,7 +19,7 @@ func newRecoverFilter() core.Filter {
 
 type recoverFilter struct{}
 
-func (r recoverFilter) Init() error { return nil }
+func (r recoverFilter) Init(app core.IApp) error { return nil }
 
 func (r recoverFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
 	err := utils.Recover.WrapCall(func() error {

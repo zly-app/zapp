@@ -126,15 +126,15 @@ func MakeFilter() {
 }
 
 // 初始化过滤器
-func InitFilter() {
+func InitFilter(app core.IApp) {
 	for t, f := range clientFilter {
-		err := f.Init()
+		err := f.Init(app)
 		if err != nil {
 			logger.Log.Fatal("init client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	for t, f := range serviceFilter {
-		err := f.Init()
+		err := f.Init(app)
 		if err != nil {
 			logger.Log.Fatal("init service filter err", zap.String("filter", t), zap.Error(err))
 		}
@@ -226,6 +226,6 @@ func GetServiceFilter(ctx context.Context, serviceName string, methodName string
 }
 
 func init() {
-	baseFilter := WrapFilterCreator(newTimeoutFilter, newTraceFilter, newLogFilter, newRecoverFilter)
+	baseFilter := WrapFilterCreator(newTimeoutFilter, newTraceFilter, newMetricsFilter, newLogFilter, newRecoverFilter)
 	RegisterFilterCreator("base", baseFilter, baseFilter)
 }

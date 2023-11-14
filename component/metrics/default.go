@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/handler"
 	"github.com/zly-app/zapp/logger"
@@ -10,7 +9,7 @@ import (
 var defaultClient Client
 
 func init() {
-	zapp.AddHandler(zapp.AfterInitializeHandler, func(app core.IApp, handlerType handler.HandlerType) {
+	handler.AddHandler(handler.BeforeInitializeHandler, func(app core.IApp, handlerType handler.HandlerType) {
 		defaultClient = newClient(app)
 	})
 }

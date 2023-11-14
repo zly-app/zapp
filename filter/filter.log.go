@@ -43,7 +43,7 @@ func (t *logFilter) marshal(a any) string {
 	return s
 }
 
-func (t *logFilter) Init() error {
+func (t *logFilter) Init(app core.IApp) error {
 	err := config.Conf.ParseFilterConfig("base.log", t, true)
 	if err != nil {
 		return err

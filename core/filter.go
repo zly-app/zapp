@@ -7,7 +7,7 @@ import (
 // 过滤器
 type Filter interface {
 	// 初始化
-	Init() error
+	Init(app IApp) error
 	// 注射模式
 	HandleInject(ctx context.Context, req, rsp interface{}, next FilterInjectFunc) error
 	// return模式

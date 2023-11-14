@@ -8,9 +8,9 @@ import (
 
 type filterWrap []core.Filter
 
-func (f filterWrap) Init() error {
+func (f filterWrap) Init(app core.IApp) error {
 	for _, filter := range f {
-		err := filter.Init()
+		err := filter.Init(app)
 		if err != nil {
 			return err
 		}

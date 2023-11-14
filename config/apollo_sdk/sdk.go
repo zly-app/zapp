@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -326,7 +325,7 @@ func (a *ApolloClient) saveDataToBackupFile() {
 
 	bs, err := yaml.Marshal(a.cache)
 	if err == nil {
-		err = ioutil.WriteFile(a.BackupFile, bs, 0644)
+		err = os.WriteFile(a.BackupFile, bs, 0644)
 	}
 	if err != nil {
 		logger.Log.Error("备份配置文件失败", zap.Error(err))
@@ -339,7 +338,7 @@ func (a *ApolloClient) loadDataFromBackupFile() (MultiNamespaceData, error) {
 		return nil, nil
 	}
 
-	bs, err := ioutil.ReadFile(a.BackupFile)
+	bs, err := os.ReadFile(a.BackupFile)
 	if err != nil {
 		return nil, err
 	}

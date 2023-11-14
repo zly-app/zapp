@@ -14,7 +14,6 @@ import (
 	"github.com/zlyuancn/zretry"
 	"go.uber.org/zap"
 
-	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/handler"
 	"github.com/zly-app/zapp/logger"
@@ -163,7 +162,7 @@ func (p *clientCli) startPullMode(conf *Config) {
 	mux.Handle(conf.PullPath, handle)
 	server := &http.Server{Addr: conf.PullBind, Handler: mux}
 
-	zapp.AddHandler(zapp.AfterExitHandler, func(app core.IApp, handlerType handler.HandlerType) {
+	handler.AddHandler(handler.AfterExitHandler, func(app core.IApp, handlerType handler.HandlerType) {
 		_ = server.Close()
 	})
 	// 开始监听
@@ -199,7 +198,7 @@ func (p *clientCli) startPushMode(conf *Config) {
 
 	// 开始推送
 	done, cancel := context.WithCancel(context.Background())
-	zapp.AddHandler(zapp.AfterExitHandler, func(app core.IApp, handlerType handler.HandlerType) {
+	handler.AddHandler(handler.AfterExitHandler, func(app core.IApp, handlerType handler.HandlerType) {
 		cancel()
 	})
 	go func(ctx context.Context, conf *Config, pusher *push.Pusher) {
@@ -219,14 +218,11 @@ func (p *clientCli) startPushMode(conf *Config) {
 
 // 推送
 func (p *clientCli) push(conf *Config, pusher *push.Pusher) {
-	err := zretry.DoRetry(int(conf.PushRetry+1), time.Duration(conf.PushRetryInterval)*time.Millisecond, pusher.Push,
+	zretry.DoRetry(int(conf.PushRetry+1), time.Duration(conf.PushRetryInterval)*time.Millisecond, pusher.Push,
 		func(nowAttemptCount, remainCount int, err error) {
 			p.app.Error("metrics 状态推送失败", zap.Error(err))
 		},
 	)
-	if err == nil {
-		p.app.Debug("metrics 状态推送成功")
-	}
 }
 
 // 注册收集器
@@ -247,7 +243,7 @@ func (p *clientCli) RegistryCounter(name, help string, constLabels Labels, label
 	defer p.counterCollectorLocker.Unlock()
 
 	if _, ok := p.counterCollector[name]; ok {
-		p.app.Fatal("重复注册 metrics 计数器")
+		p.app.Fatal("重复注册 metrics 计数器", zap.String("name", name))
 	}
 
 	counter := prometheus.NewCounterVec(prometheus.CounterOpts{

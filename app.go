@@ -97,7 +97,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	// 构建过滤器
 	filter.MakeFilter()
 	// 初始化过滤器
-	filter.InitFilter()
+	filter.InitFilter(app)
 	// 构建服务
 	app.makeService()
 
