@@ -56,20 +56,38 @@ func (m metricsFilter) start(ctx context.Context) CallMeta {
 func (m metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error) {
 	duration := meta.EndTime() - meta.StartTime()
 	kind := "client"
-	if meta.IsServiceMeta() {
+	if meta.Kind() == MetaKindService {
 		kind = "server"
 	}
 
 	code, codeType, _ := DefaultGetErrCodeFunc(ctx, rsp, err)
 	traceID, _ := utils.Otel.GetOTELTraceID(ctx)
-	_ = traceID
+	exemplar := metrics.Labels{"traceID": traceID}
+
 	values := []string{kind, cast.ToString(codeType), cast.ToString(code), meta.CallerService(), meta.CallerMethod(), meta.CalleeService(), meta.CalleeMethod()}
 
-	metrics.CounterWithLabelValue(metricsRpcServerHandledTotal, values...).Inc()
-	if meta.HasPanic() {
-		metrics.CounterWithLabelValue(metricsRpcServerPanicTotal, values...).Inc()
+	c := metrics.CounterWithLabelValue(metricsRpcServerHandledTotal, values...)
+	if e, ok := c.(metrics.ExemplarAdder); ok {
+		e.AddWithExemplar(1, exemplar)
+	} else {
+		c.Inc()
 	}
-	metrics.HistogramWithLabelValue(metricsRpcServerHandledMsec, values...).Observe(float64(time.Duration(duration) / time.Millisecond))
+
+	if meta.HasPanic() {
+		c := metrics.CounterWithLabelValue(metricsRpcServerPanicTotal, values...)
+		if e, ok := c.(metrics.ExemplarAdder); ok {
+			e.AddWithExemplar(1, exemplar)
+		} else {
+			c.Inc()
+		}
+	}
+
+	h := metrics.HistogramWithLabelValue(metricsRpcServerHandledMsec, values...)
+	if e, ok := h.(metrics.ExemplarObserver); ok {
+		e.ObserveWithExemplar(float64(time.Duration(duration)/time.Millisecond), exemplar)
+	} else {
+		h.Observe(float64(time.Duration(duration) / time.Millisecond))
+	}
 }
 
 func (m metricsFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {

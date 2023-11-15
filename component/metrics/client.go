@@ -20,11 +20,14 @@ import (
 )
 
 type (
-	Labels   = map[string]string
+	Labels = map[string]string
+
 	ICounter = interface {
 		Inc()
 		Add(float64)
 	}
+	ExemplarAdder = prometheus.ExemplarAdder
+
 	IGauge = interface {
 		Set(float64)
 		Inc()
@@ -33,9 +36,12 @@ type (
 		Sub(float64)
 		SetToCurrentTime()
 	}
+
 	IHistogram = interface {
 		Observe(float64)
 	}
+	ExemplarObserver = prometheus.ExemplarObserver
+
 	ISummary = interface {
 		Observe(float64)
 	}
@@ -107,6 +113,9 @@ type clientCli struct {
 	histogramCollector       map[string]*prometheus.HistogramVec // 直方图
 	histogramCollectorLocker sync.RWMutex
 
+	histogramCollectorExemplar       map[string]ExemplarObserver // 直方图
+	histogramCollectorExemplarLocker sync.RWMutex
+
 	summaryCollector       map[string]*prometheus.SummaryVec // 汇总
 	summaryCollectorLocker sync.RWMutex
 
@@ -116,11 +125,12 @@ type clientCli struct {
 
 func newClient(app core.IApp) Client {
 	p := &clientCli{
-		app:                app,
-		counterCollector:   make(map[string]*prometheus.CounterVec),
-		gaugeCollector:     make(map[string]*prometheus.GaugeVec),
-		histogramCollector: make(map[string]*prometheus.HistogramVec),
-		summaryCollector:   make(map[string]*prometheus.SummaryVec),
+		app:                        app,
+		counterCollector:           make(map[string]*prometheus.CounterVec),
+		gaugeCollector:             make(map[string]*prometheus.GaugeVec),
+		histogramCollector:         make(map[string]*prometheus.HistogramVec),
+		histogramCollectorExemplar: make(map[string]ExemplarObserver),
+		summaryCollector:           make(map[string]*prometheus.SummaryVec),
 	}
 
 	key := fmt.Sprintf("components.%s.default", DefaultComponentType)
