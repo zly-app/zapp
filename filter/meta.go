@@ -97,7 +97,23 @@ func newServiceMeta(serviceName, methodName string) *callMeta {
 	}
 }
 
-func (m *callMeta) fillByCallerMeta(callerMeta CallerMeta) {
+// 填充主调被调信息, 应用可以调用 SaveCallerMeta 来修改主调被调信息
+func (m *callMeta) fillCallerMeta(ctx context.Context) {
+	defer func() {
+		// 没有主调数据, 通过 app 获取
+		if m.callerService == "" {
+			m.callerService = config.Conf.Config().Frame.Name
+		}
+		if m.callerMethod == "" {
+			m.callerMethod = "rpc"
+		}
+	}()
+
+	callerMeta, ok := GetCallerMeta(ctx)
+	if !ok {
+		return
+	}
+
 	if callerMeta.CallerService != "" {
 		m.callerService = callerMeta.CallerService
 	}
@@ -111,21 +127,15 @@ func (m *callMeta) fillByCallerMeta(callerMeta CallerMeta) {
 		m.calleeMethod = callerMeta.CalleeMethod
 	}
 }
+
 func (m *callMeta) fill(ctx context.Context) context.Context {
 	_ = m.StartTime()
 	m.fn, m.file, m.line = funcFileLine(m.callersSkip)
 
-	// 填充主调被调信息, 应用可以调用 SaveCallerMeta 来修改主调被调信息
-	callerMeta, ok := GetCallerMeta(ctx)
-	if ok {
-		m.fillByCallerMeta(callerMeta)
-	} else { // 没有主调数据, 通过 app 获取
-		m.callerService = config.Conf.Config().Frame.Name
-		m.callerMethod = "rpc"
-	}
+	m.fillCallerMeta(ctx)
 
+	// 将当前服务信息存入ctx, 那么client就会从ctx中获取到当前服务信息作为主调, 这里仅设置主调信息, 因为被调只有client执行时才能确认
 	if m.IsServiceMeta() {
-		// 将当前服务信息存入ctx, 那么client就会从ctx中获取到当前服务信息作为主调, 这里仅设置主调信息, 因为被调只有执行时才能确认
 		return SaveCallerMeta(ctx, CallerMeta{
 			CallerService: m.calleeService,
 			CallerMethod:  m.calleeMethod,
