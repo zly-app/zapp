@@ -96,12 +96,16 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 	customCaller := zlog.WithCaller(fn, file, line)
 
 	instance := zap.String("instance", config.Conf.Config().Frame.Instance)
+	callerService := zap.String("callerService", meta.CallerService())
+	callerMethod := zap.String("callerMethod", meta.CallerMethod())
 	calleeService := zap.String("calleeService", meta.CalleeService())
 	calleeMethod := zap.String("calleeMethod", meta.CalleeMethod())
 
 	logFields := []interface{}{
 		customCaller,
 		instance,
+		callerService,
+		callerMethod,
 		calleeService,
 		calleeMethod,
 	}
@@ -110,6 +114,8 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 	logger.Log.Log(level,
 		customCaller,
 		instance,
+		callerService,
+		callerMethod,
 		calleeService,
 		calleeMethod,
 		ctx, t.getMethodName(meta)+eventName, zap.String("req", t.marshal(req)),

@@ -16,7 +16,7 @@ type FilterChain []core.Filter
 func (c FilterChain) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
 	meta := GetCallMeta(ctx)
 	if v, ok := meta.(*callMeta); ok {
-		v.fill()
+		ctx = v.fill(ctx)
 	}
 
 	for i := len(c) - 1; i >= 0; i-- {
@@ -30,7 +30,7 @@ func (c FilterChain) HandleInject(ctx context.Context, req, rsp interface{}, nex
 func (c FilterChain) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
 	meta := GetCallMeta(ctx)
 	if v, ok := meta.(*callMeta); ok {
-		v.fill()
+		ctx = v.fill(ctx)
 	}
 
 	for i := len(c) - 1; i >= 0; i-- {

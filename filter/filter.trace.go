@@ -50,6 +50,8 @@ func (t traceFilter) start(ctx context.Context, req interface{}) (context.Contex
 			utils.OtelSpanKey("line").String(file+":"+strconv.Itoa(line)),
 			utils.OtelSpanKey("func").String(fn),
 			utils.OtelSpanKey("instance").String(config.Conf.Config().Frame.Instance),
+			utils.OtelSpanKey("callerService").String(meta.CallerService()),
+			utils.OtelSpanKey("callerMethod").String(meta.CallerMethod()),
 			utils.OtelSpanKey("calleeService").String(meta.CalleeService()),
 			utils.OtelSpanKey("calleeMethod").String(meta.CalleeMethod()),
 		),

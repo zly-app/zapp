@@ -37,7 +37,7 @@ func (m metricsFilter) Init(app core.IApp) error {
 			"env":            app.GetConfig().Config().Frame.Env,
 			"container_name": app.GetConfig().Config().Frame.Instance,
 		}
-		lables := []string{"kind", "code_type", "code", "callee_service", "callee_method"}
+		lables := []string{"kind", "code_type", "code", "caller_service", "caller_method", "callee_service", "callee_method"}
 
 		metrics.RegistryCounter(metricsRpcServerHandledTotal, "rpc调用计数器", constLabels, lables...)
 		metrics.RegistryCounter(metricsRpcServerPanicTotal, "rpc调用panic计数器", constLabels, lables...)
@@ -63,7 +63,7 @@ func (m metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, 
 	code, codeType, _ := DefaultGetErrCodeFunc(ctx, rsp, err)
 	traceID, _ := utils.Otel.GetOTELTraceID(ctx)
 	_ = traceID
-	values := []string{kind, cast.ToString(codeType), cast.ToString(code), meta.CalleeService(), meta.CalleeMethod()}
+	values := []string{kind, cast.ToString(codeType), cast.ToString(code), meta.CallerService(), meta.CallerMethod(), meta.CalleeService(), meta.CalleeMethod()}
 
 	metrics.CounterWithLabelValue(metricsRpcServerHandledTotal, values...).Inc()
 	if meta.HasPanic() {

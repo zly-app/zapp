@@ -3,6 +3,8 @@ package filter
 import (
 	"context"
 	"time"
+
+	"github.com/zly-app/zapp/config"
 )
 
 type CallMeta interface {
@@ -13,8 +15,13 @@ type CallMeta interface {
 
 	// 是否为服务meta
 	IsServiceMeta() bool
+	// 获取服务名
 	ServiceName() string
 
+	// 获取主调服务
+	CallerService() string
+	// 获取主调方法
+	CallerMethod() string
 	// 获取被调服务
 	CalleeService() string
 	// 获取被调方法
@@ -41,8 +48,10 @@ type callMeta struct {
 	clientName   string // 客户端名
 
 	isServiceMeta bool   // 是否为服务meta
-	serviceName   string // 服务类型
+	serviceName   string // 服务名
 
+	callerService string // 主调服务
+	callerMethod  string // 主调方法
 	calleeService string // 被调服务
 	calleeMethod  string // 被调方法
 
@@ -57,9 +66,42 @@ type callMeta struct {
 	hasPanic bool // 是否存在panic
 }
 
-func (m *callMeta) fill() {
+func (m *callMeta) fillByCallerMeta(callerMeta CallerMeta) {
+	if callerMeta.CallerService != "" {
+		m.callerService = callerMeta.CallerService
+	}
+	if callerMeta.CallerMethod != "" {
+		m.callerMethod = callerMeta.CallerMethod
+	}
+	if callerMeta.CalleeService != "" {
+		m.calleeService = callerMeta.CalleeService
+	}
+	if callerMeta.CalleeMethod != "" {
+		m.calleeMethod = callerMeta.CalleeMethod
+	}
+}
+func (m *callMeta) fill(ctx context.Context) context.Context {
 	_ = m.StartTime()
 	m.fn, m.file, m.line = funcFileLine(m.callersSkip)
+
+	// 填充主调被调信息, 应用可以调用 SaveCallerMeta 来修改主调被调信息
+	callerMeta, ok := GetCallerMeta(ctx)
+	if ok {
+		m.fillByCallerMeta(callerMeta)
+	} else { // 没有主调数据, 通过 app 获取
+		m.callerService = config.Conf.Config().Frame.Name
+		m.callerMethod = "rpc"
+	}
+
+	if m.IsServiceMeta() {
+		// 将当前服务信息存入ctx, 那么client就会从ctx中获取到当前服务信息作为主调, 这里仅设置主调信息, 因为被调只有执行时才能确认
+		return SaveCallerMeta(ctx, CallerMeta{
+			CallerService: m.calleeService,
+			CallerMethod:  m.calleeMethod,
+		})
+	}
+
+	return ctx
 }
 
 // 是否为客户端meta
@@ -70,6 +112,8 @@ func (m *callMeta) ClientName() string { return m.clientName }
 func (m *callMeta) IsServiceMeta() bool { return m.isServiceMeta }
 func (m *callMeta) ServiceName() string { return m.serviceName }
 
+func (m *callMeta) CallerService() string { return m.callerService }
+func (m *callMeta) CallerMethod() string  { return m.callerMethod }
 func (m *callMeta) CalleeService() string { return m.calleeService }
 func (m *callMeta) CalleeMethod() string  { return m.calleeMethod }
 
@@ -106,4 +150,29 @@ func GetCallMeta(ctx context.Context) CallMeta {
 
 func SaveCallMata(ctx context.Context, meta CallMeta) context.Context {
 	return context.WithValue(ctx, metaKey{}, meta)
+}
+
+type callerMetaKey struct{}
+
+// 主调信息
+type CallerMeta struct {
+	CallerService string // 主调服务
+	CallerMethod  string // 主调方法
+	CalleeService string // 被调服务
+	CalleeMethod  string // 被调方法
+}
+
+func GetCallerMeta(ctx context.Context) (CallerMeta, bool) {
+	v := ctx.Value(callerMetaKey{})
+	if v != nil {
+		m, ok := v.(CallerMeta)
+		if ok {
+			return m, true
+		}
+	}
+	return CallerMeta{}, false
+}
+
+func SaveCallerMeta(ctx context.Context, callerMeta CallerMeta) context.Context {
+	return context.WithValue(ctx, callerMetaKey{}, callerMeta)
 }
