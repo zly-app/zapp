@@ -8,6 +8,7 @@ import (
 )
 
 type CallMeta interface {
+	Kind() MetaKind
 	// 是否为客户端meta
 	IsClientMeta() bool
 	ClientType() string
@@ -42,13 +43,20 @@ type CallMeta interface {
 	SetPanic()
 }
 
-type callMeta struct {
-	isClientMeta bool   // 是否为客户端的meta
-	clientType   string // 客户端类型
-	clientName   string // 客户端名
+type MetaKind int
 
-	isServiceMeta bool   // 是否为服务meta
-	serviceName   string // 服务名
+const (
+	MetaKindClient  MetaKind = 1
+	MetaKindService MetaKind = 2
+)
+
+type callMeta struct {
+	kind MetaKind
+
+	clientType string // 客户端类型
+	clientName string // 客户端名
+
+	serviceName string // 服务名
 
 	callerService string // 主调服务
 	callerMethod  string // 主调方法
@@ -64,6 +72,29 @@ type callMeta struct {
 	line     int
 
 	hasPanic bool // 是否存在panic
+}
+
+func newClientMeta(clientType, clientName, methodName string) *callMeta {
+	return &callMeta{
+		kind: MetaKindClient,
+
+		clientType: clientType,
+		clientName: clientName,
+
+		calleeService: clientType + "/" + clientName,
+		calleeMethod:  methodName,
+	}
+}
+
+func newServiceMeta(serviceName, methodName string) *callMeta {
+	return &callMeta{
+		kind: MetaKindService,
+
+		serviceName: serviceName,
+
+		calleeService: serviceName,
+		calleeMethod:  methodName,
+	}
 }
 
 func (m *callMeta) fillByCallerMeta(callerMeta CallerMeta) {
@@ -104,12 +135,14 @@ func (m *callMeta) fill(ctx context.Context) context.Context {
 	return ctx
 }
 
+func (m *callMeta) Kind() MetaKind { return m.kind }
+
 // 是否为客户端meta
-func (m *callMeta) IsClientMeta() bool { return m.isClientMeta }
+func (m *callMeta) IsClientMeta() bool { return m.kind == MetaKindClient }
 func (m *callMeta) ClientType() string { return m.clientType }
 func (m *callMeta) ClientName() string { return m.clientName }
 
-func (m *callMeta) IsServiceMeta() bool { return m.isServiceMeta }
+func (m *callMeta) IsServiceMeta() bool { return m.kind == MetaKindService }
 func (m *callMeta) ServiceName() string { return m.serviceName }
 
 func (m *callMeta) CallerService() string { return m.callerService }

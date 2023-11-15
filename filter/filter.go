@@ -199,28 +199,15 @@ func getServiceFilterChain(serviceName string) FilterChain {
 // 获取客户端过滤器
 func GetClientFilter(ctx context.Context, clientType, clientName, methodName string) (context.Context, FilterChain) {
 	chain := getClientFilterChain(clientType, clientName)
-	meta := &callMeta{
-		isClientMeta: true,
-		clientType:   clientType,
-		clientName:   clientName,
-
-		calleeService: clientType + "/" + clientName,
-		calleeMethod:  methodName,
-	}
+	meta := newClientMeta(clientType, clientName, methodName)
 	ctx = SaveCallMata(ctx, meta)
 	return ctx, chain
 }
 
 // 获取服务过滤器
-func GetServiceFilter(ctx context.Context, serviceName string, methodName string) (context.Context, FilterChain) {
+func GetServiceFilter(ctx context.Context, serviceName, methodName string) (context.Context, FilterChain) {
 	chain := getServiceFilterChain(serviceName)
-	meta := &callMeta{
-		isServiceMeta: true,
-		serviceName:   serviceName,
-
-		calleeService: serviceName,
-		calleeMethod:  methodName,
-	}
+	meta := newServiceMeta(serviceName, methodName)
 	ctx = SaveCallMata(ctx, meta)
 	return ctx, chain
 }
