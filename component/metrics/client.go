@@ -119,8 +119,8 @@ type clientCli struct {
 	summaryCollector       map[string]*prometheus.SummaryVec // 汇总
 	summaryCollectorLocker sync.RWMutex
 
-	pullRegistry prometheus.Registerer // pull模式注册器
-	pusher       *push.Pusher          // push模式推送器
+	pullRegistry *prometheus.Registry // pull模式注册器
+	pusher       *push.Pusher         // push模式推送器
 }
 
 func newClient(app core.IApp) Client {
@@ -142,32 +142,33 @@ func newClient(app core.IApp) Client {
 	}
 	conf.Check()
 
-	p.startPullMode(conf)
-	p.startPushMode(conf)
+	coll := []prometheus.Collector{}
+	if conf.ProcessCollector {
+		coll = append(coll, collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	}
+	if conf.GoCollector {
+		coll = append(coll, collectors.NewGoCollector())
+	}
+
+	p.startPullMode(conf, coll...)
+	p.startPushMode(conf, coll...)
 
 	return p
 }
 
 // 启动pull模式
-func (p *clientCli) startPullMode(conf *Config) {
+func (p *clientCli) startPullMode(conf *Config, coll ...prometheus.Collector) {
 	if conf.PullBind == "" {
 		return
 	}
 
 	// 创建注册器
-	r := prometheus.NewRegistry()
-	p.pullRegistry = r
-	if conf.ProcessCollector {
-		r.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
-	}
-	if conf.GoCollector {
-		r.MustRegister(collectors.NewGoCollector())
-	}
-
+	p.pullRegistry = prometheus.NewRegistry()
+	p.pullRegistry.MustRegister(coll...)
 	p.app.Info("启用 metrics pull模式", zap.String("PullBind", conf.PullBind), zap.String("PullPath", conf.PullPath))
 
 	// 构建server
-	handle := promhttp.InstrumentMetricHandler(r, promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
+	handle := promhttp.InstrumentMetricHandler(p.pullRegistry, promhttp.HandlerFor(p.pullRegistry, promhttp.HandlerOpts{}))
 	mux := http.NewServeMux()
 	mux.Handle(conf.PullPath, handle)
 	server := &http.Server{Addr: conf.PullBind, Handler: mux}
@@ -184,26 +185,22 @@ func (p *clientCli) startPullMode(conf *Config) {
 }
 
 // 启动push模式
-func (p *clientCli) startPushMode(conf *Config) {
+func (p *clientCli) startPushMode(conf *Config, coll ...prometheus.Collector) {
 	if conf.PushAddress == "" {
 		return
 	}
 
 	// 创建推送器
 	pusher := push.New(conf.PushAddress, p.app.Name())
-	p.pusher = pusher
-	if conf.PushInstance == "" {
-		conf.PushInstance = p.app.Name()
-	}
+	pusher.Grouping("app", p.app.Name())
+	pusher.Grouping("env", p.app.GetConfig().Config().Frame.Env)
 	pusher.Grouping("instance", conf.PushInstance)
 
-	if conf.ProcessCollector {
-		pusher.Collector(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
-	}
-	if conf.GoCollector {
-		pusher.Collector(collectors.NewGoCollector())
+	for _, c := range coll {
+		pusher.Collector(c)
 	}
 
+	p.pusher = pusher
 	p.app.Info("启用 metrics push 模式", zap.String("PushAddress", conf.PushAddress), zap.String("PushInstance", conf.PushInstance))
 
 	// 开始推送

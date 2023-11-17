@@ -85,3 +85,9 @@ filters:
     filter2:
       foo: bar
 ```
+
+## grafana 面板
+
+在`grafana`中导入[这个json文件](./grafana-zapp-home.json)
+
+![image](./grafana-zapp-home.png)
