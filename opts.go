@@ -20,7 +20,9 @@ import (
 type Option func(opt *option)
 
 type option struct {
-	// 配置选项
+	// 自定义配置
+	Config core.IConfig
+	// 配置选项, 如果设置了自定义配置则配置选项不生效
 	ConfigOpts []config.Option
 	// 日志选项
 	LogOpts []zap.Option
@@ -102,7 +104,14 @@ func (o *option) CheckServices(app core.IApp) error {
 	return nil
 }
 
-// 设置config选项
+// 自定义配置
+func WithCustomConfig(config core.IConfig) Option {
+	return func(opt *option) {
+		opt.Config = config
+	}
+}
+
+// 设置config选项. 如果设置了自定义配置则配置选项不生效
 func WithConfigOption(opts ...config.Option) Option {
 	return func(opt *option) {
 		opt.ConfigOpts = append(opt.ConfigOpts, opts...)

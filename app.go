@@ -67,14 +67,20 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	// 启用守护进程
 	app.enableDaemon()
 
-	app.config = config.NewConfig(appName, app.opt.ConfigOpts...)
-	if name := app.config.Config().Frame.Name; name != "" {
+	// 配置加载
+	app.config = app.opt.Config
+	if app.config == nil {
+		app.config = config.NewConfig(appName, app.opt.ConfigOpts...)
+	}
+
+	// app名处理
+	if name := app.config.Config().Frame.Name; name != "" { // 用配置中加载的app名来替换代码传入的app名
 		app.name = name
 	}
 	if app.name == "" {
 		logger.Log.Fatal("appName is empty")
 	}
-	app.config.Config().Frame.Name = app.name
+	app.config.Config().Frame.Name = app.name // 配置中的app名可能是空的, 这里复写
 
 	app.ILogger = logger.NewLogger(appName, app.config, app.opt.LogOpts...)
 
