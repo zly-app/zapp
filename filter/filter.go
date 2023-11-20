@@ -213,6 +213,6 @@ func GetServiceFilter(ctx context.Context, serviceName, methodName string) (cont
 }
 
 func init() {
-	baseFilter := WrapFilterCreator(newTimeoutFilter, newTraceFilter, newMetricsFilter, newLogFilter, newRecoverFilter)
+	baseFilter := WrapFilterCreator(newTimeoutFilter, newTraceFilter, newMetricsFilter, newGPoolFilter, newLogFilter, newRecoverFilter)
 	RegisterFilterCreator("base", baseFilter, baseFilter)
 }
