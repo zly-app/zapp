@@ -57,7 +57,7 @@ func WithApollo(conf *ApolloConfig) Option {
 }
 
 // 不启用 flag
-func WithoutFlag(conf *ApolloConfig) Option {
+func WithoutFlag() Option {
 	return func(o *Options) {
 		o.disableFlag = true
 	}
