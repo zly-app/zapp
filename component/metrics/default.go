@@ -3,10 +3,9 @@ package metrics
 import (
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/handler"
-	"github.com/zly-app/zapp/logger"
 )
 
-var defaultClient Client
+var defaultClient Client = defNoopClient
 
 func init() {
 	handler.AddHandler(handler.BeforeInitializeHandler, func(app core.IApp, handlerType handler.HandlerType) {
@@ -14,12 +13,7 @@ func init() {
 	})
 }
 
-func GetClient() Client {
-	if defaultClient == nil {
-		logger.Log.Fatal("metrics client is nil")
-	}
-	return defaultClient
-}
+func GetClient() Client { return defaultClient }
 
 /*
 注册计数器
