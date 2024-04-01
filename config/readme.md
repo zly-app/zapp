@@ -14,6 +14,7 @@
     - [引用配置文件](#%E5%BC%95%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
     - [从apollo配置中心加载配置](#%E4%BB%8Eapollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE)
         - [apollo配置中心命名空间和配置说明](#apollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E5%92%8C%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
+        - [扁平化配置说明](#%E6%89%81%E5%B9%B3%E5%8C%96%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E)
         - [在配置文件中设置从apollo配置中心加载](#%E5%9C%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%AD%E8%AE%BE%E7%BD%AE%E4%BB%8Eapollo%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E5%8A%A0%E8%BD%BD)
 - [配置观察](#%E9%85%8D%E7%BD%AE%E8%A7%82%E5%AF%9F)
     - [使用示例](#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B)
@@ -194,6 +195,21 @@ application:
   otherKey: '{"debug": true, "log": {"level": "info"}}'
 ```
 
+### 扁平化配置说明
+
+上一步所有配置都放在命名空间`application`中的, 这里支持将 `frame`/`components`/`plugins`/`filters`/`services`直接作为命名空间来配置数据. 如下
+
+示例 apollo 配置数据:
+
+| 命名空间     | content                                   | 备注                   |
+| ------------ | ----------------------------------------- | ---------------------- |
+| frame.json   | {"debug": true, "log": {"level": "info"}} | 会按照指定格式解析其值 |
+| plugins.json | {"myplugin": {"foo": "bar"}}              | 会按照指定格式解析其值 |
+
+当前其它在配置`ApplicationParseKeys`中指定的命名空间也会被解析.
+
+注意. 此处不支持 `properties` 格式, 在创建Namespace时需要选择匹配的格式
+
 ### 在配置文件中设置从`apollo`配置中心加载
 
 > 文件中添加如下设置, 参考 [config.ApolloConfig](./apollo.go). 从apollo拉取的配置会和文件的配置智能合并, 以apollo配置优先
@@ -219,7 +235,7 @@ apollo:
     AlwaysLoadFromRemote: false    # 总是从远程获取, 在远程加载失败时不会从备份文件加载
     BackupFile: "./configs/backup.apollo" # 本地备份文件, 留空表示不使用备份
     ApplicationDataType: "yaml"    # application命名空间下key的值的数据类型, 支持yaml,yml,toml,json
-    ApplicationParseKeys: []       # application命名空间下哪些key数据会被解析, 无论如何默认的key(frame/components/plugins/services)会被解析
+    ApplicationParseKeys: []       # application命名空间下哪些key数据会被解析, 无论如何默认的key(frame/components/plugins/filters/services)会被解析
     Namespaces: []                 # 其他自定义命名空间
     IgnoreNamespaceNotFound: false # 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
 ```
