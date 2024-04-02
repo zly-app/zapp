@@ -14,7 +14,7 @@ import (
 	"github.com/zly-app/zapp/pkg/zlog"
 )
 
-const defLogLevel = "info"
+const defLogLevel = "debug"
 
 func init() {
 	RegisterFilterCreator("base.log", newLogFilter, newLogFilter)
