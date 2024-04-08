@@ -1,5 +1,5 @@
 
-# 用于快速构建项目的基础库
+用于快速构建项目的基础库
 
 ---
 <!-- TOC -->
@@ -8,6 +8,7 @@
 - [扩展性](#%E6%89%A9%E5%B1%95%E6%80%A7)
     - [组件](#%E7%BB%84%E4%BB%B6)
     - [插件](#%E6%8F%92%E4%BB%B6)
+    - [filter](#filter)
     - [服务](#%E6%9C%8D%E5%8A%A1)
 - [配置](#%E9%85%8D%E7%BD%AE)
 - [使用说明](#%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)
@@ -15,7 +16,7 @@
     - [Handler](#handler)
     - [运行时自定义启用插件](#%E8%BF%90%E8%A1%8C%E6%97%B6%E8%87%AA%E5%AE%9A%E4%B9%89%E5%90%AF%E7%94%A8%E6%8F%92%E4%BB%B6)
     - [运行时自定义启用服务](#%E8%BF%90%E8%A1%8C%E6%97%B6%E8%87%AA%E5%AE%9A%E4%B9%89%E5%90%AF%E7%94%A8%E6%9C%8D%E5%8A%A1)
-    - [会话独立日志](#%E4%BC%9A%E8%AF%9D%E7%8B%AC%E7%AB%8B%E6%97%A5%E5%BF%97)
+    - [独特的日志](#%E7%8B%AC%E7%89%B9%E7%9A%84%E6%97%A5%E5%BF%97)
 - [app生命周期](#app%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F)
     - [初始化](#%E5%88%9D%E5%A7%8B%E5%8C%96)
     - [用户操作](#%E7%94%A8%E6%88%B7%E6%93%8D%E4%BD%9C)
@@ -27,6 +28,8 @@
 
 # 开始
 
+推荐使用 [uapp](https://github.com/zly-app/uapp)
+
 ```go
 app := zapp.NewApp("test")
 app.Run()
@@ -37,6 +40,7 @@ app.Run()
 ## 组件
 
 > 我们实现了一些组件, 可以在 [这里](https://github.com/zly-app/component) 找到
+> [这里](./component) 内置了一些组件
 
 ## 插件
 
@@ -44,7 +48,7 @@ app.Run()
 
 ## filter
 
-> 我们实现了一些filter, 可以在 [这里](https://github.com/zly-app/filter) 找到
+> [这里](./filter) 内置了一些 filter
 
 ## 服务
 
