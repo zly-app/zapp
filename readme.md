@@ -42,6 +42,10 @@ app.Run()
 
 > 我们实现了一些插件, 可以在 [这里](https://github.com/zly-app/plugin) 找到
 
+## filter
+
+> 我们实现了一些filter, 可以在 [这里](https://github.com/zly-app/filter) 找到
+
 ## 服务
 
 > 我们实现了一些服务, 可以在 [这里](https://github.com/zly-app/service) 找到
@@ -120,7 +124,7 @@ zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []
 
 ## 初始化
 
-`app := zapp.NewApp(...)` > 生成`BaseContext` > 加载配置 > 初始化日志记录器 > 构建组件 > 构建插件 > 构建并初始化过滤器 > 构建服务   
+`app := zapp.NewApp(...)` > 生成`BaseContext` > 加载配置 > 初始化日志记录器 > 构建组件 > 构建插件 > 构建并初始化 filter > 构建服务   
 
 ## 用户操作
 
@@ -132,5 +136,5 @@ zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []
 
 ## 退出
 
-`app.Exit() 或收到退出信号` > 关闭`BaseContext` > 停止内存释放任务 > 关闭服务 > 关闭过滤器 > 关闭插件 > 释放组件资源 > `结束之前调用app.Run()的阻塞` 
+`app.Exit() 或收到退出信号` > 关闭`BaseContext` > 停止内存释放任务 > 关闭服务 > 关闭 filter > 关闭插件 > 释放组件资源 > `结束之前调用app.Run()的阻塞` 
 
