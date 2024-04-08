@@ -23,7 +23,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 3,
-  "iteration": 1700192790898,
+  "iteration": 1712578292323,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -1488,7 +1488,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
               }
@@ -3181,7 +3182,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "ms"
         },
         "overrides": []
       },
@@ -3546,7 +3547,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "percentunit"
         },
         "overrides": []
       },
@@ -3556,14 +3558,13 @@
         "x": 12,
         "y": 46
       },
-      "id": 413,
+      "id": 367,
       "options": {
         "legend": {
           "calcs": [
             "min",
             "max",
-            "last",
-            "mean"
+            "last"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -3587,12 +3588,8 @@
               "type": "date_histogram"
             }
           ],
-          "datasource": {
-            "type": "prometheus",
-            "uid": "aNhYsfzIk"
-          },
           "exemplar": true,
-          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (instance)",
+          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\",code_type!=\"success\"}[1m])) by (callee_method, callee_service) / sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (callee_method, callee_service)",
           "interval": "",
           "legendFormat": "",
           "metrics": [
@@ -3606,7 +3603,121 @@
           "timeField": "timestamp"
         }
       ],
-      "title": "请求量（实例维度）",
+      "title": "异常率（服务维度）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 56
+      },
+      "id": 369,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "aNhYsfzIk"
+          },
+          "exemplar": true,
+          "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_server_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, callee_service, callee_method)))",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "耗时P99（服务维度）",
       "type": "timeseries"
     },
     {
@@ -3665,9 +3776,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 12,
-        "x": 0,
+        "x": 12,
         "y": 56
       },
       "id": 365,
@@ -3717,120 +3828,6 @@
         }
       ],
       "title": "异常返回码（服务维度）",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 56
-      },
-      "id": 415,
-      "options": {
-        "legend": {
-          "calcs": [
-            "min",
-            "max",
-            "last",
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "alias": "",
-          "bucketAggs": [
-            {
-              "field": "timestamp",
-              "id": "2",
-              "settings": {
-                "interval": "auto"
-              },
-              "type": "date_histogram"
-            }
-          ],
-          "datasource": {
-            "type": "prometheus",
-            "uid": "aNhYsfzIk"
-          },
-          "exemplar": true,
-          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\", code_type!=\"success\"}[1m])) by (instance, code)",
-          "interval": "",
-          "legendFormat": "",
-          "metrics": [
-            {
-              "id": "1",
-              "type": "count"
-            }
-          ],
-          "query": "",
-          "refId": "A",
-          "timeField": "timestamp"
-        }
-      ],
-      "title": "异常返回码（实例维度）",
       "type": "timeseries"
     },
     {
@@ -4006,7 +4003,7 @@
         "h": 16,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 66
       },
       "id": 506,
       "options": {
@@ -4091,8 +4088,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "percentunit"
+          }
         },
         "overrides": []
       },
@@ -4100,15 +4096,16 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 81
+        "y": 82
       },
-      "id": 367,
+      "id": 413,
       "options": {
         "legend": {
           "calcs": [
             "min",
             "max",
-            "last"
+            "last",
+            "mean"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -4132,8 +4129,12 @@
               "type": "date_histogram"
             }
           ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "aNhYsfzIk"
+          },
           "exemplar": true,
-          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\",code_type!=\"success\"}[1m])) by (callee_method, callee_service) / sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (callee_method, callee_service)",
+          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (instance)",
           "interval": "",
           "legendFormat": "",
           "metrics": [
@@ -4147,7 +4148,7 @@
           "timeField": "timestamp"
         }
       ],
-      "title": "异常率（服务维度）",
+      "title": "请求量（实例维度）",
       "type": "timeseries"
     },
     {
@@ -4210,7 +4211,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 81
+        "y": 82
       },
       "id": 417,
       "options": {
@@ -4316,7 +4317,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "ms"
         },
         "overrides": []
       },
@@ -4324,9 +4325,9 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 91
+        "y": 92
       },
-      "id": 369,
+      "id": 419,
       "options": {
         "legend": {
           "calcs": [
@@ -4361,7 +4362,1144 @@
             "uid": "aNhYsfzIk"
           },
           "exemplar": true,
-          "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_server_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, callee_service, callee_method)))",
+          "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_server_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, instance)))",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "耗时P99（实例维度）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 92
+      },
+      "id": 415,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "aNhYsfzIk"
+          },
+          "exemplar": true,
+          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\", code_type!=\"success\"}[1m])) by (instance, code)",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "异常返回码（实例维度）",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 102
+      },
+      "id": 48,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto",
+                "filterable": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "平均耗时"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ms"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "请求量"
+                },
+                "properties": [
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  },
+                  {
+                    "id": "unit",
+                    "value": "short"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "成功率"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percentunit"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "上游Service"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": []
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 251
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "P99耗时"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "ms"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "本服务Service"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 479
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "本服务Method"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 203
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 24,
+            "x": 0,
+            "y": 103
+          },
+          "id": 40,
+          "links": [],
+          "options": {
+            "footer": {
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "请求量"
+              }
+            ]
+          },
+          "pluginVersion": "8.3.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[$__range])) by (caller_service, callee_service, callee_method)",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "请求量",
+              "range": false,
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\", code_type=\"success\"}[$__range])) by (callee_service, callee_method, caller_service) /  sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[$__range])) by (callee_service, callee_method, caller_service) ",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "成功率",
+              "range": false,
+              "refId": "C"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum(increase(rpc_server_handled_msec_sum{app=~\"$app\",env=~\"$env\"}[$__range])) by (callee_service, callee_method, caller_service) / sum(increase(rpc_server_handled_msec_count{app=~\"$app\",env=~\"$env\"}[$__range])) by  (callee_service, callee_method, caller_service)",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "平均耗时",
+              "range": false,
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_server_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[$__range])) by (le, callee_service, callee_method, caller_service)))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "interval": "",
+              "legendFormat": "P99耗时",
+              "range": false,
+              "refId": "D"
+            }
+          ],
+          "title": "上游调用监控",
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "indexByName": {
+                  "Time": 0,
+                  "Value": 4,
+                  "callee_method": 3,
+                  "callee_service": 2,
+                  "caller_service": 1
+                },
+                "renameByName": {
+                  "Value": "请求量(min)",
+                  "Value #A": "平均耗时",
+                  "Value #B": "请求量",
+                  "Value #C": "成功率",
+                  "Value #D": "P99耗时",
+                  "callee_method": "本服务Method",
+                  "callee_service": "本服务Service",
+                  "caller_service": "上游Service"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "被调监控",
+      "type": "row"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 103
+      },
+      "id": 373,
+      "panels": [],
+      "title": "主调总览",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 104
+      },
+      "id": 379,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]))",
+          "interval": "",
+          "legendFormat": "current",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "1 day ago",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "7 days ago",
+          "refId": "C"
+        }
+      ],
+      "title": "请求总量 1m",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 104
+      },
+      "id": 381,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "sum(increase(rpc_client_handled_msec_sum{app=~\"$app\", env=~\"$env\"}[1m]))/sum(increase(rpc_client_handled_msec_count{app=~\"$app\", env=~\"$env\"}[1m]))",
+          "interval": "",
+          "legendFormat": "current",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_msec_sum{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))/sum(increase(rpc_client_handled_msec_count{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "1 day ago",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_msec_sum{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))/sum(increase(rpc_client_handled_msec_count{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "7 days ago",
+          "refId": "C"
+        }
+      ],
+      "title": "平均耗时",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 104
+      },
+      "id": 383,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m])) / sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]))",
+          "interval": "",
+          "legendFormat": "current",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m]offset 1d)) / sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "1 day ago",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m]offset 7d)) / sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "7 days ago",
+          "refId": "C"
+        }
+      ],
+      "title": "异常率",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": -6,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": -5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 113
+      },
+      "id": 357,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (callee_service, callee_method)",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "请求量（服务维度）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 113
+      },
+      "id": 359,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "exemplar": true,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m])) by (callee_service, callee_method)/ sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m])) by (callee_service, callee_method)",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "异常率（服务维度）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 123
+      },
+      "id": 361,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "exemplar": true,
+          "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_client_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, callee_service, callee_method)))",
           "interval": "",
           "legendFormat": "",
           "metrics": [
@@ -4429,8 +5567,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "s"
+          }
         },
         "overrides": []
       },
@@ -4438,9 +5575,336 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 91
+        "y": 123
       },
-      "id": 419,
+      "id": 355,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\", code_type!=\"success\"}[1m])) by (code, callee_service, callee_method)",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "异常返回码（服务维度）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "10"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "10ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "100"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "100ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "1000"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "1s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "20"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "20ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "200"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "200ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "2000"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "2s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "30"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "30ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "300"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "300ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "3000"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "3s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "50"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "50ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "500"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "500ms"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5000"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "5s"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 24,
+        "x": 0,
+        "y": 133
+      },
+      "id": 507,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": false
+      },
+      "pluginVersion": "8.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_msec_bucket{app=~\"$app\", env=~\"$env\"}[$__range])) by (le)",
+          "format": "heatmap",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "title": "耗时区间分布(右上角所选时间区间)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": -6,
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": -5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 149
+      },
+      "id": 411,
       "options": {
         "legend": {
           "calcs": [
@@ -4454,7 +5918,122 @@
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (instance)",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "请求量（实例维度）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 149
+      },
+      "id": 407,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -4475,7 +6054,121 @@
             "uid": "aNhYsfzIk"
           },
           "exemplar": true,
-          "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_server_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, instance)))",
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m])) by (instance)/ sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m])) by (instance)",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
+        }
+      ],
+      "title": "异常率（实例维度）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 159
+      },
+      "id": 409,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "aNhYsfzIk"
+          },
+          "exemplar": true,
+          "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_client_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, instance)))",
           "interval": "",
           "legendFormat": "",
           "metrics": [
@@ -4493,23 +6186,6 @@
       "type": "timeseries"
     },
     {
-      "collapsed": false,
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 101
-      },
-      "id": 48,
-      "panels": [],
-      "title": "被调监控",
-      "type": "row"
-    },
-    {
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -4517,12 +6193,35 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
           "custom": {
-            "align": "auto",
-            "displayMode": "auto",
-            "filterable": true
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -4531,229 +6230,74 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "平均耗时"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "s"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "请求量"
-            },
-            "properties": [
-              {
-                "id": "decimals",
-                "value": 0
-              },
-              {
-                "id": "unit",
-                "value": "short"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "成功率"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "percentunit"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "上游Service"
-            },
-            "properties": [
-              {
-                "id": "links",
-                "value": []
-              },
-              {
-                "id": "custom.width",
-                "value": 251
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "P99耗时"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "s"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "本服务Service"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 479
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "本服务Method"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 203
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 24,
-        "x": 0,
-        "y": 102
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 159
       },
-      "id": 40,
-      "links": [],
+      "id": 405,
       "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "lastNotNull",
             "sum"
           ],
-          "show": false
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "请求量"
-          }
-        ]
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "8.3.3",
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[$__range])) by (caller_service, callee_service, callee_method)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "interval": "",
-          "legendFormat": "请求量",
-          "range": false,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\", code_type=\"success\"}[$__range])) by (callee_service, callee_method, caller_service) /  sum(increase(rpc_server_handled_total{app=~\"$app\",env=~\"$env\"}[$__range])) by (callee_service, callee_method, caller_service) ",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "interval": "",
-          "legendFormat": "成功率",
-          "range": false,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum(increase(rpc_server_handled_msec_sum{app=~\"$app\",env=~\"$env\"}[$__range])) by (callee_service, callee_method, caller_service) / sum(increase(rpc_server_handled_msec_count{app=~\"$app\",env=~\"$env\"}[$__range])) by  (callee_service, callee_method, caller_service)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "interval": "",
-          "legendFormat": "平均耗时",
-          "range": false,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_server_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[$__range])) by (le, callee_service, callee_method, caller_service)))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "interval": "",
-          "legendFormat": "P99耗时",
-          "range": false,
-          "refId": "D"
-        }
-      ],
-      "title": "上游调用监控",
-      "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true
-            },
-            "indexByName": {
-              "Time": 0,
-              "Value": 4,
-              "callee_method": 3,
-              "callee_service": 2,
-              "caller_service": 1
-            },
-            "renameByName": {
-              "Value": "请求量(min)",
-              "Value #A": "平均耗时",
-              "Value #B": "请求量",
-              "Value #C": "成功率",
-              "Value #D": "P99耗时",
-              "callee_method": "本服务Method",
-              "callee_service": "本服务Service",
-              "caller_service": "上游Service"
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "timestamp",
+              "id": "2",
+              "settings": {
+                "interval": "auto"
+              },
+              "type": "date_histogram"
             }
-          }
+          ],
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\", code_type!=\"success\"}[1m])) by (code, instance)",
+          "interval": "",
+          "legendFormat": "",
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "",
+          "refId": "A",
+          "timeField": "timestamp"
         }
       ],
-      "type": "table"
+      "title": "异常返回码（实例维度）",
+      "type": "timeseries"
     },
     {
       "collapsed": true,
@@ -4765,1538 +6309,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 113
-      },
-      "id": 373,
-      "panels": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 9,
-            "w": 8,
-            "x": 0,
-            "y": 30
-          },
-          "id": 379,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]))",
-              "interval": "",
-              "legendFormat": "current",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "1 day ago",
-              "refId": "B"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "7 days ago",
-              "refId": "C"
-            }
-          ],
-          "title": "请求总量 1m",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 9,
-            "w": 8,
-            "x": 8,
-            "y": 30
-          },
-          "id": 381,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": true,
-              "expr": "sum(increase(rpc_client_handled_msec_sum{app=~\"$app\", env=~\"$env\"}[1m]))/sum(increase(rpc_client_handled_msec_count{app=~\"$app\", env=~\"$env\"}[1m]))",
-              "interval": "",
-              "legendFormat": "current",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_msec_sum{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))/sum(increase(rpc_client_handled_msec_count{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "1 day ago",
-              "refId": "B"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_msec_sum{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))/sum(increase(rpc_client_handled_msec_count{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "7 days ago",
-              "refId": "C"
-            }
-          ],
-          "title": "平均耗时",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 9,
-            "w": 8,
-            "x": 16,
-            "y": 30
-          },
-          "id": 383,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": true,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m])) / sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]))",
-              "interval": "",
-              "legendFormat": "current",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m]offset 1d)) / sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 1d))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "1 day ago",
-              "refId": "B"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m]offset 7d)) / sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m]offset 7d))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "7 days ago",
-              "refId": "C"
-            }
-          ],
-          "title": "异常率",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "axisSoftMin": -6,
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "decimals": 0,
-              "mappings": [],
-              "min": -5,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 0,
-            "y": 39
-          },
-          "id": 357,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "last",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (callee_service, callee_method)",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "请求量（服务维度）",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "axisSoftMin": -6,
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "decimals": 0,
-              "mappings": [],
-              "min": -5,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 12,
-            "y": 39
-          },
-          "id": 411,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "last",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\"}[1m])) by (instance)",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "请求量（实例维度）",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 0,
-            "y": 49
-          },
-          "id": 355,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "last",
-                "sum"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\", code_type!=\"success\"}[1m])) by (code, callee_service, callee_method)",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "异常返回码（服务维度）",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 12,
-            "y": 49
-          },
-          "id": 405,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "lastNotNull",
-                "sum"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\",env=~\"$env\", code_type!=\"success\"}[1m])) by (code, instance)",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "异常返回码（实例维度）",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 0,
-            "y": 59
-          },
-          "id": 359,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "exemplar": true,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m])) by (callee_service, callee_method)/ sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m])) by (callee_service, callee_method)",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "异常率（服务维度）",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 12,
-            "y": 59
-          },
-          "id": 407,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "aNhYsfzIk"
-              },
-              "exemplar": true,
-              "expr": "sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\", code_type!=\"success\"}[1m])) by (instance)/ sum(increase(rpc_client_handled_total{app=~\"$app\", env=~\"$env\"}[1m])) by (instance)",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "异常率（实例维度）",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "10"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "10ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "100"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "100ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "1000"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "1s"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "20"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "20ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "200"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "200ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "2000"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "2s"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "30"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "30ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "300"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "300ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "3000"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "3s"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "50"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "50ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "500"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "500ms"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "5000"
-                },
-                "properties": [
-                  {
-                    "id": "displayName",
-                    "value": "5s"
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 16,
-            "w": 24,
-            "x": 0,
-            "y": 69
-          },
-          "id": 507,
-          "options": {
-            "displayMode": "gradient",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showUnfilled": false
-          },
-          "pluginVersion": "8.3.3",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "exemplar": false,
-              "expr": "sum(increase(rpc_client_handled_msec_bucket{app=~\"$app\", env=~\"$env\"}[$__range])) by (le)",
-              "format": "heatmap",
-              "instant": true,
-              "interval": "",
-              "legendFormat": "{{le}}",
-              "refId": "A"
-            }
-          ],
-          "title": "耗时区间分布(右上角所选时间区间)",
-          "type": "bargauge"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 0,
-            "y": 85
-          },
-          "id": 361,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "exemplar": true,
-              "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_client_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, callee_service, callee_method)))",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "耗时P99（服务维度）",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 12,
-            "y": 85
-          },
-          "id": 409,
-          "options": {
-            "legend": {
-              "calcs": [
-                "min",
-                "max",
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "alias": "",
-              "bucketAggs": [
-                {
-                  "field": "timestamp",
-                  "id": "2",
-                  "settings": {
-                    "interval": "auto"
-                  },
-                  "type": "date_histogram"
-                }
-              ],
-              "datasource": {
-                "type": "prometheus",
-                "uid": "aNhYsfzIk"
-              },
-              "exemplar": true,
-              "expr": "topk(20, histogram_quantile(0.99, sum(rate(rpc_client_handled_msec_bucket{app=~\"$app\",env=~\"$env\"}[1m])) by (le, instance)))",
-              "interval": "",
-              "legendFormat": "",
-              "metrics": [
-                {
-                  "id": "1",
-                  "type": "count"
-                }
-              ],
-              "query": "",
-              "refId": "A",
-              "timeField": "timestamp"
-            }
-          ],
-          "title": "耗时P99（实例维度）",
-          "type": "timeseries"
-        }
-      ],
-      "title": "主调总览",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "datasource": {
-        "type": "datasource",
-        "uid": "grafana"
-      },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 114
+        "y": 169
       },
       "id": 50,
       "panels": [
@@ -6320,7 +6333,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
               }
@@ -6334,7 +6348,7 @@
                 "properties": [
                   {
                     "id": "unit",
-                    "value": "s"
+                    "value": "ms"
                   }
                 ]
               },
@@ -6386,7 +6400,7 @@
                 "properties": [
                   {
                     "id": "unit",
-                    "value": "s"
+                    "value": "ms"
                   }
                 ]
               },
@@ -6408,7 +6422,7 @@
             "h": 11,
             "w": 24,
             "x": 0,
-            "y": 96
+            "y": 170
           },
           "id": 46,
           "links": [],
@@ -6578,9 +6592,9 @@
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
-          "text": "grpc-server",
-          "value": "grpc-server"
+          "selected": true,
+          "text": "test-pulsar",
+          "value": "test-pulsar"
         },
         "datasource": {
           "type": "prometheus",
@@ -6652,6 +6666,6 @@
   "timezone": "",
   "title": "zapp服务监控",
   "uid": "zapp-home",
-  "version": 52,
+  "version": 55,
   "weekStart": ""
 }

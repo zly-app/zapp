@@ -39,30 +39,30 @@ app.Run()
 
 ## 组件
 
-> 我们实现了一些组件, 可以在 [这里](https://github.com/zly-app/component) 找到
-> [这里](./component) 内置了一些组件
++ 我们实现了一些组件, 可以在 [这里](https://github.com/zly-app/component) 找到
++ [这里](./component) 内置了一些组件
 
 ## 插件
 
-> 我们实现了一些插件, 可以在 [这里](https://github.com/zly-app/plugin) 找到
++ 我们实现了一些插件, 可以在 [这里](https://github.com/zly-app/plugin) 找到
 
 ## filter
 
-> [这里](./filter) 内置了一些 filter
++ [这里](./filter) 内置了一些 filter
 
 ## 服务
 
-> 我们实现了一些服务, 可以在 [这里](https://github.com/zly-app/service) 找到
++ 我们实现了一些服务, 可以在 [这里](https://github.com/zly-app/service) 找到
 
 # 配置
 
-> 请转到 [这里](./config)
++ 请转到 [这里](./config)
 
 # 使用说明
 
 ## 守护进程
 
-> 初始化时添加 `zapp.WithEnableDaemon()` 选项, 构建后使用以下命令
+初始化时添加 `zapp.WithEnableDaemon()` 选项, 构建后使用以下命令
 
 ```text
 ./app文件
@@ -75,7 +75,7 @@ app.Run()
 
 ## Handler
 
-> 初始化时添加 `zapp.WithHandler(...)` 选项 
+初始化时添加 `zapp.WithHandler(...)` 选项 
 
 ```text
 BeforeInitializeHandler         在app初始化前
@@ -88,7 +88,7 @@ AfterExitHandler                在app退出后
 
 ## 运行时自定义启用插件
 
-> 初始化时添加 `zapp.WithCustomEnablePlugin(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些插件
+初始化时添加 `zapp.WithCustomEnablePlugin(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些插件
 
 ```go
 zapp.WithCustomEnablePlugin(func(app core.IApp, plugins []core.PluginType) []core.PluginType {
@@ -101,7 +101,7 @@ zapp.WithCustomEnablePlugin(func(app core.IApp, plugins []core.PluginType) []cor
 
 ## 运行时自定义启用服务
 
-> 初始化时添加 `zapp.WithCustomEnableService(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些服务
+初始化时添加 `zapp.WithCustomEnableService(...)` 选项, zapp 会根据返回值来决定开启和关闭哪些服务
 
 ```go
 zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []core.ServiceType) Option {
