@@ -37,7 +37,7 @@ type option struct {
 	// 插件
 	Plugins []core.PluginType
 	// 自定义启用插件函数
-	CustomEnablePluginsFn func(app core.IApp, plugins []core.PluginType) []core.PluginType
+	CustomEnablePluginsFn []func(app core.IApp, plugins []core.PluginType) []core.PluginType
 
 	// 在服务不稳定观察阶段中出现错误则退出
 	ExitOnErrOfObserveServiceUnstable bool
@@ -46,7 +46,7 @@ type option struct {
 	// 服务
 	Services []core.ServiceType
 	// 自定义启用服务函数
-	CustomEnableServicesFn func(app core.IApp, services []core.ServiceType) []core.ServiceType
+	CustomEnableServicesFn []func(app core.IApp, services []core.ServiceType) []core.ServiceType
 
 	// 自定义组件函数
 	CustomComponentFn func(app core.IApp) core.IComponent
@@ -72,8 +72,8 @@ func newOption(opts ...Option) *option {
 
 // 检查自定义启用插件
 func (o *option) CheckPlugins(app core.IApp) error {
-	if o.CustomEnablePluginsFn != nil {
-		o.Plugins = o.CustomEnablePluginsFn(app, o.Plugins)
+	for _, fn := range o.CustomEnablePluginsFn {
+		o.Plugins = fn(app, o.Plugins)
 	}
 
 	mm := make(map[core.PluginType]struct{}, len(o.Plugins))
@@ -89,8 +89,8 @@ func (o *option) CheckPlugins(app core.IApp) error {
 
 // 检查自定义启用服务
 func (o *option) CheckServices(app core.IApp) error {
-	if o.CustomEnableServicesFn != nil {
-		o.Services = o.CustomEnableServicesFn(app, o.Services)
+	for _, fn := range o.CustomEnableServicesFn {
+		o.Services = fn(app, o.Services)
 	}
 
 	mm := make(map[core.ServiceType]struct{}, len(o.Services))
@@ -160,7 +160,7 @@ func WithPlugin(pluginType core.PluginType, enable ...bool) Option {
 // 如果要启用某个插件, 必须先注册该插件
 func WithCustomEnablePlugin(fn func(app core.IApp, plugins []core.PluginType) []core.PluginType) Option {
 	return func(opt *option) {
-		opt.CustomEnablePluginsFn = fn
+		opt.CustomEnablePluginsFn = append(opt.CustomEnablePluginsFn, fn)
 	}
 }
 
@@ -192,7 +192,7 @@ func WithService(serviceType core.ServiceType, enable ...bool) Option {
 // 如果要启用某个服务, 必须先注册该服务
 func WithCustomEnableService(fn func(app core.IApp, services []core.ServiceType) []core.ServiceType) Option {
 	return func(opt *option) {
-		opt.CustomEnableServicesFn = fn
+		opt.CustomEnableServicesFn = append(opt.CustomEnableServicesFn, fn)
 	}
 }
 
