@@ -27,6 +27,16 @@ const defApplicationDataType = "yaml"
 // 默认application命名空间下哪些key数据会被解析
 var defApplicationParseKeys = []string{"frame", "components", "plugins", "filters", "services"}
 
+// 注册在apollo需要解析的命名空间
+func RegistryApolloNeedParseNamespace(namespace string) {
+	for i := range defApplicationParseKeys {
+		if defApplicationParseKeys[i] == namespace {
+			return
+		}
+	}
+	defApplicationParseKeys = append(defApplicationParseKeys, namespace)
+}
+
 type ApolloConfig struct {
 	Address                 string   // apollo-api地址, 多个地址用英文逗号连接
 	AppId                   string   // 应用名
