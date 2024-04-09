@@ -48,8 +48,8 @@ type option struct {
 	// 自定义启用服务函数
 	CustomEnableServicesFn []func(app core.IApp, services []core.ServiceType) []core.ServiceType
 
-	// 自定义组件函数
-	CustomComponentFn func(app core.IApp) core.IComponent
+	// 自定义组件函数列表
+	CustomComponentFn []func(app core.IApp, c core.IComponent) core.IComponent
 }
 
 func newOption(opts ...Option) *option {
@@ -197,8 +197,18 @@ func WithCustomEnableService(fn func(app core.IApp, services []core.ServiceType)
 }
 
 // 自定义组件
+// Deprecated: Use CustomComponentFns
 func WithCustomComponent(creator func(app core.IApp) core.IComponent) Option {
 	return func(opt *option) {
-		opt.CustomComponentFn = creator
+		opt.CustomComponentFn = append(opt.CustomComponentFn, func(app core.IApp, c core.IComponent) core.IComponent {
+			return creator(app)
+		})
+	}
+}
+
+// 自定义组件
+func CustomComponentFns(creator func(app core.IApp, c core.IComponent) core.IComponent) Option {
+	return func(opt *option) {
+		opt.CustomComponentFn = append(opt.CustomComponentFn, creator)
 	}
 }

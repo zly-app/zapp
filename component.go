@@ -16,9 +16,8 @@ import (
 // 构建组件
 func (app *appCli) makeComponent() {
 	app.component = component.NewComponent(app)
-	if app.opt.CustomComponentFn != nil {
-		app.component = app.opt.CustomComponentFn(app)
-		component.ResetComponent(app.component)
+	for _, fn := range app.opt.CustomComponentFn {
+		app.component = fn(app, app.component)
 	}
 }
 
