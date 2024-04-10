@@ -19,6 +19,7 @@ func (app *appCli) makeComponent() {
 	for _, fn := range app.opt.CustomComponentFn {
 		app.component = fn(app, app.component)
 	}
+	component.ResetComponent(app.component)
 }
 
 // 释放组件资源
