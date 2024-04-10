@@ -291,6 +291,11 @@ func (a *ApolloClient) WaitNotification(ctx context.Context, param []*Notificati
 		if err == context.Canceled { // 被主动取消
 			return nil, nil
 		}
+		if e, ok := err.(*url.Error); ok {
+			if e.Err == context.Canceled { // 被主动取消
+				return nil, nil
+			}
+		}
 		return nil, err
 	}
 	defer resp.Body.Close()
