@@ -36,7 +36,6 @@ type KeyCallbacks map[string][]core.ConfigWatchProviderCallback
 
 func (p *ApolloProvider) Inject(a ...interface{}) {}
 func (p *ApolloProvider) Start() error {
-	go p.startWatchNamespace()
 	return nil
 }
 func (p *ApolloProvider) Close() error {
@@ -56,6 +55,7 @@ func NewApolloProvider(app core.IApp) *ApolloProvider {
 		namespaceCallbackList: make(map[string]KeyCallbacks),
 	}
 	p.watchCtx, p.watchCtxCancel = context.WithCancel(app.BaseContext())
+	go p.startWatchNamespace()
 	return p
 }
 
