@@ -19,6 +19,8 @@
 - [配置观察](#%E9%85%8D%E7%BD%AE%E8%A7%82%E5%AF%9F)
     - [使用示例](#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B)
     - [自动解析泛型结构示例-强烈推荐用法](#%E8%87%AA%E5%8A%A8%E8%A7%A3%E6%9E%90%E6%B3%9B%E5%9E%8B%E7%BB%93%E6%9E%84%E7%A4%BA%E4%BE%8B-%E5%BC%BA%E7%83%88%E6%8E%A8%E8%8D%90%E7%94%A8%E6%B3%95)
+- [配置工具](#%E9%85%8D%E7%BD%AE%E5%B7%A5%E5%85%B7)
+    - [用户白名单](#%E7%94%A8%E6%88%B7%E7%99%BD%E5%90%8D%E5%8D%95)
 
 <!-- /TOC -->
 ---
@@ -240,6 +242,8 @@ apollo:
     IgnoreNamespaceNotFound: false # 是否忽略命名空间不存在, 无论如何设置application命名空间必须存在
 ```
 
+---
+
 # 配置观察
 
 拥有以下特性
@@ -358,3 +362,100 @@ var MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("watch.json", "content")
 
 [其它示例代码](./watch_example)
 
+---
+
+# 配置工具
+
+## 用户白名单
+
+功能支持
+
+- [x] 指定用户id
+- [x] 指定尾号(后两位)
+- [x] 灰度比例(1%细粒度)
+
+
+示例
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/zly-app/zapp"
+	"github.com/zly-app/zapp/plugin/apollo_provider"
+)
+
+type MyConfig struct {
+	A                  string              // 其它业务需要的字段
+	B                  string              // 其它业务需要的字段
+	zapp.UserWhiteList                     // 直接继承这个结构
+	UserWhitelist2     zapp.UserWhiteList  // 另一个白名单
+	UserWhitelist3     *zapp.UserWhiteList // 又一个白名单
+}
+
+// 定义一个获取配置的函数
+var GetMyConfig = zapp.WatchConfigJson[*MyConfig]("group_name", "generic_key")
+
+func main() {
+	app := zapp.NewApp("test",
+		// 使用apollo配置中心作为配置提供者并设置为默认的配置提供者
+		apollo_provider.WithPlugin(true),
+	)
+	defer app.Exit()
+
+	v := GetMyConfig.Get() // 获取数据
+
+	// 检查用户是否在白名单中
+	fmt.Println(v.IsWhiteList("111"))   // true
+	fmt.Println(v.IsWhiteList("222"))   // true
+	fmt.Println(v.IsWhiteList("12301")) // true
+	fmt.Println(v.IsWhiteList("12302")) // true
+
+	// 检查用户是否在白名单中
+	fmt.Println(v.UserWhitelist2.IsWhiteList("111"))   // true
+	fmt.Println(v.UserWhitelist2.IsWhiteList("222"))   // true
+	fmt.Println(v.UserWhitelist2.IsWhiteList("12301")) // true
+	fmt.Println(v.UserWhitelist2.IsWhiteList("12302")) // true
+}
+```
+
+配置如下
+
+```json
+{
+    "Uids": [
+        "111",
+        "222"
+    ],
+    "Percent": 0,
+    "Tails": [
+        "01",
+        "02"
+    ],
+
+    "UserWhitelist2": {
+      "Uids": [
+        "111",
+        "222"
+      ],
+      "Percent": 0,
+      "Tails": [
+        "01",
+        "02"
+      ]
+    }
+}
+```
+
+底层结构说明
+
+```go
+// 用户白名单, 多个数据同时存在时只要匹配任意一个条件就行
+type UserWhiteList struct {
+	Uids    []string // 指定的用户
+	Percent uint8    // 灰度比例, 百分比, 0~100
+	Tails   []string // 用户后两位尾号
+}
+```
