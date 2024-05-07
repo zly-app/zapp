@@ -4,17 +4,17 @@ import (
 	"sync/atomic"
 )
 
-type IUserWhiteList interface {
+type IUserMatcher interface {
 	// 数据构建
 	make()
-	// 查询是否在白名单中
-	IsWhiteList(uid string) bool
+	// 查询是否命中
+	IsHit(uid string) bool
 }
 
-var _ IUserWhiteList = (*UserWhiteList)(nil)
+var _ IUserMatcher = (*UserMatcher)(nil)
 
-// 用户白名单, 多个数据同时存在时只要复合任意一个就行
-type UserWhiteList struct {
+// 用户匹配器, 多个数据同时存在时只要复合任意一个就行
+type UserMatcher struct {
 	Uids    []string // 指定的用户
 	Percent uint8    // 灰度比例, 百分比
 	Tails   []string // 用户后两位尾号
@@ -24,7 +24,7 @@ type UserWhiteList struct {
 	incrV   uint32
 }
 
-func (u *UserWhiteList) make() {
+func (u *UserMatcher) make() {
 	if u == nil {
 		return
 	}
@@ -40,7 +40,7 @@ func (u *UserWhiteList) make() {
 	}
 }
 
-func (u *UserWhiteList) IsWhiteList(uid string) bool {
+func (u *UserMatcher) IsHit(uid string) bool {
 	if u == nil {
 		return false
 	}
@@ -73,9 +73,8 @@ func (u *UserWhiteList) IsWhiteList(uid string) bool {
 }
 
 func init() {
-	AddResetInjectObjCallback[IUserWhiteList](func(obj IUserWhiteList, isField bool) {
-		// 构建用户白名单数据
-		if u, ok := obj.(IUserWhiteList); ok {
+	AddResetInjectObjCallback[IUserMatcher](func(obj IUserMatcher, isField bool) {
+		if u, ok := obj.(IUserMatcher); ok {
 			u.make()
 		}
 	})

@@ -366,7 +366,7 @@ var MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("watch.json", "content")
 
 # 配置工具
 
-## 用户白名单
+## 用户过滤器
 
 功能支持
 
@@ -388,11 +388,11 @@ import (
 )
 
 type MyConfig struct {
-	A                  string              // 其它业务需要的字段
-	B                  string              // 其它业务需要的字段
-	zapp.UserWhiteList                     // 直接继承这个结构
-	UserWhitelist2     zapp.UserWhiteList  // 另一个白名单
-	UserWhitelist3     *zapp.UserWhiteList // 又一个白名单
+	A                string            // 其它业务需要的字段
+	B                string            // 其它业务需要的字段
+	zapp.UserMatcher                   // 直接继承这个结构
+	UserMatcher2     zapp.UserMatcher  // 另一个用户匹配器
+	UserMatcher3     *zapp.UserMatcher // 又一个用户匹配器
 }
 
 // 定义一个获取配置的函数
@@ -407,17 +407,15 @@ func main() {
 
 	v := GetMyConfig.Get() // 获取数据
 
-	// 检查用户是否在白名单中
-	fmt.Println(v.IsWhiteList("111"))   // true
-	fmt.Println(v.IsWhiteList("222"))   // true
-	fmt.Println(v.IsWhiteList("12301")) // true
-	fmt.Println(v.IsWhiteList("12302")) // true
+	fmt.Println(v.IsHit("111"))   // true
+	fmt.Println(v.IsHit("222"))   // true
+	fmt.Println(v.IsHit("12301")) // true
+	fmt.Println(v.IsHit("12302")) // true
 
-	// 检查用户是否在白名单中
-	fmt.Println(v.UserWhitelist2.IsWhiteList("111"))   // true
-	fmt.Println(v.UserWhitelist2.IsWhiteList("222"))   // true
-	fmt.Println(v.UserWhitelist2.IsWhiteList("12301")) // true
-	fmt.Println(v.UserWhitelist2.IsWhiteList("12302")) // true
+	fmt.Println(v.UserMatcher2.IsHit("111"))   // true
+	fmt.Println(v.UserMatcher2.IsHit("222"))   // true
+	fmt.Println(v.UserMatcher2.IsHit("12301")) // true
+	fmt.Println(v.UserMatcher2.IsHit("12302")) // true
 }
 ```
 
@@ -435,7 +433,7 @@ func main() {
         "02"
     ],
 
-    "UserWhitelist2": {
+    "UserMatcher2": {
       "Uids": [
         "111",
         "222"
@@ -452,8 +450,8 @@ func main() {
 底层结构说明
 
 ```go
-// 用户白名单, 多个数据同时存在时只要匹配任意一个条件就行
-type UserWhiteList struct {
+// 用户匹配器, 多个数据同时存在时只要匹配任意一个条件就行
+type UserMatcher struct {
 	Uids    []string // 指定的用户
 	Percent uint8    // 灰度比例, 百分比, 0~100
 	Tails   []string // 用户后两位尾号

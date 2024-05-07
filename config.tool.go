@@ -4,4 +4,4 @@ import (
 	"github.com/zly-app/zapp/config"
 )
 
-type UserWhiteList = config.UserWhiteList
+type UserMatcher = config.UserMatcher
