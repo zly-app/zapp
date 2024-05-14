@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -195,6 +196,20 @@ func (p *clientCli) startPushMode(conf *Config, coll ...prometheus.Collector) {
 	pusher.Grouping("app", p.app.Name())
 	pusher.Grouping("env", p.app.GetConfig().Config().Frame.Env)
 	pusher.Grouping("instance", conf.PushInstance)
+
+	var defaultDialer = &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+	pusher.Client(&http.Client{Transport: &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           defaultDialer.DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}})
 
 	for _, c := range coll {
 		pusher.Collector(c)
