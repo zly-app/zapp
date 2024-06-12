@@ -62,7 +62,7 @@ func (t traceFilter) start(ctx context.Context, req interface{}) (context.Contex
 	if meta.IsServiceMeta() {
 		eventName = "Recv"
 	}
-	utils.Otel.CtxEvent(ctx, eventName, utils.OtelSpanKey("req").String(t.marshal(req)))
+	utils.Otel.CtxEvent(ctx, eventName, utils.OtelSpanKey("data").String(t.marshal(req)))
 	return ctx, span, meta
 }
 
@@ -85,9 +85,9 @@ func (t traceFilter) end(ctx context.Context, span trace.Span, meta CallMeta, rs
 	}
 
 	if err != nil {
-		utils.Otel.CtxErrEvent(ctx, eventName, err, utils.OtelSpanKey("rsp").String(t.marshal(rsp)))
+		utils.Otel.CtxErrEvent(ctx, eventName, err, utils.OtelSpanKey("data").String(t.marshal(rsp)))
 	} else {
-		utils.Otel.CtxEvent(ctx, eventName, utils.OtelSpanKey("rsp").String(t.marshal(rsp)))
+		utils.Otel.CtxEvent(ctx, eventName, utils.OtelSpanKey("data").String(t.marshal(rsp)))
 	}
 	return err
 }

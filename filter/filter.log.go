@@ -118,7 +118,7 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 		callerMethod,
 		calleeService,
 		calleeMethod,
-		ctx, t.getMethodName(meta)+eventName, zap.String("req", t.marshal(req)),
+		ctx, t.getMethodName(meta)+eventName, zap.String("data", t.marshal(req)),
 	)
 	return ctx, meta, logFields
 }
@@ -136,7 +136,7 @@ func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err
 	logFields = append(logFields,
 		ctx,
 		t.getMethodName(meta)+eventName,
-		zap.String("rsp", t.marshal(rsp)),
+		zap.String("data", t.marshal(rsp)),
 		zap.Int64("duration", duration),
 		zap.String("durationText", time.Duration(duration).String()),
 		zap.Int("code", code),
