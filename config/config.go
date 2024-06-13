@@ -88,7 +88,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 			logger.Log.Fatal("从用户指定文件构建viper失败", zap.Error(err))
 		}
 	} else if opt.apolloConfig != nil { // WithApollo
-		rawVi = viper.New()
+		rawVi = newViper()
 		rawVi.Set(consts.ApolloConfigKey, opt.apolloConfig)
 	} else if rawVi = loadDefaultFiles(); rawVi != nil {
 	}
@@ -174,7 +174,7 @@ func (c *configCli) makeLabels() {
 // 加载默认配置文件, 默认配置文件不存在返回nil
 func loadDefaultFiles() *viper.Viper {
 	files := strings.Split(consts.DefaultConfigFiles, ",")
-	vi := viper.New()
+	vi := newViper()
 	for _, file := range files {
 		_, err := os.Stat(file)
 		if err != nil {
@@ -217,7 +217,7 @@ func mergeFile(vi *viper.Viper, file string, ignoreNotExist bool) error {
 
 // 从文件构建viper
 func makeViperFromFile(files []string, ignoreNotExist bool) (*viper.Viper, error) {
-	vi := viper.New()
+	vi := newViper()
 	for _, file := range files {
 		if err := mergeFile(vi, file, ignoreNotExist); err != nil {
 			return nil, fmt.Errorf("合并配置文件'%s'失败: %s", file, err.Error())
@@ -233,7 +233,7 @@ func makeViperFromStruct(a interface{}) (*viper.Viper, error) {
 		return nil, fmt.Errorf("编码失败: %s", err)
 	}
 
-	vi := viper.New()
+	vi := newViper()
 	vi.SetConfigType("json")
 	err = vi.ReadConfig(bytes.NewReader(bs))
 	if err != nil {
@@ -362,4 +362,8 @@ func (c *configCli) HasFlag(flag string) bool {
 
 func (c *configCli) GetFlags() []string {
 	return c.conf.Frame.Flags
+}
+
+func newViper() *viper.Viper {
+	return viper.NewWithOptions(viper.KeyDelimiter(`\/empty_delimiter\/`))
 }

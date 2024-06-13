@@ -140,7 +140,7 @@ func makeViperFromApollo(conf *ApolloConfig) (*viper.Viper, error) {
 	}
 
 	// 构建viper
-	vi := viper.New()
+	vi := newViper()
 	if err = vi.MergeConfigMap(configs); err != nil {
 		return nil, fmt.Errorf("合并apollo配置数据失败: %s", err)
 	}
@@ -173,7 +173,7 @@ func analyseApolloConfig(dst map[string]interface{}, namespace string, configura
 			return nil
 		}
 		content := configurations["content"]
-		vi := viper.New()
+		vi := newViper()
 		vi.SetConfigType(conf.ApplicationDataType)
 		err := vi.ReadConfig(strings.NewReader(content))
 		if err != nil {
@@ -209,7 +209,7 @@ func analyseApolloConfig(dst map[string]interface{}, namespace string, configura
 			continue
 		}
 
-		vi := viper.New()
+		vi := newViper()
 		vi.SetConfigType(conf.ApplicationDataType)
 		err := vi.ReadConfig(strings.NewReader(v))
 		if err != nil {
