@@ -90,6 +90,12 @@ func MakeFilter() {
 
 	// 分配
 	clientChain = make(map[string]map[string]FilterChain)
+	if len(conf.Client[defName]) == 0 {
+		conf.Client[defName] = make(map[string][]string)
+	}
+	if len(conf.Client[defName][defName]) == 0 {
+		conf.Client[defName][defName] = []string{"base"} // 写入base
+	}
 	for clientType, clientConf := range conf.Client {
 		chain, ok := clientChain[clientType]
 		if !ok {
@@ -111,6 +117,9 @@ func MakeFilter() {
 	}
 
 	// 分配
+	if len(conf.Service[defName]) == 0 {
+		conf.Service[defName] = []string{"base"} // 写入base
+	}
 	serviceChain = make(map[string]FilterChain)
 	for name, filterTypes := range conf.Service {
 		filters := make(FilterChain, len(filterTypes))
@@ -173,19 +182,25 @@ func funcFileLine(skip int) (string, string, int) {
 
 func getClientFilterChain(clientType, clientName string) FilterChain {
 	chainMap, ok := clientChain[clientType]
-	if !ok { // 没有找到 clientType 则用全局默认
-		chainMap, ok = clientChain[defName]
+	if ok {
+		chain, ok := chainMap[clientName]
 		if ok {
-			return chainMap[defName]
+			return chain
 		}
-		return nil
+		chain, ok = chainMap[clientName]
+		if ok {
+			return chain
+		}
 	}
 
-	chain, ok := chainMap[clientName]
+	chainMap, ok = clientChain[defName]
 	if ok {
-		return chain
+		chain, ok := chainMap[defName]
+		if ok {
+			return chain
+		}
 	}
-	return chainMap[defName]
+	return nil
 }
 
 func getServiceFilterChain(serviceName string) FilterChain {
