@@ -33,3 +33,28 @@ func NewLogger(appName string, c core.IConfig, opts ...zap.Option) core.ILogger 
 	Log = log
 	return log
 }
+
+func Debug(v ...interface{}) {
+	l := zlog.GetLogCore(Log)
+	l.Debug(v...)
+}
+func Info(v ...interface{}) {
+	l := zlog.GetLogCore(Log)
+	l.Info(v...)
+}
+func Warn(v ...interface{}) {
+	l := zlog.GetLogCore(Log)
+	l.Warn(v...)
+}
+func Error(v ...interface{}) {
+	l := zlog.GetLogCore(Log)
+	l.Error(v...)
+}
+func Panic(v ...interface{}) {
+	l := zlog.GetLogCore(Log)
+	l.Panic(v...)
+}
+func Fatal(v ...interface{}) {
+	l := zlog.GetLogCore(Log)
+	l.Fatal(v...)
+}
