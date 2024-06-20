@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"time"
 
 	"github.com/zly-app/zapp/core"
 )
@@ -28,3 +29,16 @@ func (*ctxCli) GetLogger(ctx context.Context) core.ILogger {
 	}
 	return nil
 }
+
+// clone一个不会超时的ctx, 且携带上下文
+func (*ctxCli) CloneContext(ctx context.Context) context.Context {
+	return detach(ctx)
+}
+
+type detachedContext struct{ parent context.Context }
+
+func detach(ctx context.Context) context.Context            { return detachedContext{ctx} }
+func (v detachedContext) Deadline() (time.Time, bool)       { return time.Time{}, false }
+func (v detachedContext) Done() <-chan struct{}             { return nil }
+func (v detachedContext) Err() error                        { return nil }
+func (v detachedContext) Value(key interface{}) interface{} { return v.parent.Value(key) }
