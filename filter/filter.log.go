@@ -53,26 +53,36 @@ func (t *logFilter) Init(app core.IApp) error {
 
 func (t *logFilter) getClientLevel(clientType, clientName string) string {
 	ct, ok := t.Client[clientType]
-	if !ok { // 没有找到 clientType 则用全局默认
-		ct, ok = t.Client[defName]
+	if ok {
+		l, ok := ct[clientName]
 		if ok {
-			return ct[defName]
+			return l
 		}
-		return defLogLevel
+		l, ok = ct[defName] // 默认客户端组件
+		if ok {
+			return l
+		}
 	}
 
-	l, ok := ct[clientName]
+	ct, ok = t.Client[defName]
 	if ok {
-		return l
+		l, ok := ct[defName]
+		if ok {
+			return l
+		}
 	}
-	return ct[defName]
+	return defLogLevel
 }
 func (t *logFilter) getServiceLevel(serviceName string) string {
 	l, ok := t.Service[serviceName]
 	if ok {
 		return l
 	}
-	return t.Service[defName]
+	l, ok = t.Service[defName]
+	if ok {
+		return l
+	}
+	return defLogLevel
 }
 func (t *logFilter) getLevel(ctx context.Context) string {
 	meta := GetCallMeta(ctx)

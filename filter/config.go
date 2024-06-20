@@ -15,15 +15,6 @@ type Config struct {
 }
 
 func loadConfig() *Config {
-	serviceDefaultKey := "filters.service.default"
-	if !config.Conf.GetViper().IsSet(serviceDefaultKey) {
-		config.Conf.GetViper().Set(serviceDefaultKey, []string{"base"})
-	}
-	clientDefaultKey := "filters.client.default.default"
-	if !config.Conf.GetViper().IsSet(clientDefaultKey) {
-		config.Conf.GetViper().Set(clientDefaultKey, []string{"base"})
-	}
-
 	conf := &Config{
 		Service: make(map[string][]string),
 		Client:  make(map[string]map[string][]string),
