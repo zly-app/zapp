@@ -204,11 +204,15 @@ func getClientFilterChain(clientType, clientName string) FilterChain {
 }
 
 func getServiceFilterChain(serviceName string) FilterChain {
-	chain, ok := serviceChain[serviceName]
+	l, ok := serviceChain[serviceName]
 	if ok {
-		return chain
+		return l
 	}
-	return serviceChain[defName]
+	l, ok = serviceChain[defName]
+	if ok {
+		return l
+	}
+	return nil
 }
 
 // 获取客户端过滤器

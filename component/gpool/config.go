@@ -36,7 +36,7 @@ func (g *GPoolConfig) check() {
 	if g.ThreadCount == 0 {
 		g.ThreadCount = runtime.NumCPU() * 2
 	}
-	if g.ThreadCount < 1 {
+	if g.ThreadCount < 0 {
 		g.ThreadCount = -1
 	}
 }

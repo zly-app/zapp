@@ -38,26 +38,36 @@ func (r *timeoutFilter) Init(app core.IApp) error {
 
 func (r *timeoutFilter) getClientTimeout(clientType, clientName string) int64 {
 	ct, ok := r.Client[clientType]
-	if !ok { // 没有找到 clientType 则用全局默认
-		ct, ok = r.Client[defName]
+	if ok {
+		l, ok := ct[clientName]
 		if ok {
-			return ct[defName]
+			return l
 		}
-		return defTimeout
+		l, ok = ct[defName] // 默认客户端组件
+		if ok {
+			return l
+		}
 	}
 
-	t, ok := ct[clientName]
+	ct, ok = r.Client[defName]
 	if ok {
-		return t
+		l, ok := ct[defName]
+		if ok {
+			return l
+		}
 	}
-	return ct[defName]
+	return defTimeout
 }
 func (r *timeoutFilter) getServiceTimeout(serviceName string) int64 {
-	t, ok := r.Service[serviceName]
+	l, ok := r.Service[serviceName]
 	if ok {
-		return t
+		return l
 	}
-	return r.Service[defName]
+	l, ok = r.Service[defName]
+	if ok {
+		return l
+	}
+	return defTimeout
 }
 func (r *timeoutFilter) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 	meta := GetCallMeta(ctx)

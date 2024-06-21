@@ -24,9 +24,9 @@ func newGPoolFilter() core.Filter {
 }
 
 type gPoolFilter struct {
-	gpool.GPoolConfig
-	once sync.Once
-	pool core.IGPool
+	Config gpool.GPoolConfig
+	once   sync.Once
+	pool   core.IGPool
 }
 
 func (g *gPoolFilter) Init(app core.IApp) error {
@@ -36,7 +36,7 @@ func (g *gPoolFilter) Init(app core.IApp) error {
 		if err != nil {
 			return
 		}
-		g.pool = gpool.NewGPool(&g.GPoolConfig)
+		g.pool = gpool.NewGPool(&g.Config)
 	})
 	return err
 }
