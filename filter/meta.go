@@ -101,7 +101,7 @@ func newServiceMeta(serviceName, methodName string) *callMeta {
 func (m *callMeta) fillCallerMeta(ctx context.Context) {
 	defer func() {
 		// 没有主调数据, 通过 app 获取
-		if m.callerService == "" {
+		if m.callerService == "" && config.Conf != nil {
 			m.callerService = config.Conf.Config().Frame.Name
 		}
 		if m.callerMethod == "" {
