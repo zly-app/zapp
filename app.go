@@ -23,6 +23,7 @@ import (
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/filter"
 	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/pkg/depender"
 )
 
 var defaultApp core.IApp
@@ -43,10 +44,11 @@ type appCli struct {
 	core.ILogger
 	component core.IComponent
 	plugins   map[core.PluginType]core.IPlugin
+	pluginsDepender depender.Depender
 	services  map[core.ServiceType]core.IService
 
-	interrupt chan os.Signal
-	onceExit  sync.Once
+	interrupt       chan os.Signal
+	onceExit        sync.Once
 }
 
 // 创建一个app

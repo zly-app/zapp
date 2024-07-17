@@ -13,6 +13,7 @@ import (
 
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/pkg/depender"
 	"github.com/zly-app/zapp/plugin"
 )
 
@@ -30,21 +31,46 @@ func (app *appCli) makePlugin() {
 
 func (app *appCli) startPlugin() {
 	app.Debug("启动插件")
-	for _, pluginType := range app.opt.Plugins {
+	type Item struct {
+		Name      string
+		DependsOn []string
+		Close     func()
+	}
+	items := make([]depender.Item, len(app.opt.Plugins))
+	for i, pluginType := range app.opt.Plugins {
 		p, ok := app.plugins[pluginType]
 		if !ok {
 			app.Fatal("插件查找失败", zap.String("pluginType", string(pluginType)))
 		}
-
-		err := p.Start()
-		if err != nil {
-			app.Fatal("插件启动失败", zap.String("pluginType", string(pluginType)), zap.Error(err))
+		var dps []string = nil
+		if dp, ok := p.(core.Depender); ok {
+			dps = dp.DependsOn()
 		}
+		items[i] = depender.NewItem(string(pluginType), dps, func() error {
+			return p.Start()
+		}, func() {
+			err := p.Close()
+			if err != nil {
+				app.Error("插件关闭失败", zap.String("pluginType", string(pluginType)), zap.Error(err))
+			}
+		})
 	}
+	dep := depender.NewDepender(items)
+	err := dep.Start()
+	if err != nil {
+		app.Fatal("插件启动失败", zap.Error(err))
+	}
+	app.pluginsDepender = dep
 }
 
 func (app *appCli) closePlugin() {
 	app.Debug("关闭插件")
+	if app.pluginsDepender != nil {
+		app.pluginsDepender.Close()
+		return
+	}
+
+	// 可能没有调用 app.Run 这里需要主动遍历关闭
 	for _, pluginType := range app.opt.Plugins {
 		p, ok := app.plugins[pluginType]
 		if !ok {

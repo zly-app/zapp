@@ -50,3 +50,12 @@ type IApp interface {
 	// 注入服务
 	InjectService(serviceType ServiceType, a ...interface{})
 }
+
+type Depender interface {
+	/*依赖其它启动项
+
+	plugin 在调用Start时会检查依赖项, 其依赖项名称为插件类型
+	service	在调用Start时会检查依赖项, 其依赖项名称为服务类型
+	*/
+	DependsOn() []string
+}
