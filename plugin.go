@@ -19,6 +19,9 @@ import (
 
 // 初始化插件
 func (app *appCli) makePlugin() {
+	app.Info("构建插件")
+	app.handler(BeforeMakePlugin)
+
 	err := app.opt.CheckPlugins(app)
 	if err != nil {
 		app.Fatal("插件检查失败", zap.Error(err))
@@ -27,10 +30,13 @@ func (app *appCli) makePlugin() {
 	for _, pluginType := range app.opt.Plugins {
 		app.plugins[pluginType] = plugin.MakePlugin(app, pluginType)
 	}
+
+	app.handler(AfterMakePlugin)
 }
 
 func (app *appCli) startPlugin() {
-	app.Debug("启动插件")
+	app.Info("启动插件")
+	app.handler(BeforeStartPlugin)
 	type Item struct {
 		Name      string
 		DependsOn []string
@@ -61,10 +67,12 @@ func (app *appCli) startPlugin() {
 		app.Fatal("插件启动失败", zap.Error(err))
 	}
 	app.pluginsDepender = dep
+	app.handler(AfterStartPlugin)
 }
 
 func (app *appCli) closePlugin() {
-	app.Debug("关闭插件")
+	app.Info("关闭插件")
+	app.handler(BeforeClosePlugin)
 	if app.pluginsDepender != nil {
 		app.pluginsDepender.Close()
 		return
@@ -81,6 +89,7 @@ func (app *appCli) closePlugin() {
 			app.Error("插件关闭失败", zap.String("pluginType", string(pluginType)), zap.Error(err))
 		}
 	}
+	app.handler(AfterClosePlugin)
 }
 
 func (app *appCli) GetPlugin(pluginType core.PluginType) (core.IPlugin, bool) {

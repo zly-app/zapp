@@ -18,6 +18,9 @@ import (
 
 // 构建服务
 func (app *appCli) makeService() {
+	app.Info("构建服务")
+	app.handler(BeforeMakeService)
+
 	err := app.opt.CheckServices(app)
 	if err != nil {
 		app.Fatal("服务检查失败", zap.Error(err))
@@ -26,10 +29,13 @@ func (app *appCli) makeService() {
 	for _, serviceType := range app.opt.Services {
 		app.services[serviceType] = service.MakeService(app, serviceType)
 	}
+
+	app.handler(AfterMakeService)
 }
 
 func (app *appCli) startService() {
-	app.Debug("启动服务")
+	app.Info("启动服务")
+	app.handler(BeforeStartService)
 	for _, serviceType := range app.opt.Services {
 		s, ok := app.services[serviceType]
 		if !ok {
@@ -45,10 +51,12 @@ func (app *appCli) startService() {
 			app.Fatal("服务启动失败", zap.String("serviceType", string(serviceType)), zap.Error(err))
 		}
 	}
+	app.handler(AfterStartService)
 }
 
 func (app *appCli) closeService() {
-	app.Debug("关闭服务")
+	app.Info("关闭服务")
+	app.handler(BeforeCloseService)
 	for _, serviceType := range app.opt.Services {
 		s, ok := app.services[serviceType]
 		if !ok {
@@ -59,6 +67,7 @@ func (app *appCli) closeService() {
 			app.Error("服务关闭失败", zap.String("serviceType", string(serviceType)), zap.Error(err))
 		}
 	}
+	app.handler(AfterCloseService)
 }
 
 func (app *appCli) GetService(serviceType core.ServiceType) (core.IService, bool) {

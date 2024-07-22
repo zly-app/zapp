@@ -15,17 +15,24 @@ import (
 
 // 构建组件
 func (app *appCli) makeComponent() {
+	app.Info("构建组件")
+	app.handler(BeforeMakeComponent)
+
 	app.component = component.NewComponent(app)
 	for _, fn := range app.opt.CustomComponentFn {
 		app.component = fn(app, app.component)
 	}
 	component.ResetComponent(app.component)
+
+	app.handler(AfterMakeComponent)
 }
 
 // 释放组件资源
 func (app *appCli) releaseComponentResource() {
-	app.Debug("释放组件资源")
+	app.Info("释放组件资源")
+	app.handler(BeforeCloseComponent)
 	app.component.Close()
+	app.handler(AfterCloseComponent)
 }
 
 func (app *appCli) GetComponent() core.IComponent {

@@ -21,7 +21,6 @@ import (
 
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/filter"
 	"github.com/zly-app/zapp/logger"
 	"github.com/zly-app/zapp/pkg/depender"
 )
@@ -42,13 +41,13 @@ type appCli struct {
 
 	config core.IConfig
 	core.ILogger
-	component core.IComponent
-	plugins   map[core.PluginType]core.IPlugin
+	component       core.IComponent
+	plugins         map[core.PluginType]core.IPlugin
 	pluginsDepender depender.Depender
-	services  map[core.ServiceType]core.IService
+	services        map[core.ServiceType]core.IService
 
-	interrupt       chan os.Signal
-	onceExit        sync.Once
+	interrupt chan os.Signal
+	onceExit  sync.Once
 }
 
 // 创建一个app
@@ -96,20 +95,18 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	}
 
 	app.handler(BeforeInitializeHandler)
-	app.Debug("app初始化")
+	app.Info("app初始化")
 
 	// 构建组件
 	app.makeComponent()
 	// 构建插件
 	app.makePlugin()
 	// 构建过滤器
-	filter.MakeFilter()
-	// 初始化过滤器
-	filter.InitFilter(app)
+	app.makeFilter()
 	// 构建服务
 	app.makeService()
 
-	app.Debug("app初始化完毕")
+	app.Info("app初始化完毕")
 	app.handler(AfterInitializeHandler)
 
 	return app
@@ -117,7 +114,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 
 func (app *appCli) run() {
 	app.handler(BeforeStartHandler)
-	app.Debug("启动app")
+	app.Info("启动app")
 
 	// 启动插件
 	app.startPlugin()
@@ -140,14 +137,14 @@ func (app *appCli) run() {
 func (app *appCli) exit() {
 	// app退出前
 	app.handler(BeforeExitHandler)
-	app.Debug("app准备退出")
+	app.Info("app准备退出")
 
 	// 关闭基础上下文
 	app.baseCtxCancel()
 	// 关闭服务
 	app.closeService()
 	// 关闭过滤器
-	filter.CloseFilter()
+	app.closeFilter()
 	// 关闭插件
 	app.closePlugin()
 	// 释放组件资源

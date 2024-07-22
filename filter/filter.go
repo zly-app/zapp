@@ -158,12 +158,14 @@ func CloseFilter() {
 			logger.Log.Error("close client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
+	clientFilter = make(map[string]core.Filter)
 	for t, f := range serviceFilter {
 		err := f.Close()
 		if err != nil {
 			logger.Log.Error("close service filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
+	serviceFilter = make(map[string]core.Filter)
 }
 
 func funcFileLine(skip int) (string, string, int) {
