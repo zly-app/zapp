@@ -154,6 +154,10 @@ filters:
 
 ## grafana 面板
 
-在`grafana`的`Browse`中导入[这个json文件](./grafana-zapp-home.json)
+服务大盘. 在`grafana`的`Browse`中导入[这个json文件](./grafana-zapp-overview.json)
+
+![image](./grafana-zapp-overview.png)
+
+服务监控. 在`grafana`的`Browse`中导入[这个json文件](./grafana-zapp-home.json)
 
 ![image](./grafana-zapp-home.png)
