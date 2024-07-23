@@ -27,7 +27,7 @@ type Config struct {
 	ProcessCollector bool // 启用进程收集器
 	GoCollector      bool // 启用go收集器
 
-	PullBind string // pull模式bind地址, 如: ':8080', 如果为空则不启用pull模式
+	PullBind string // pull模式bind地址, 如: ':9100', 如果为空则不启用pull模式
 	PullPath string // pull模式拉取路径, 如: '/metrics'
 
 	PushAddress string // push模式 pushGateway地址, 如果为空则不启用push模式, 如: 'http://127.0.0.1:9091'

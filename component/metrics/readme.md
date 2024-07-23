@@ -18,7 +18,7 @@ components:
       ProcessCollector: true     # 启用进程收集器
       GoCollector: true          # 启用go收集器
 
-      PullBind: ""          # pull模式bind地址, 如: ':8080', 如果为空则不启用pull模式
+      PullBind: ""          # pull模式bind地址, 如: ':9100', 如果为空则不启用pull模式
       PullPath: "/metrics"       # pull模式拉取路径, 如: '/metrics'
 
       PushAddress: "" # push模式 pushGateway地址, 如果为空则不启用push模式, 如: 'http://127.0.0.1:9091'
