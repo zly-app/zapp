@@ -30,36 +30,60 @@ const (
 	metricsProcessMemoryQuota = "process_memory_quota" // 内存总量
 )
 
+const (
+	LabelKind          = "kind"
+	LabelCallerService = "caller_service"
+	LabelCallerMethod  = "caller_method"
+	LabelCalleeService = "callee_service"
+	LabelCalleeMethod  = "callee_method"
+	LabelCodeType      = "code_type"
+	LabelCode          = "code"
+)
+
 func init() {
 	RegisterFilterCreator("base.metrics", newMetricsFilter, newMetricsFilter)
 }
 
 var metricsOnce sync.Once
+var defaultMetrics = &metricsFilter{}
 
 func newMetricsFilter() core.Filter {
-	return metricsFilter{}
+	return defaultMetrics
 }
 
-type metricsFilter struct{}
+type metricsFilter struct {
+	RpcServerStartedTotal metrics.ICounter
+	RpcServerHandledTotal metrics.ICounter
+	RpcServerPanicTotal   metrics.ICounter
+	RpcServerHandledMsec  metrics.IHistogram
 
-func (m metricsFilter) Init(app core.IApp) error {
+	RpcClientStartedTotal metrics.ICounter
+	RpcClientHandledTotal metrics.ICounter
+	RpcClientPanicTotal   metrics.ICounter
+	RpcClientHandledMsec  metrics.IHistogram
+
+	ProcessCpuCores    metrics.IGauge
+	ProcessMemoryQuota metrics.IGauge
+}
+
+func (m *metricsFilter) Init(app core.IApp) error {
 	metricsOnce.Do(func() {
-		startLables := []string{"kind", "caller_service", "caller_method", "callee_service", "callee_method"}
-		lables := append(startLables, "code_type", "code")
+		startLabels := []string{LabelKind, LabelCallerService, LabelCallerMethod, LabelCalleeService, LabelCalleeMethod}
+		labels := append(startLabels, LabelCodeType, LabelCode)
 		buckets := []float64{10, 20, 30, 50, 100, 200, 300, 500, 1000, 2000, 3000, 5000}
 
-		metrics.RegistryCounter(metricsRpcServerStartedTotal, "服务rpc开始计数器", nil, startLables...)
-		metrics.RegistryCounter(metricsRpcServerHandledTotal, "服务rpc调用计数器", nil, lables...)
-		metrics.RegistryCounter(metricsRpcServerPanicTotal, "服务rpc调用panic计数器", nil, lables...)
-		metrics.RegistryHistogram(metricsRpcServerHandledMsec, "耗时桶", buckets, nil, lables...)
+		m.RpcServerStartedTotal = metrics.RegistryCounter(metricsRpcServerStartedTotal, "服务rpc开始计数器", nil, startLabels...)
+		m.RpcServerHandledTotal = metrics.RegistryCounter(metricsRpcServerHandledTotal, "服务rpc调用计数器", nil, labels...)
+		m.RpcServerPanicTotal = metrics.RegistryCounter(metricsRpcServerPanicTotal, "服务rpc调用panic计数器", nil, labels...)
+		m.RpcServerHandledMsec = metrics.RegistryHistogram(metricsRpcServerHandledMsec, "耗时桶", buckets, nil, labels...)
 
-		metrics.RegistryCounter(metricsRpcClientStartedTotal, "客户端rpc开始计数器", nil, startLables...)
-		metrics.RegistryCounter(metricsRpcClientHandledTotal, "客户端rpc调用计数器", nil, lables...)
-		metrics.RegistryCounter(metricsRpcClientPanicTotal, "客户端rpc调用panic计数器", nil, lables...)
-		metrics.RegistryHistogram(metricsRpcClientHandledMsec, "客户端耗时桶", buckets, nil, lables...)
+		m.RpcClientStartedTotal = metrics.RegistryCounter(metricsRpcClientStartedTotal, "客户端rpc开始计数器", nil, startLabels...)
+		m.RpcClientHandledTotal = metrics.RegistryCounter(metricsRpcClientHandledTotal, "客户端rpc调用计数器", nil, labels...)
+		m.RpcClientPanicTotal = metrics.RegistryCounter(metricsRpcClientPanicTotal, "客户端rpc调用panic计数器", nil, labels...)
+		m.RpcClientHandledMsec = metrics.RegistryHistogram(metricsRpcClientHandledMsec, "客户端耗时桶", buckets, nil, labels...)
 
-		metrics.RegistryGauge(metricsProcessCpuCores, "cpu数量", nil)
-		metrics.RegistryGauge(metricsProcessMemoryQuota, "内存总量", nil)
+		m.ProcessCpuCores = metrics.RegistryGauge(metricsProcessCpuCores, "cpu数量", nil)
+		m.ProcessMemoryQuota = metrics.RegistryGauge(metricsProcessMemoryQuota, "内存总量", nil)
 		go func() {
 			m.reportSysInfo() // 立即报告
 
@@ -79,103 +103,101 @@ func (m metricsFilter) Init(app core.IApp) error {
 }
 
 // 报告系统信息
-func (m metricsFilter) reportSysInfo() {
-	metrics.GaugeWithLabelValue(metricsProcessCpuCores).Set(float64(runtime.NumCPU()))
+func (m *metricsFilter) reportSysInfo() {
+	m.ProcessCpuCores.Set(float64(runtime.NumCPU()), nil)
 
 	total := float64(0)
 	if memory, _ := mem.VirtualMemory(); memory != nil {
 		total = float64(memory.Total)
 	}
-	metrics.GaugeWithLabelValue(metricsProcessMemoryQuota).Set(total)
+	m.ProcessMemoryQuota.Set(total, nil)
 }
 
-func (m metricsFilter) start(ctx context.Context) CallMeta {
+func (m *metricsFilter) start(ctx context.Context) CallMeta {
 	meta := GetCallMeta(ctx)
 	_ = meta.StartTime()
 
-	traceID, _ := utils.Otel.GetOTELTraceID(ctx)
-	exemplar := metrics.Labels{"traceID": traceID}
-
 	switch meta.Kind() {
 	case MetaKindService:
-		values := []string{"server", meta.CallerService(), meta.CallerMethod(), meta.CalleeService(), meta.CalleeMethod()}
-		c := metrics.CounterWithLabelValue(metricsRpcServerStartedTotal, values...)
-		if e, ok := c.(metrics.ExemplarAdder); ok {
-			e.AddWithExemplar(1, exemplar)
-		} else {
-			c.Inc()
+		label := metrics.Labels{
+			LabelKind:          "server",
+			LabelCallerService: meta.CallerService(),
+			LabelCallerMethod:  meta.CallerMethod(),
+			LabelCalleeService: meta.CalleeService(),
+			LabelCalleeMethod:  meta.CalleeMethod(),
 		}
+		m.RpcServerStartedTotal.Inc(label, nil)
 	case MetaKindClient:
-		values := []string{"client", meta.CallerService(), meta.CallerMethod(), meta.CalleeService(), meta.CalleeMethod()}
-		c := metrics.CounterWithLabelValue(metricsRpcClientStartedTotal, values...)
-		if e, ok := c.(metrics.ExemplarAdder); ok {
-			e.AddWithExemplar(1, exemplar)
-		} else {
-			c.Inc()
+		label := metrics.Labels{
+			LabelKind:          "client",
+			LabelCallerService: meta.CallerService(),
+			LabelCallerMethod:  meta.CallerMethod(),
+			LabelCalleeService: meta.CalleeService(),
+			LabelCalleeMethod:  meta.CalleeMethod(),
 		}
+		m.RpcClientStartedTotal.Inc(label, nil)
 	}
 
 	return meta
 }
-func (m metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error) {
+func (m *metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error) {
+	exemplar := (metrics.Labels)(nil)
+
 	duration := meta.EndTime() - meta.StartTime()
-
 	code, codeType, _ := DefaultGetErrCodeFunc(ctx, rsp, err)
-	traceID, _ := utils.Otel.GetOTELTraceID(ctx)
-	exemplar := metrics.Labels{"traceID": traceID}
 
-	var values []string
-	var k1, k2, k3 string
+	// 不成功的则上报标本
+	if codeType != CodeTypeSuccess {
+		traceID, _ := utils.Otel.GetOTELTraceID(ctx)
+		exemplar = metrics.Labels{"traceID": traceID}
+	}
 
 	switch meta.Kind() {
 	case MetaKindService:
-		values = []string{"server", meta.CallerService(), meta.CallerMethod(), meta.CalleeService(), meta.CalleeMethod(), cast.ToString(codeType), cast.ToString(code)}
-		k1 = metricsRpcServerHandledTotal
-		k2 = metricsRpcServerPanicTotal
-		k3 = metricsRpcServerHandledMsec
-	case MetaKindClient:
-		values = []string{"client", meta.CallerService(), meta.CallerMethod(), meta.CalleeService(), meta.CalleeMethod(), cast.ToString(codeType), cast.ToString(code)}
-		k1 = metricsRpcClientHandledTotal
-		k2 = metricsRpcClientPanicTotal
-		k3 = metricsRpcClientHandledMsec
-	}
-
-	c := metrics.CounterWithLabelValue(k1, values...)
-	if e, ok := c.(metrics.ExemplarAdder); ok {
-		e.AddWithExemplar(1, exemplar)
-	} else {
-		c.Inc()
-	}
-
-	if meta.HasPanic() {
-		c = metrics.CounterWithLabelValue(k2, values...)
-		if e, ok := c.(metrics.ExemplarAdder); ok {
-			e.AddWithExemplar(1, exemplar)
-		} else {
-			c.Inc()
+		label := metrics.Labels{
+			LabelKind:          "server",
+			LabelCallerService: meta.CallerService(),
+			LabelCallerMethod:  meta.CallerMethod(),
+			LabelCalleeService: meta.CalleeService(),
+			LabelCalleeMethod:  meta.CalleeMethod(),
+			LabelCodeType:      cast.ToString(codeType),
+			LabelCode:          cast.ToString(code),
 		}
-	}
-
-	h := metrics.HistogramWithLabelValue(k3, values...)
-	if e, ok := h.(metrics.ExemplarObserver); ok {
-		e.ObserveWithExemplar(float64(time.Duration(duration)/time.Millisecond), exemplar)
-	} else {
-		h.Observe(float64(time.Duration(duration) / time.Millisecond))
+		m.RpcServerHandledTotal.Inc(label, exemplar)
+		if meta.HasPanic() {
+			m.RpcServerPanicTotal.Inc(label, exemplar)
+		}
+		m.RpcServerHandledMsec.Observe(float64(time.Duration(duration)/time.Millisecond), label, exemplar)
+	case MetaKindClient:
+		label := metrics.Labels{
+			LabelKind:          "client",
+			LabelCallerService: meta.CallerService(),
+			LabelCallerMethod:  meta.CallerMethod(),
+			LabelCalleeService: meta.CalleeService(),
+			LabelCalleeMethod:  meta.CalleeMethod(),
+			LabelCodeType:      cast.ToString(codeType),
+			LabelCode:          cast.ToString(code),
+		}
+		m.RpcClientHandledTotal.Inc(label, exemplar)
+		if meta.HasPanic() {
+			m.RpcClientPanicTotal.Inc(label, exemplar)
+		}
+		m.RpcClientHandledMsec.Observe(float64(time.Duration(duration)/time.Millisecond), label, exemplar)
 	}
 }
 
-func (m metricsFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
+func (m *metricsFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
 	meta := m.start(ctx)
 	err := next(ctx, req, rsp)
 	m.end(ctx, meta, rsp, err)
 	return err
 }
 
-func (m metricsFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
+func (m *metricsFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
 	meta := m.start(ctx)
 	rsp, err := next(ctx, req)
 	m.end(ctx, meta, rsp, err)
 	return rsp, err
 }
 
-func (m metricsFilter) Close() error { return nil }
+func (m *metricsFilter) Close() error { return nil }
