@@ -24,8 +24,9 @@ const (
 )
 
 type Config struct {
-	ProcessCollector bool // 启用进程收集器
-	GoCollector      bool // 启用go收集器
+	ProcessCollector  bool // 启用进程收集器
+	GoCollector       bool // 启用go收集器
+	EnableOpenMetrics bool // 启用 OpenMetrics 格式
 
 	PullBind string // pull模式bind地址, 如: ':9100', 如果为空则不启用pull模式
 	PullPath string // pull模式拉取路径, 如: '/metrics'

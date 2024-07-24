@@ -17,6 +17,7 @@ components:
     default:
       ProcessCollector: true     # 启用进程收集器
       GoCollector: true          # 启用go收集器
+      EnableOpenMetrics: false    # 启用 OpenMetrics 格式
 
       PullBind: ""          # pull模式bind地址, 如: ':9100', 如果为空则不启用pull模式
       PullPath: "/metrics"       # pull模式拉取路径, 如: '/metrics'

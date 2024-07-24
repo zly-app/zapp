@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus/push"
+	"github.com/prometheus/common/expfmt"
 	"github.com/zlyuancn/zretry"
 	"go.uber.org/zap"
 
@@ -169,7 +170,7 @@ func (p *clientCli) startPullMode(conf *Config, coll ...prometheus.Collector) {
 	p.app.Info("启用 metrics pull模式", zap.String("PullBind", conf.PullBind), zap.String("PullPath", conf.PullPath))
 
 	// 构建server
-	handle := promhttp.InstrumentMetricHandler(p.pullRegistry, promhttp.HandlerFor(p.pullRegistry, promhttp.HandlerOpts{}))
+	handle := promhttp.InstrumentMetricHandler(p.pullRegistry, promhttp.HandlerFor(p.pullRegistry, promhttp.HandlerOpts{EnableOpenMetrics: conf.EnableOpenMetrics}))
 	mux := http.NewServeMux()
 	mux.Handle(conf.PullPath, handle)
 	server := &http.Server{Addr: conf.PullBind, Handler: mux}
@@ -193,6 +194,9 @@ func (p *clientCli) startPushMode(conf *Config, coll ...prometheus.Collector) {
 
 	// 创建推送器
 	pusher := push.New(conf.PushAddress, p.app.Name())
+	if conf.EnableOpenMetrics {
+		pusher.Format(expfmt.NewFormat(expfmt.TypeOpenMetrics))
+	}
 	pusher.Grouping("app", p.app.Name())
 	pusher.Grouping("env", p.app.GetConfig().Config().Frame.Env)
 	pusher.Grouping("instance", conf.PushInstance)
