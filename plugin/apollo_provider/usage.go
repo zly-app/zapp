@@ -13,23 +13,23 @@ const ProviderName = "apollo"
 // 默认插件类型
 const DefaultPluginType core.PluginType = "apollo_provider"
 
-// 当前服务类型
-var nowPluginType = DefaultPluginType
+var _setDefaultProvider bool
 
-// 设置插件类型, 这个函数应该在 zapp.NewApp 之前调用
-func SetPluginType(t core.PluginType) {
-	nowPluginType = t
-}
-
-// 启用插件, 用于设置配置观察的提供者
-func WithPlugin(setDefaultProvider ...bool) zapp.Option {
-	plugin.RegisterCreatorFunc(nowPluginType, func(app core.IApp) core.IPlugin {
+func init() {
+	plugin.RegisterCreatorFunc(DefaultPluginType, func(app core.IApp) core.IPlugin {
 		p := NewApolloProvider(app)
 		config.RegistryConfigWatchProvider(ProviderName, p) // 注册提供者
-		if len(setDefaultProvider) > 0 && setDefaultProvider[0] {
+		if _setDefaultProvider {
 			config.SetDefaultConfigWatchProvider(p) // 设为默认
 		}
 		return p
 	})
-	return zapp.WithPlugin(nowPluginType)
+}
+
+// 启用插件, 用于设置配置观察的提供者
+func WithPlugin(setDefaultProvider ...bool) zapp.Option {
+	if len(setDefaultProvider) > 0 && setDefaultProvider[0] {
+		_setDefaultProvider = true // 任何一次将其设为默认
+	}
+	return zapp.WithPlugin(DefaultPluginType)
 }
