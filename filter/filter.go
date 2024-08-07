@@ -189,7 +189,7 @@ func getClientFilterChain(clientType, clientName string) FilterChain {
 		if ok {
 			return chain
 		}
-		chain, ok = chainMap[clientName]
+		chain, ok = chainMap[defName]
 		if ok {
 			return chain
 		}

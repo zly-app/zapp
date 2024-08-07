@@ -1,6 +1,18 @@
 # 过滤器
 
-将请求相关的特定逻辑组件化，插件化
+将请求相关的特定逻辑组件化，插件化.
+
+默认提供了这些过滤器:
+
+| 名称          | 说明                 |
+| ------------- | -------------------- |
+| gpool.timeout | 请求超时             |
+| gpool.trace   | 链路追踪             |
+| gpool.metrics | 指标收集             |
+| gpool.gpool   | 协程池               |
+| gpool.log     | 请求日志             |
+| gpool.recover | panic恢复            |
+| gpool.base    | 对以上过滤器的包装器 |
 
 # 组件请求、响应时接入过滤器
 
@@ -55,6 +67,8 @@ filter.RegisterFilterCreator("myFilter", clientFilterCreator, nil)
 filter.RegisterFilterCreator("myFilter", nil, serviceFilterCreator)
 ```
 
+可以通过 `filter.WrapFilterCreator` 将多个过滤器包装为一个过滤器.
+
 ## 过滤器配置
 
 `component` 的配置类型是 `client`
@@ -86,7 +100,9 @@ filters:
          foo: bar
 ```
 
-配置查找方式为 自己组件类型和组件名的配置 -> 自己组件类型default组件名 -> default组件类型default组件名 -> 默认配置.
+client 配置查找方式为 filters.client.clientType.clientName -> filters.client.clientType.default -> filters.client.default.default
+
+service 配置查找方式为 filters.service.serviceName -> filters.service.default
 
 如果找到了指定的配置, 不会继承全局配置. 如下配置
 
@@ -105,11 +121,11 @@ filters:
 
 在这个配置中. 组件类型查找到的配置如下:
 
- 组件类型  | 组件名  | 过滤器     
--------|------|---------
- a     | foo  | filter3 
- a     | bar  | filter2 
- other | test | filter1 
+ | client类型 | client名 | 匹配过滤器 | 查找路径                      |
+ | ---------- | -------- | ---------- | ----------------------------- |
+ | a          | foo      | filter3    | filters.client.a.foo          |
+ | a          | bar      | filter2    | filter.client.a.default       |
+ | other      | test     | filter1    | filter.client.default.default |
 
 ### 配置参考
 
