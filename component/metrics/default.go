@@ -1,6 +1,6 @@
 package metrics
 
-var defaultClient Client = defNoopClient
+var defaultClient Client = DefNoopClient
 
 func GetClient() Client { return defaultClient }
 

@@ -1,37 +1,37 @@
 package metrics
 
-var defNoopClient Client = noopClient{}
+var DefNoopClient Client = noopClient{}
 
 type noopClient struct{}
 
 func (n noopClient) RegistryCounter(name, help string, constLabels Labels, labels ...string) ICounter {
-	return defNoopCounter
+	return DefNoopCounter
 }
-func (n noopClient) Counter(name string) ICounter { return defNoopCounter }
+func (n noopClient) Counter(name string) ICounter { return DefNoopCounter }
 
 func (n noopClient) RegistryGauge(name, help string, constLabels Labels, labels ...string) IGauge {
-	return defNoopGauge
+	return DefNoopGauge
 }
-func (n noopClient) Gauge(name string) IGauge { return defNoopGauge }
+func (n noopClient) Gauge(name string) IGauge { return DefNoopGauge }
 
 func (n noopClient) RegistryHistogram(name, help string, buckets []float64, constLabels Labels, labels ...string) IHistogram {
-	return defNoopHistogram
+	return DefNoopHistogram
 }
-func (n noopClient) Histogram(name string) IHistogram { return defNoopHistogram }
+func (n noopClient) Histogram(name string) IHistogram { return DefNoopHistogram }
 
 func (n noopClient) RegistrySummary(name, help string, constLabels Labels, labels ...string) ISummary {
-	return defNoopSummary
+	return DefNoopSummary
 }
-func (n noopClient) Summary(name string) ISummary { return defNoopSummary }
+func (n noopClient) Summary(name string) ISummary { return DefNoopSummary }
 
-var defNoopCounter ICounter = noopCounter{}
+var DefNoopCounter ICounter = noopCounter{}
 
 type noopCounter struct{}
 
 func (n noopCounter) Inc(labels Labels, exemplar Labels)                {}
 func (n noopCounter) Add(value float64, labels Labels, exemplar Labels) {}
 
-var defNoopGauge IGauge = noopGauge{}
+var DefNoopGauge IGauge = noopGauge{}
 
 type noopGauge struct{}
 
@@ -42,13 +42,13 @@ func (n noopGauge) Add(v float64, labels Labels)   {}
 func (n noopGauge) Sub(v float64, labels Labels)   {}
 func (n noopGauge) SetToCurrentTime(labels Labels) {}
 
-var defNoopHistogram IHistogram = noopHistogram{}
+var DefNoopHistogram IHistogram = noopHistogram{}
 
 type noopHistogram struct{}
 
 func (n noopHistogram) Observe(value float64, labels Labels, exemplar Labels) {}
 
-var defNoopSummary ISummary = noopSummary{}
+var DefNoopSummary ISummary = noopSummary{}
 
 type noopSummary struct{}
 
