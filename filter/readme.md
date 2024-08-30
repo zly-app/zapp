@@ -135,11 +135,21 @@ filters:
 filters:
    config:
       base.gpool:
+         # 默认的配置, 未定义的任何 service 和 client 都会使用同一个协程池
          Config:
             # 任务队列大小
             JobQueueSize: 10000
             # 同时处理信息的goroutine数, 设为0时取逻辑cpu数量 * 2, 设为负数时不作任何限制, 每个请求有独立的线程执行
             ThreadCount: 0
+         Service:
+            default:
+               JobQueueSize: 10000
+               ThreadCount: 0
+         Client:
+            default:
+               default:
+                  JobQueueSize: 10000
+                  ThreadCount: 0
 ```
 
 `base.log` 过程调用日志级别
@@ -152,7 +162,7 @@ filters:
             default: 'debug'
          Client:
             default:
-              default: 'debug'
+               default: 'debug'
 ```
 
 `base.timeout` 过程调用超时
