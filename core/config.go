@@ -25,6 +25,9 @@ type Config struct {
 
 	// 组件配置
 	Components ComponentsConfig
+
+	// 过滤器配置
+	Filters FiltersConfig
 }
 
 // 配置
@@ -131,3 +134,9 @@ type PluginsConfig map[string]interface{}
 
 // 组件配置
 type ComponentsConfig map[string]map[string]interface{}
+
+type FiltersConfig struct {
+	Service map[string][]string
+	Client  map[string]map[string][]string
+	Config  map[string]interface{}
+}

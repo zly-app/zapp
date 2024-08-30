@@ -23,7 +23,7 @@ func newGPoolFilter() core.Filter {
 	return defGPoolFilter
 }
 
-type gPoolFilterConfig struct {
+type GPoolFilterConfig struct {
 	Config  *gpool.GPoolConfig
 	Client  map[string]map[string]*gpool.GPoolConfig
 	Service map[string]*gpool.GPoolConfig
@@ -40,7 +40,7 @@ type gPoolFilter struct {
 func (g *gPoolFilter) Init(app core.IApp) error {
 	var err error
 	g.once.Do(func() {
-		conf := &gPoolFilterConfig{}
+		conf := &GPoolFilterConfig{}
 		err = config.Conf.ParseFilterConfig("base.gpool", conf, true)
 		if err != nil {
 			return
