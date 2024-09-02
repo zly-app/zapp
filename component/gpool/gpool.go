@@ -20,7 +20,8 @@ type gpool struct {
 	jobQueue    chan *job     // 任务队列
 	stop        chan struct{} // 停止信号, 同步通道
 
-	wg sync.WaitGroup
+	wg        sync.WaitGroup
+	onceClose sync.Once
 }
 
 func NewGPool(conf *GPoolConfig) core.IGPool {
@@ -172,8 +173,10 @@ func (g *gpool) Wait() {
 // 命令所有没有收到任务的工人立即停工, 收到任务的工人完成当前任务后停工, 不管任务队列是否清空.
 // 表现为加入队列的任务不一定会执行, 但是正在执行的任务不会被取消并会等待这些任务执行完毕.
 func (g *gpool) Close() {
-	g.stop <- struct{}{}
-	<-g.stop
+	g.onceClose.Do(func() {
+		g.stop <- struct{}{}
+		<-g.stop
+	})
 }
 
 func (g *gpool) newJob(fn func() error, callback func(err error)) *job {
