@@ -11,7 +11,6 @@ package msgbus
 import (
 	"sync"
 
-	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/handler"
 )
@@ -96,7 +95,7 @@ func NewMsgbus() core.IMsgbus {
 		global: newMsgTopic(),
 		topics: make(map[string]*msgTopic),
 	}
-	zapp.AddHandler(zapp.AfterCloseComponent, func(_ core.IApp, _ handler.HandlerType) {
+	handler.AddHandler(handler.AfterCloseComponent, func(_ core.IApp, _ handler.HandlerType) {
 		msg.Close()
 	})
 	return msg
