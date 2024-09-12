@@ -11,14 +11,16 @@ package msgbus
 import (
 	"sync"
 
+	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/handler"
 )
 
 // 消息总线
 type msgbus struct {
-	global    *msgTopic // 用于接收全局消息
-	topics    map[string]*msgTopic
-	mx        sync.RWMutex // 用于锁 topics
+	global *msgTopic // 用于接收全局消息
+	topics map[string]*msgTopic
+	mx     sync.RWMutex // 用于锁 topics
 }
 
 func (m *msgbus) Publish(topic string, msg interface{}) {
@@ -90,8 +92,12 @@ func (m *msgbus) Close() {
 }
 
 func NewMsgbus() core.IMsgbus {
-	return &msgbus{
+	msg := &msgbus{
 		global: newMsgTopic(),
 		topics: make(map[string]*msgTopic),
 	}
+	zapp.AddHandler(zapp.AfterCloseComponent, func(_ core.IApp, _ handler.HandlerType) {
+		msg.Close()
+	})
+	return msg
 }

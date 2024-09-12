@@ -22,8 +22,6 @@ type IMsgbus interface {
 	UnsubscribeGlobal(subscribeId uint32)
 	// 关闭主题, 同时关闭所有订阅该主题的订阅者
 	CloseTopic(topic string)
-	// 关闭
-	Close()
 }
 
 type IMsgbusContext interface {

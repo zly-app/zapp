@@ -11,8 +11,6 @@ package core
 type IGPools interface {
 	// 获取gpool
 	GetGPool(name ...string) IGPool
-	// 关闭
-	Close()
 }
 
 type IGPool interface {

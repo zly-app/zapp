@@ -11,10 +11,12 @@ package gpool
 import (
 	"go.uber.org/zap"
 
+	"github.com/zly-app/zapp"
 	"github.com/zly-app/zapp/component/conn"
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/handler"
 	"github.com/zly-app/zapp/logger"
 	"github.com/zly-app/zapp/pkg/utils"
 )
@@ -23,10 +25,14 @@ type gpools struct {
 	conn *conn.Conn
 }
 
-func NewGPools() core.IGPools {
-	return &gpools{
+func NewCreator() core.IGPools {
+	g := &gpools{
 		conn: conn.NewConn(),
 	}
+	zapp.AddHandler(zapp.AfterCloseComponent, func(_ core.IApp, _ handler.HandlerType) {
+		g.Close()
+	})
+	return g
 }
 
 func (g *gpools) GetGPool(name ...string) core.IGPool {
