@@ -30,11 +30,8 @@ func (app *appCli) enableDaemon() {
 	flag.Bool("status", false, "查看运行状态")
 
 	switch os.Args[1] {
-	case "-install":
-	case "-remove":
-	case "-start":
-	case "-stop":
-	case "-status":
+	case "-install", "-remove", "-start", "-stop", "-status":
+	case "install", "remove", "start", "stop", "status":
 	default:
 		return
 	}
@@ -46,15 +43,15 @@ func (app *appCli) enableDaemon() {
 
 	var out string
 	switch os.Args[1] {
-	case "-install":
+	case "install", "-install":
 		out, err = d.Install(os.Args[2:]...)
-	case "-remove":
+	case "remove", "-remove":
 		out, err = d.Remove()
-	case "-start":
+	case "start", "-start":
 		out, err = d.Start()
-	case "-stop":
+	case "stop", "-stop":
 		out, err = d.Stop()
-	case "-status":
+	case "status", "-status":
 		out, err = d.Status()
 	}
 
