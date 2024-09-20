@@ -11,10 +11,9 @@ package zapp
 import (
 	"context"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 
+	"github.com/kardianos/service"
 	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -46,8 +45,8 @@ type appCli struct {
 	pluginsDepender depender.Depender
 	services        map[core.ServiceType]core.IService
 
-	interrupt chan os.Signal
-	onceExit  sync.Once
+	daemonService service.Service
+	onceExit      sync.Once
 }
 
 // 创建一个app
@@ -56,11 +55,10 @@ type appCli struct {
 // 正常启动时会初始化所有服务
 func NewApp(appName string, opts ...Option) core.IApp {
 	app := &appCli{
-		name:      appName,
-		interrupt: make(chan os.Signal, 1),
-		plugins:   make(map[core.PluginType]core.IPlugin),
-		services:  make(map[core.ServiceType]core.IService),
-		opt:       newOption(opts...),
+		name:     appName,
+		plugins:  make(map[core.PluginType]core.IPlugin),
+		services: make(map[core.ServiceType]core.IService),
+		opt:      newOption(opts...),
 	}
 	app.baseCtx, app.baseCtxCancel = context.WithCancel(context.Background())
 	defaultApp = app
@@ -125,13 +123,6 @@ func (app *appCli) run() {
 
 	app.Info("app已启动")
 	app.handler(AfterStartHandler)
-
-	signal.Notify(app.interrupt, os.Kill, os.Interrupt, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
-	<-app.interrupt
-
-	app.onceExit.Do(func() {
-		app.exit()
-	})
 }
 
 func (app *appCli) exit() {
@@ -161,19 +152,17 @@ func (app *appCli) Name() string {
 
 // 启动
 func (app *appCli) Run() {
-	app.run()
+	err := app.daemonService.Run()
+	if err != nil {
+		logger.Fatal("Run err", zap.Error(err))
+	}
 }
 
 // 退出
 func (app *appCli) Exit() {
 	app.onceExit.Do(func() {
-		// 尝试发送退出信号
-		select {
-		case app.interrupt <- syscall.SIGQUIT:
-		default:
-		}
-
 		app.exit()
+		os.Exit(0)
 	})
 }
 

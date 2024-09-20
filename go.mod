@@ -5,13 +5,13 @@ go 1.19
 require (
 	github.com/bytedance/sonic v1.10.0
 	github.com/json-iterator/go v1.1.12
+	github.com/kardianos/service v1.2.2
 	github.com/klauspost/compress v1.15.9
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/shirou/gopsutil/v3 v3.23.10
 	github.com/spf13/cast v1.3.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.9.0
-	github.com/takama/daemon v1.0.0
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	go.opentelemetry.io/otel v1.13.0
 	go.opentelemetry.io/otel/trace v1.13.0
