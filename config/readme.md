@@ -174,7 +174,7 @@ namespace1:
   key2: '{"foo": "bar"}'
 ```
 
-zapp会将 `applicaiont` 命名空间下的 `frame`,`components`,`plugins`,`services`配置作为配置顶级key, 并将其值按照指定格式解析后赋予其子集(默认是`yaml`格式解析, 需要在apollo配置中设为你需要的格式).
+zapp会将 `application` 命名空间下的 `frame`,`components`,`plugins`,`services`配置作为配置顶级key, 并将其值按照指定格式解析后赋予其子集(默认是`yaml`格式解析, 需要在apollo配置中设为你需要的格式).
 
 示例 apollo 配置数据:
 
