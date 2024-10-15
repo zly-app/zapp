@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -44,6 +45,19 @@ var (
 	HttpReqTimeout = time.Second * 3
 	// http请求通知超时
 	HttpReqNotificationTimeout = time.Second * 65
+
+	HttpClient = &http.Client{Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}}
 )
 
 // 错误状态码描述
@@ -185,7 +199,7 @@ func (a *ApolloClient) loadNamespaceDataFromRemote(namespace string) (data *Name
 	a.officialSignature(req) // 认证
 
 	// 请求
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := HttpClient.Do(req)
 	if err != nil {
 		return nil, false, err
 	}
@@ -286,7 +300,7 @@ func (a *ApolloClient) WaitNotification(ctx context.Context, param []*Notificati
 	}
 	a.officialSignature(req) // 认证
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := HttpClient.Do(req)
 	if err != nil {
 		if err == context.Canceled { // 被主动取消
 			return nil, nil
