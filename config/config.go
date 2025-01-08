@@ -93,7 +93,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	} else if rawVi = loadDefaultFiles(); rawVi != nil {
 	}
 
-	vi := newViper()
+	vi := viper.New() // 这个不要使用自定义定界符, 否则导致 parseXXX 配置失败
 	if rawVi != nil {
 		if err := vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
 			logger.Log.Fatal("合并配置文件失败", zap.Error(err))
