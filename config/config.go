@@ -93,7 +93,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	} else if rawVi = loadDefaultFiles(); rawVi != nil {
 	}
 
-	vi := viper.New()
+	vi := newViper()
 	if rawVi != nil {
 		if err := vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
 			logger.Log.Fatal("合并配置文件失败", zap.Error(err))
