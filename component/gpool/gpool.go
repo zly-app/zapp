@@ -9,10 +9,13 @@
 package gpool
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/zly-app/zapp/core"
 )
+
+var ErrGPoolClosed = errors.New("gpool closed")
 
 // 协程池
 type gpool struct {
@@ -94,7 +97,11 @@ func (g *gpool) dispatch() {
 // 异步执行, 如果队列任务已满则阻塞等待直到有空位
 func (g *gpool) Go(fn func() error, callback func(err error)) {
 	job := g.newJob(fn, callback)
-	g.jobQueue <- job
+	select {
+	case g.jobQueue <- job:
+	case <-g.stop:
+		callback(ErrGPoolClosed)
+	}
 }
 
 // 同步执行
@@ -176,6 +183,7 @@ func (g *gpool) Close() {
 	g.onceClose.Do(func() {
 		g.stop <- struct{}{}
 		<-g.stop
+		close(g.stop)
 	})
 }
 
