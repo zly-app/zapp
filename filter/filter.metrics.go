@@ -201,3 +201,24 @@ func (m *metricsFilter) Handle(ctx context.Context, req interface{}, next core.F
 }
 
 func (m *metricsFilter) Close() error { return nil }
+
+var Metrics = metricsCli{}
+
+type metricsCli struct{}
+
+func (metricsCli) StartClient(ctx context.Context, clientType, clientName, methodName string) (context.Context, CallMeta) {
+	meta := newClientMeta(clientType, clientName, methodName)
+	ctx = SaveCallMata(ctx, meta)
+	ctx = meta.fill(ctx)
+	return ctx, defaultMetrics.start(ctx)
+}
+func (metricsCli) StartService(ctx context.Context, serviceName, methodName string) (context.Context, CallMeta) {
+	meta := newServiceMeta(serviceName, methodName)
+	ctx = SaveCallMata(ctx, meta)
+	ctx = meta.fill(ctx)
+	return ctx, defaultMetrics.start(ctx)
+}
+
+func (metricsCli) End(ctx context.Context, meta CallMeta, rsp interface{}, err error) {
+	defaultMetrics.end(ctx, meta, rsp, err)
+}
