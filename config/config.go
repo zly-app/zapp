@@ -129,7 +129,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		logger.Log.Fatal("配置解析失败", zap.Error(err))
 	}
 
-	c.checkDefaultConfig(c.conf)
+	c.checkDefaultConfig(appName, c.conf)
 
 	if *testFlag {
 		logger.Log.Info("配置文件测试成功")
@@ -261,10 +261,9 @@ func loadIncludeConfigFile(vi *viper.Viper) *viper.Viper {
 	return vi
 }
 
-func (c *configCli) checkDefaultConfig(conf *core.Config) {
-	if conf.Frame.Name != "" {
-		conf.Frame.Log.Name = conf.Frame.Name
-	}
+func (c *configCli) checkDefaultConfig(appName string, conf *core.Config) {
+	conf.Frame.Name = appName
+	conf.Frame.Log.Name = conf.Frame.Name
 	conf.Frame.WaitServiceRunTime = utils.Ternary.Or(conf.Frame.WaitServiceRunTime, consts.DefaultWaitServiceRunTime).(int)
 	conf.Frame.ServiceUnstableObserveTime = utils.Ternary.Or(conf.Frame.ServiceUnstableObserveTime, consts.DefaultServiceUnstableObserveTime).(int)
 }

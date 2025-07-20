@@ -54,6 +54,10 @@ type appCli struct {
 // 根据提供的app名和选项创建一个app
 // 正常启动时会初始化所有服务
 func NewApp(appName string, opts ...Option) core.IApp {
+	if appName == "" {
+		logger.Fatal("appName is empty")
+	}
+
 	app := &appCli{
 		name:     appName,
 		plugins:  make(map[core.PluginType]core.IPlugin),
@@ -71,15 +75,6 @@ func NewApp(appName string, opts ...Option) core.IApp {
 	if app.config == nil {
 		app.config = config.NewConfig(appName, app.opt.ConfigOpts...)
 	}
-
-	// app名处理
-	if name := app.config.Config().Frame.Name; name != "" { // 用配置中加载的app名来替换代码传入的app名
-		app.name = name
-	}
-	if app.name == "" {
-		logger.Log.Fatal("appName is empty")
-	}
-	app.config.Config().Frame.Name = app.name // 配置中的app名可能是空的, 这里复写
 
 	app.ILogger = logger.NewLogger(appName, app.config, app.opt.LogOpts...)
 
