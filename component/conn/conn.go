@@ -158,23 +158,39 @@ func (c *Conn) getConn(creator CreatorFunc, name string) (IInstance, error) {
 // 移除实例, 移除时会关闭示例
 func (c *Conn) Remove(name string) {
 	c.mx.Lock()
-	defer c.mx.Unlock()
 	wg, ok := c.wgs[name]
 	if ok {
-		wg.instance.Close()
 		delete(c.wgs, name)
+	}
+	c.mx.Unlock()
+
+	if !ok {
+		return
+	}
+
+	wg.wg.Wait()
+	if wg.e == nil {
+		wg.instance.Close()
 	}
 }
 
 // 关闭所有实例的链接
 func (c *Conn) CloseAll() {
 	c.mx.Lock()
-	defer c.mx.Unlock()
 
-	for _, wg := range c.wgs {
-		if wg.instance != nil {
-			wg.instance.Close()
-		}
+	fns := make([]func() error, 0, len(c.wgs))
+	for _, v := range c.wgs {
+		wg := v
+		fns = append(fns, func() error {
+			wg.wg.Wait()
+			if wg.e == nil {
+				wg.instance.Close()
+			}
+			return nil
+		})
 	}
 	c.wgs = make(map[string]*connWaitGroup)
+	c.mx.Unlock()
+
+	_ = utils.Go.GoAndWait(fns...)
 }

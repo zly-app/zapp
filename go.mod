@@ -1,6 +1,6 @@
 module github.com/zly-app/zapp
 
-go 1.19
+go 1.23
 
 require (
 	github.com/bytedance/sonic v1.13.1
@@ -54,7 +54,7 @@ require (
 	go.uber.org/multierr v1.5.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
