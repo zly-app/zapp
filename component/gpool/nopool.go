@@ -46,6 +46,8 @@ func (n *NoPool) GoAndWait(fn ...func() error) error {
 	return utils.Go.GoAndWait(fn...)
 }
 
+func (n *NoPool) GoRetWait(fn ...func() error) func() error { return utils.Go.GoRetWait(fn...) }
+
 func (n *NoPool) Wait() {
 	n.wg.Wait()
 }

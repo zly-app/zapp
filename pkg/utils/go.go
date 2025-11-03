@@ -37,7 +37,7 @@ func (goCli) GoAndWait(fns ...func() error) error {
 	return err
 }
 
-// 启用协程运行函数, 并返回一个wait函数等待所有函数执行完成, 会自动 Recover, 如果有函数执行错误, 会返回第一个不为nil的error
+// 启用协程运行函数, 会自动 Recover, 并返回一个wait函数等待所有函数执行完成, 会自动 Recover, 如果有函数执行错误, 会返回第一个不为nil的error
 func (goCli) GoRetWait(fns ...func() error) func() error {
 	if len(fns) == 0 {
 		return func() error { return nil }

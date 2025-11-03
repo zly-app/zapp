@@ -9,8 +9,6 @@
 package gpool
 
 import (
-	"runtime"
-
 	"github.com/zly-app/zapp/core"
 )
 
@@ -18,8 +16,10 @@ import (
 const DefaultComponentType core.ComponentType = "gpool"
 
 const (
-	// 默认任务队列大小
-	defaultJobQueueSize = 10000
+	// 最小任务队列大小
+	defaultMinJobQueueSize = 100000
+	// 最小线程数
+	defaultMinThreadCount = 100
 )
 
 type GPoolConfig struct {
@@ -30,11 +30,11 @@ type GPoolConfig struct {
 }
 
 func (g *GPoolConfig) check() {
-	if g.JobQueueSize < 1 {
-		g.JobQueueSize = defaultJobQueueSize
+	if g.JobQueueSize < defaultMinJobQueueSize {
+		g.JobQueueSize = defaultMinJobQueueSize
 	}
-	if g.ThreadCount == 0 {
-		g.ThreadCount = runtime.NumCPU() * 2
+	if g.ThreadCount < defaultMinThreadCount {
+		g.ThreadCount = defaultMinThreadCount
 	}
 	if g.ThreadCount < 0 {
 		g.ThreadCount = -1

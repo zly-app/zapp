@@ -142,7 +142,7 @@ func (g *gpool) TryGoSync(fn func() error) (result error, ok bool) {
 	return
 }
 
-// 执行等待所有函数完成
+// 执行等待所有函数完成, 会自动 Recover, 如果有函数执行错误, 会返回第一个不为nil的error
 func (g *gpool) GoAndWait(fn ...func() error) error {
 	if len(fn) == 0 {
 		return nil
@@ -168,6 +168,39 @@ func (g *gpool) GoAndWait(fn ...func() error) error {
 	default:
 	}
 	return err
+}
+
+// 启用协程运行函数, 会自动 Recover, 并返回一个wait函数等待所有函数执行完成, 会自动 Recover, 如果有函数执行错误, 会返回第一个不为nil的error
+func (g *gpool) GoRetWait(fn ...func() error) func() error {
+	if len(fn) == 0 {
+		return func() error { return nil }
+	}
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(fn))
+
+	for _, f := range fn {
+		wg.Add(1)
+		go func(fn func() error) {
+			g.Go(fn, func(err error) {
+				defer wg.Done()
+				if err != nil {
+					errChan <- err
+				}
+			})
+		}(f)
+	}
+
+	return func() error {
+		wg.Wait()
+
+		var err error
+		select {
+		case err = <-errChan:
+		default:
+		}
+		return err
+	}
 }
 
 // 等待队列中所有的任务结束
