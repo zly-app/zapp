@@ -218,11 +218,7 @@ func (l *logCore) NewSessionLogger(fields ...zap.Field) core.ILogger {
 
 // 创建一个带链路id的log
 func (l *logCore) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.ILogger {
-	span := utils.Trace.GetSpan(ctx)
-	if span == nil {
-		span = utils.Trace.StartSpan("Undefined")
-	}
-	traceID := utils.Trace.GetTraceID(span)
+	traceID, _ := utils.Trace.GetTraceIDWithContext(ctx)
 	return &logCore{
 		log:            l.log,
 		fields:         append(append(append([]zap.Field{}, l.fields...), zap.String(logTraceIdKey, traceID)), fields...),
