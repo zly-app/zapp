@@ -6,6 +6,8 @@ import (
 
 // 过滤器
 type Filter interface {
+	// 过滤器名
+	Name() string
 	// 初始化
 	Init(app IApp) error
 	// 注射模式

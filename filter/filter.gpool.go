@@ -37,6 +37,7 @@ type gPoolFilter struct {
 	servicePool map[string]core.IGPool
 }
 
+func (*gPoolFilter) Name() string { return "base.gpool" }
 func (g *gPoolFilter) Init(app core.IApp) error {
 	var err error
 	g.once.Do(func() {

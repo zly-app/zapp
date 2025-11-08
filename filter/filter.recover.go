@@ -19,6 +19,8 @@ func newRecoverFilter() core.Filter {
 
 type recoverFilter struct{}
 
+func (recoverFilter) Name() string { return "base.recover" }
+
 func (r recoverFilter) Init(app core.IApp) error { return nil }
 
 func (r recoverFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {

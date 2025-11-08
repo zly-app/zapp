@@ -28,6 +28,8 @@ type timeoutFilter struct {
 	Service map[string]int64
 }
 
+func (*timeoutFilter) Name() string { return "base.timeout" }
+
 func (r *timeoutFilter) Init(app core.IApp) error {
 	err := config.Conf.ParseFilterConfig("base.timeout", r, true)
 	if err != nil {

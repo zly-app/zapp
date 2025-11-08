@@ -35,6 +35,8 @@ func (t traceFilter) marshal(a any) string {
 	return s
 }
 
+func (traceFilter) Name() string { return "base.trace" }
+
 func (t traceFilter) Init(app core.IApp) error { return nil }
 
 func (t traceFilter) start(ctx context.Context, req interface{}) (context.Context, trace.Span, CallMeta) {

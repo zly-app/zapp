@@ -66,6 +66,8 @@ type metricsFilter struct {
 	ProcessMemoryQuota metrics.IGauge
 }
 
+func (*metricsFilter) Name() string { return "base.metrics" }
+
 func (m *metricsFilter) Init(app core.IApp) error {
 	metricsOnce.Do(func() {
 		startLabels := []string{LabelKind, LabelCallerService, LabelCallerMethod, LabelCalleeService, LabelCalleeMethod}
