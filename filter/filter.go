@@ -19,8 +19,15 @@ func (c FilterChain) HandleInject(ctx context.Context, req, rsp interface{}, nex
 		ctx = v.fill(ctx)
 	}
 
+	opts := getFilterOpts(ctx)
+
 	for i := len(c) - 1; i >= 0; i-- {
 		invoke, curFilter := next, c[i]
+
+		if opts.InWithoutFilterName(curFilter.Name()) {
+			continue
+		}
+
 		next = func(ctx context.Context, req, rsp interface{}) error {
 			return curFilter.HandleInject(ctx, req, rsp, invoke)
 		}
@@ -33,8 +40,15 @@ func (c FilterChain) Handle(ctx context.Context, req interface{}, next core.Filt
 		ctx = v.fill(ctx)
 	}
 
+	opts := getFilterOpts(ctx)
+
 	for i := len(c) - 1; i >= 0; i-- {
 		invoke, curFilter := next, c[i]
+
+		if opts.InWithoutFilterName(curFilter.Name()) {
+			continue
+		}
+
 		next = func(ctx context.Context, req interface{}) (rsp interface{}, err error) {
 			return curFilter.Handle(ctx, req, invoke)
 		}

@@ -24,8 +24,15 @@ func (f filterWrap) Init(app core.IApp) error {
 }
 
 func (f filterWrap) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
+	opts := getFilterOpts(ctx)
+
 	for i := len(f.fs) - 1; i >= 0; i-- {
 		invoke, curFilter := next, f.fs[i]
+
+		if opts.InWithoutFilterName(curFilter.Name()) {
+			continue
+		}
+
 		next = func(ctx context.Context, req, rsp interface{}) error {
 			return curFilter.HandleInject(ctx, req, rsp, invoke)
 		}
@@ -34,8 +41,15 @@ func (f filterWrap) HandleInject(ctx context.Context, req, rsp interface{}, next
 }
 
 func (f filterWrap) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
+	opts := getFilterOpts(ctx)
+
 	for i := len(f.fs) - 1; i >= 0; i-- {
 		invoke, curFilter := next, f.fs[i]
+
+		if opts.InWithoutFilterName(curFilter.Name()) {
+			continue
+		}
+
 		next = func(ctx context.Context, req interface{}) (rsp interface{}, err error) {
 			return curFilter.Handle(ctx, req, invoke)
 		}
