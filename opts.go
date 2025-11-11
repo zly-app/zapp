@@ -212,3 +212,12 @@ func CustomComponentFns(creator func(app core.IApp, c core.IComponent) core.ICom
 		opt.CustomComponentFn = append(opt.CustomComponentFn, creator)
 	}
 }
+
+// 包装多个选项
+func WithMultiOptions(opts ...Option) Option {
+	return func(opt *option) {
+		for _, o := range opts {
+			o(opt)
+		}
+	}
+}

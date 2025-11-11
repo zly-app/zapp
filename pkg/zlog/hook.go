@@ -16,10 +16,13 @@ import (
 type interceptorFunc func(ent *zapcore.Entry, fields []zapcore.Field) (cancel bool)
 
 type interceptor struct {
-	zapcore.Core
+	core zapcore.Core
 	conf *hookConfig
 }
 
+func (c *interceptor) Enabled(level zapcore.Level) bool {
+	return c.core.Enabled(level)
+}
 func (c *interceptor) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.CheckedEntry {
 	if c.Enabled(ent.Level) {
 		return ce.AddCore(ent, c)
@@ -27,9 +30,13 @@ func (c *interceptor) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcor
 	return ce
 }
 func (h *interceptor) With(fields []zapcore.Field) zapcore.Core {
+	conf := *h.conf
+	if conf.core != nil {
+		conf.core = h.conf.core.With(fields)
+	}
 	return &interceptor{
-		Core: h.Core.With(fields),
-		conf: h.conf,
+		core: h.core.With(fields),
+		conf: &conf,
 	}
 }
 func (c *interceptor) Write(ent zapcore.Entry, fields []zapcore.Field) error {
@@ -38,19 +45,42 @@ func (c *interceptor) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 			return nil
 		}
 	}
-	return c.Core.Write(ent, fields)
+
+	if c.conf.core != nil {
+		err := c.conf.core.Write(ent, fields)
+		if err != nil {
+			return err
+		}
+	}
+	return c.core.Write(ent, fields)
+}
+func (i *interceptor) Sync() error {
+	if i.conf.core != nil {
+		err := i.conf.core.Sync()
+		if err != nil {
+			return err
+		}
+	}
+	return i.core.Sync()
 }
 
 func (i *interceptor) WrapCore(core zapcore.Core) zapcore.Core {
-	if i.Core != nil {
+	if i.core != nil {
 		return i
 	}
-	i.Core = core
+	i.core = core
 
 	for _, fn := range i.conf.startHookCallbacks {
 		fn()
 	}
 	return i
+}
+
+// 核心附加
+func WithCore(core zapcore.Core) zap.Option {
+	conf := NewHookConfig()
+	conf.SetCore(core)
+	return WithHookByConfig(conf)
 }
 
 // 拦截器
@@ -71,8 +101,15 @@ func WithHookByConfig(conf *hookConfig) zap.Option {
 }
 
 type hookConfig struct {
+	core               zapcore.Core
 	fns                []interceptorFunc
 	startHookCallbacks []func()
+}
+
+// 添加附加核心
+func (h *hookConfig) SetCore(core zapcore.Core) *hookConfig {
+	h.core = core
+	return h
 }
 
 // 添加开始hook回调
