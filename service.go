@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/service"
 )
 
@@ -81,7 +81,7 @@ func (app *appCli) InjectService(serviceType core.ServiceType, a ...interface{})
 		if app.opt.IgnoreInjectOfDisableService {
 			return
 		}
-		logger.Log.Fatal("注入失败, 未启用服务", zap.String("serviceType", string(serviceType)))
+		log.Log.Fatal("注入失败, 未启用服务", zap.String("serviceType", string(serviceType)))
 	}
 
 	s.Inject(a...)

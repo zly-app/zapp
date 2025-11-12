@@ -4,8 +4,6 @@ import (
 	"io"
 
 	"go.uber.org/zap"
-
-	"github.com/zly-app/zapp/logger"
 )
 
 // 序列化器
@@ -36,7 +34,7 @@ var serializers = map[string]ISerializer{
 func RegistrySerializer(name string, c ISerializer, replace ...bool) {
 	if len(replace) == 0 || !replace[0] {
 		if _, ok := serializers[name]; ok {
-			logger.Log.Panic("Serializer重复注册", zap.String("name", name))
+			log.Log.Panic("Serializer重复注册", zap.String("name", name))
 		}
 	}
 	serializers[name] = c
@@ -46,7 +44,7 @@ func RegistrySerializer(name string, c ISerializer, replace ...bool) {
 func GetSerializer(name string) ISerializer {
 	c, ok := serializers[name]
 	if !ok {
-		logger.Log.Panic("试图获取未注册的序列化器", zap.String("name", name))
+		log.Log.Panic("试图获取未注册的序列化器", zap.String("name", name))
 	}
 	return c
 }

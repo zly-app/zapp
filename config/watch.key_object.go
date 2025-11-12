@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 // 观察选项
@@ -41,7 +41,7 @@ func (w *watchKeyObject) init() {
 		// 立即获取
 		data, err := w.p.Get(w.groupName, w.keyName)
 		if err != nil {
-			logger.Log.Fatal("获取配置失败",
+			log.Log.Fatal("获取配置失败",
 				zap.String("groupName", w.groupName),
 				zap.String("keyName", w.keyName),
 				zap.Error(err))
@@ -51,7 +51,7 @@ func (w *watchKeyObject) init() {
 		// 开始观察
 		err = w.p.Watch(w.groupName, w.keyName, w.watchCallback)
 		if err != nil {
-			logger.Log.Fatal("watch配置失败",
+			log.Log.Fatal("watch配置失败",
 				zap.String("groupName", w.groupName),
 				zap.String("keyName", w.keyName),
 				zap.Error(err))
@@ -325,7 +325,7 @@ func (w *watchKeyObject) watchCallback(_, _ string, _, newData []byte) {
 	}
 
 	w.resetData(newData)
-	logger.Log.Info("配置数据变更",
+	log.Log.Info("配置数据变更",
 		zap.String("groupName", w.groupName),
 		zap.String("keyName", w.keyName),
 		zap.String("oldData", string(oldData)),

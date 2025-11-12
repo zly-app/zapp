@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/config"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 const defName = "default"
@@ -21,7 +21,7 @@ func loadConfig() *Config {
 	}
 	err := config.Conf.Parse("filters", conf, true)
 	if err != nil {
-		logger.Log.Fatal("parse filter config err", zap.Error(err))
+		log.Log.Fatal("parse filter config err", zap.Error(err))
 	}
 	return conf
 }

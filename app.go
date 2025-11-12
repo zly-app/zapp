@@ -20,7 +20,7 @@ import (
 
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/pkg/depender"
 )
 
@@ -55,7 +55,7 @@ type appCli struct {
 // 正常启动时会初始化所有服务
 func NewApp(appName string, opts ...Option) core.IApp {
 	if appName == "" {
-		logger.Fatal("appName is empty")
+		log.Fatal("appName is empty")
 	}
 
 	app := &appCli{
@@ -76,7 +76,7 @@ func NewApp(appName string, opts ...Option) core.IApp {
 		app.config = config.NewConfig(appName, app.opt.ConfigOpts...)
 	}
 
-	app.ILogger = logger.NewLogger(appName, app.config, app.opt.LogOpts...)
+	app.ILogger = log.NewLogger(appName, app.config, app.opt.LogOpts...)
 
 	if app.config.Config().Frame.PrintConfig {
 		data, err := yaml.Marshal(app.config.GetViper().AllSettings())
@@ -149,7 +149,7 @@ func (app *appCli) Name() string {
 func (app *appCli) Run() {
 	err := app.daemonService.Run()
 	if err != nil {
-		logger.Fatal("Run err", zap.Error(err))
+		log.Fatal("Run err", zap.Error(err))
 	}
 }
 

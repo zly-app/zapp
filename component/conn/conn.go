@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/consts"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/pkg/utils"
 )
 
@@ -59,7 +59,7 @@ func (c *Conn) getInstance(creator CreatorFunc, name string) IInstance {
 	if ok {
 		wg.wg.Wait()
 		if wg.e != nil {
-			logger.Log.Panic(wg.e.Error(), zap.String("name", name))
+			log.Log.Panic(wg.e.Error(), zap.String("name", name))
 		}
 		return wg.instance
 	}
@@ -71,7 +71,7 @@ func (c *Conn) getInstance(creator CreatorFunc, name string) IInstance {
 		c.mx.Unlock()
 		wg.wg.Wait()
 		if wg.e != nil {
-			logger.Log.Panic(wg.e.Error(), zap.String("name", name))
+			log.Log.Panic(wg.e.Error(), zap.String("name", name))
 		}
 		return wg.instance
 	}
@@ -95,7 +95,7 @@ func (c *Conn) getInstance(creator CreatorFunc, name string) IInstance {
 		c.mx.Lock()
 		delete(c.wgs, name)
 		c.mx.Unlock()
-		logger.Log.Panic(utils.Recover.GetRecoverErrorDetail(wg.e), zap.String("name", name))
+		log.Log.Panic(utils.Recover.GetRecoverErrorDetail(wg.e), zap.String("name", name))
 	}
 
 	wg.wg.Done()

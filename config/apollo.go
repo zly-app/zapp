@@ -19,7 +19,7 @@ import (
 
 	"github.com/zly-app/zapp/config/apollo_sdk"
 	"github.com/zly-app/zapp/consts"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 const defApplicationDataType = "yaml"
@@ -166,7 +166,7 @@ func analyseApolloConfig(dst map[string]interface{}, namespace string, configura
 
 		if !needParse {
 			dst[namespace] = configurations
-			logger.Log.Info("分析apollo配置数据",
+			log.Log.Info("分析apollo配置数据",
 				zap.String("namespace", namespace),
 				zap.Any("configurations", configurations),
 			)

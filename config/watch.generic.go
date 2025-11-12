@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 // 观察选项
@@ -83,7 +83,7 @@ func (w *watchKeyGeneric[T]) reset(first bool, newData []byte) error {
 	var cancel bool
 	for _, hook := range resetInjectStructuredHooks {
 		if replica, resultData, cancel = hook(replica, resultData); cancel {
-			logger.Log.Warn(fmt.Sprintf(
+			log.Log.Warn(fmt.Sprintf(
 				"注入对象已被解析, 但是被拦截了! group: %s, key: %s, obj: %+v",
 				w.GroupName(), w.KeyName(), replica))
 			return nil
@@ -107,14 +107,14 @@ func (w *watchKeyGeneric[T]) watchCallback(first bool, oldData, newData []byte) 
 		return
 	}
 	if first {
-		logger.Log.Fatal("首次解析数据失败",
+		log.Log.Fatal("首次解析数据失败",
 			zap.String("groupName", w.GroupName()),
 			zap.String("keyName", w.KeyName()),
 			zap.String("data", string(newData)),
 			zap.Error(err),
 		)
 	}
-	logger.Log.Error("重置数据失败",
+	log.Log.Error("重置数据失败",
 		zap.String("groupName", w.GroupName()),
 		zap.String("keyName", w.KeyName()),
 		zap.String("oldData", string(oldData)),
@@ -140,7 +140,7 @@ func newWatchKeyStruct[T any](groupName, keyName string, opts ...core.ConfigWatc
 	temp := *new(T) // 消除new指针
 	vTemp := reflect.TypeOf(temp)
 	if vTemp.Kind() != reflect.Ptr {
-		logger.Log.Fatal("泛型类型必须是指针", zap.String("T", fmt.Sprintf("%T", temp)))
+		log.Log.Fatal("泛型类型必须是指针", zap.String("T", fmt.Sprintf("%T", temp)))
 	}
 
 	warp := &watchKeyGeneric[T]{

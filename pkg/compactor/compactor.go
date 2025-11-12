@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 type ICompactor interface {
@@ -29,7 +29,7 @@ var compactorList = map[string]ICompactor{
 func RegistryCompactor(name string, c ICompactor, replace ...bool) {
 	if len(replace) == 0 || !replace[0] {
 		if _, ok := compactorList[name]; ok {
-			logger.Log.Panic("Compactor重复注册", zap.String("name", name))
+			log.Log.Panic("Compactor重复注册", zap.String("name", name))
 		}
 	}
 	compactorList[name] = c
@@ -39,7 +39,7 @@ func RegistryCompactor(name string, c ICompactor, replace ...bool) {
 func GetCompactor(name string) ICompactor {
 	c, ok := compactorList[name]
 	if !ok {
-		logger.Log.Panic("未定义的CompactorName", zap.String("name", name))
+		log.Log.Panic("未定义的CompactorName", zap.String("name", name))
 	}
 	return c
 }

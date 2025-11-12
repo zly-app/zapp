@@ -21,7 +21,7 @@ import (
 
 	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/pkg/utils"
 	"github.com/zly-app/zapp/pkg/zlog"
 )
@@ -73,19 +73,19 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 		files := strings.Split(*confText, ",")
 		rawVi, err = makeViperFromFile(files, false)
 		if err != nil {
-			logger.Log.Fatal("从命令指定文件加载失败", zap.Error(err))
+			log.Log.Fatal("从命令指定文件加载失败", zap.Error(err))
 		}
 	} else if opt.vi != nil { // WithViper
 		rawVi = opt.vi
 	} else if opt.conf != nil { // WithConfig
 		rawVi, err = makeViperFromStruct(opt.conf)
 		if err != nil {
-			logger.Log.Fatal("从配置结构构建viper失败", zap.Any("config", opt.conf), zap.Error(err))
+			log.Log.Fatal("从配置结构构建viper失败", zap.Any("config", opt.conf), zap.Error(err))
 		}
 	} else if len(opt.files) > 0 { // WithFiles
 		rawVi, err = makeViperFromFile(opt.files, false)
 		if err != nil {
-			logger.Log.Fatal("从用户指定文件构建viper失败", zap.Error(err))
+			log.Log.Fatal("从用户指定文件构建viper失败", zap.Error(err))
 		}
 	} else if opt.apolloConfig != nil { // WithApollo
 		rawVi = newViper()
@@ -96,7 +96,7 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	vi := viper.New() // 这个不要使用自定义定界符, 否则导致 parseXXX 配置失败
 	if rawVi != nil {
 		if err := vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
-			logger.Log.Fatal("合并配置文件失败", zap.Error(err))
+			log.Log.Fatal("合并配置文件失败", zap.Error(err))
 		}
 	}
 
@@ -109,14 +109,14 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	if vi.IsSet(consts.ApolloConfigKey) {
 		apolloConf, err := makeApolloConfigFromViper(vi)
 		if err != nil {
-			logger.Log.Fatal("解析apollo配置失败", zap.Error(err))
+			log.Log.Fatal("解析apollo配置失败", zap.Error(err))
 		}
 		rawVi, err = makeViperFromApollo(apolloConf)
 		if err != nil {
-			logger.Log.Fatal("从apollo构建viper失败", zap.Error(err))
+			log.Log.Fatal("从apollo构建viper失败", zap.Error(err))
 		}
 		if err = vi.MergeConfigMap(rawVi.AllSettings()); err != nil {
-			logger.Log.Fatal("合并apollo配置失败", zap.Error(err))
+			log.Log.Fatal("合并apollo配置失败", zap.Error(err))
 		}
 	}
 
@@ -126,13 +126,13 @@ func NewConfig(appName string, opts ...Option) core.IConfig {
 	}
 	// 解析配置
 	if err = vi.Unmarshal(c.conf); err != nil {
-		logger.Log.Fatal("配置解析失败", zap.Error(err))
+		log.Log.Fatal("配置解析失败", zap.Error(err))
 	}
 
 	c.checkDefaultConfig(appName, c.conf)
 
 	if *testFlag {
-		logger.Log.Info("配置文件测试成功")
+		log.Log.Info("配置文件测试成功")
 		os.Exit(0)
 	}
 
@@ -181,14 +181,14 @@ func loadDefaultFiles() *viper.Viper {
 			if os.IsNotExist(err) {
 				continue
 			}
-			logger.Log.Fatal("读取配置文件信息失败", zap.String("file", file), zap.Error(err))
+			log.Log.Fatal("读取配置文件信息失败", zap.String("file", file), zap.Error(err))
 		}
 
 		vi.SetConfigFile(file)
 		if err = vi.MergeInConfig(); err != nil {
-			logger.Log.Fatal("合并配置文件失败", zap.String("file", file), zap.Error(err))
+			log.Log.Fatal("合并配置文件失败", zap.String("file", file), zap.Error(err))
 		}
-		logger.Log.Info("使用默认配置文件", zap.String("file", file))
+		log.Log.Info("使用默认配置文件", zap.String("file", file))
 		return vi
 	}
 	return vi
@@ -200,7 +200,7 @@ func mergeFile(vi *viper.Viper, file string, ignoreNotExist bool) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			if ignoreNotExist {
-				logger.Log.Warn("配置文件不存在", zap.String("file", file))
+				log.Log.Warn("配置文件不存在", zap.String("file", file))
 				return nil
 			}
 			return fmt.Errorf("配置文件不存在")
@@ -249,13 +249,13 @@ func loadIncludeConfigFile(vi *viper.Viper) *viper.Viper {
 	}
 	err := vi.UnmarshalKey(consts.IncludeConfigFileKey, &temp)
 	if err != nil {
-		logger.Log.Fatal("include配置错误", zap.Error(err))
+		log.Log.Fatal("include配置错误", zap.Error(err))
 	}
 
 	files := strings.Split(temp.Files, ",")
 	for _, file := range files {
 		if err := mergeFile(vi, file, false); err != nil {
-			logger.Log.Fatal("合并包含文件失败", zap.String("file", file), zap.Error(err))
+			log.Log.Fatal("合并包含文件失败", zap.String("file", file), zap.Error(err))
 		}
 	}
 	return vi

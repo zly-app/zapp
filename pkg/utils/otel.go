@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -89,8 +88,8 @@ func (*otelCli) AddSpanEvent(span trace.Span, eventName string, attributes ...Ot
 }
 
 // 将span标记为错误
-func (*otelCli) MarkSpanAnError(span trace.Span, isErr bool) {
-	span.SetStatus(codes.Error, cast.ToString(isErr))
+func (*otelCli) MarkSpanAnError(span trace.Span, err error) {
+	span.SetStatus(codes.Error, err.Error())
 }
 
 // 结束一个span
@@ -127,27 +126,26 @@ func (c *otelCli) CtxStart(ctx context.Context, name string, attributes ...OtelS
 
 func (c *otelCli) CtxEvent(ctx context.Context, name string, attributes ...OtelSpanKV) {
 	span := c.GetSpan(ctx)
-	span.SetAttributes(c.GetSpanKVWithDeadline(ctx))
-	attr := []OtelSpanKV{}
+	attr := []OtelSpanKV{c.GetSpanKVWithDeadline(ctx)}
 	attr = append(attr, attributes...)
 	c.AddSpanEvent(span, name, attr...)
 }
 
 func (c *otelCli) CtxErrEvent(ctx context.Context, name string, err error, attributes ...OtelSpanKV) {
 	span := c.GetSpan(ctx)
-	span.SetAttributes(c.GetSpanKVWithDeadline(ctx))
 	attr := []OtelSpanKV{
+		c.GetSpanKVWithDeadline(ctx),
 		OtelSpanKey("err.detail").String(err.Error()),
 	}
 	if Recover.IsRecoverError(err) {
 		c.SetSpanAttributes(span, OtelSpanKey("panic").Bool(true))
 		panicErrs := Recover.GetRecoverErrors(err)
-		attr = append(attr, OtelSpanKey("detail").StringSlice(panicErrs))
+		attr = append(attr, OtelSpanKey("detail").StringSlice(panicErrs), OtelSpanKey("panic").Bool(true))
 	}
 
 	attr = append(attr, attributes...)
 	c.AddSpanEvent(span, name+" err", attr...)
-	c.MarkSpanAnError(span, true)
+	c.MarkSpanAnError(span, err)
 }
 
 func (c *otelCli) CtxEnd(ctx context.Context) {

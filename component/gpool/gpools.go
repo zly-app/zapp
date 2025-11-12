@@ -16,7 +16,7 @@ import (
 	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
 	"github.com/zly-app/zapp/handler"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/pkg/utils"
 )
 
@@ -44,7 +44,7 @@ func (g *gpools) makeGPoolGroup(name string) (conn.IInstance, error) {
 	conf := new(GPoolConfig)
 	err := config.Conf.ParseComponentConfig(DefaultComponentType, componentName, conf, true)
 	if err != nil {
-		logger.Log.Warn("gpool组件配置解析失败, 将使用默认配置", zap.String("name", componentName), zap.Error(err))
+		log.Log.Warn("gpool组件配置解析失败, 将使用默认配置", zap.String("name", componentName), zap.Error(err))
 	}
 	conf.check()
 

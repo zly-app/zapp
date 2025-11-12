@@ -12,7 +12,7 @@ import (
 	"github.com/zly-app/zapp/component/gpool"
 	"github.com/zly-app/zapp/component/msgbus"
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 var defaultComponent core.IComponent
@@ -47,7 +47,7 @@ func NewComponent(app core.IApp) core.IComponent {
 // 获取component
 func GetComponent() core.IComponent {
 	if defaultComponent == nil {
-		logger.Log.Panic("Component is uninitialized")
+		log.Log.Panic("Component is uninitialized")
 	}
 	return defaultComponent
 }

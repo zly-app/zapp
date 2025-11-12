@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/pkg/depender"
 	"github.com/zly-app/zapp/plugin"
 )
@@ -103,7 +103,7 @@ func (app *appCli) InjectPlugin(pluginType core.PluginType, a ...interface{}) {
 		if app.opt.IgnoreInjectOfDisablePlugin {
 			return
 		}
-		logger.Log.Fatal("注入失败, 未启用插件", zap.String("pluginType", string(pluginType)))
+		log.Log.Fatal("注入失败, 未启用插件", zap.String("pluginType", string(pluginType)))
 	}
 
 	p.Inject(a...)

@@ -11,6 +11,7 @@ package zlog
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 
 	"go.uber.org/zap"
@@ -62,27 +63,41 @@ func newLogCore(log *zap.Logger, callerMinLevel zapcore.Level, ws zapcore.WriteS
 	return l
 }
 
+type logBody struct {
+	ctx                    context.Context
+	msg                    string
+	fields                 []zap.Field
+	customCaller           *customCaller
+	withoutAttachLog2Trace bool
+}
+
 func (l *logCore) print(level Level, v []interface{}) {
-	msg, fields, customCaller := l.makeBody(v)
+	body := l.makeBody(v)
 	zapLevel := parserLogLevel(level)
-	if ce := l.log.Check(zapLevel, msg); ce != nil {
-		if customCaller != nil {
-			ce.Caller.Function = customCaller.fn
-			ce.Caller.File = customCaller.file
-			ce.Caller.Line = customCaller.line
+	ce := l.log.Check(zapLevel, body.msg)
+	if ce != nil {
+		if body.customCaller != nil {
+			ce.Caller.Function = body.customCaller.fn
+			ce.Caller.File = body.customCaller.file
+			ce.Caller.Line = body.customCaller.line
 			ce.Caller.Defined = true
 		}
 		if zapLevel < l.callerMinLevel {
 			ce.Caller.Defined = false
 		}
-		ce.Write(fields...)
+		ce.Write(body.fields...)
 	}
+
+	// 将log附到trace上
+	l.attachLog2Trace(ce, body)
 }
 
-func (l *logCore) makeBody(v []interface{}) (string, []zap.Field, *customCaller) {
+func (l *logCore) makeBody(v []interface{}) logBody {
 	args := make([]interface{}, 0, len(v))
 	fields := append([]zap.Field{}, l.fields...)
 	var cCaller *customCaller
+	var ctx context.Context
+	var withoutALT bool
 	for _, value := range v {
 		switch val := value.(type) {
 		case zap.Field:
@@ -111,16 +126,26 @@ func (l *logCore) makeBody(v []interface{}) (string, []zap.Field, *customCaller)
 			if spanID != "" {
 				fields = append(fields, zap.String(logTraceSpanIdKey, spanID))
 			}
+			ctx = val
 		case string, bool,
 			int, int8, int16, int32, int64,
 			uint, uint8, uint16, uint32, uint64,
 			float32, float64:
 			args = append(args, value)
+		case withoutAttachLog2Trace:
+			withoutALT = true
+			continue
 		default:
 			fields = append(fields, zap.Any("logData", value))
 		}
 	}
-	return fmt.Sprint(args...), fields, cCaller
+	return logBody{
+		ctx:                    ctx,
+		msg:                    fmt.Sprint(args...),
+		fields:                 fields,
+		customCaller:           cCaller,
+		withoutAttachLog2Trace: withoutALT,
+	}
 }
 
 func (l *logCore) Log(level string, v ...interface{}) {
@@ -225,6 +250,26 @@ func (l *logCore) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.
 		callerMinLevel: l.callerMinLevel,
 		ws:             l.ws,
 	}
+}
+
+func (l *logCore) attachLog2Trace(ce *zapcore.CheckedEntry, body logBody) {
+	if body.ctx == nil || ce == nil || body.withoutAttachLog2Trace {
+		return
+	}
+
+	attr := make([]utils.OtelSpanKV, 0, 4+len(body.fields))
+	attr = append(attr,
+		utils.OtelSpanKey("level").String(ce.Level.String()),
+		utils.OtelSpanKey("message").String(ce.Message),
+	)
+	for _, f := range body.fields {
+		attr = append(attr, utils.OtelSpanKey(f.Key).String(convertFieldValue(f)))
+	}
+	attr = append(attr,
+		utils.OtelSpanKey("line").String(ce.Caller.File+":"+strconv.Itoa(ce.Caller.Line)),
+		utils.OtelSpanKey("func").String(ce.Caller.Function),
+	)
+	utils.Otel.CtxEvent(body.ctx, "Log", attr...)
 }
 
 type customCaller struct {

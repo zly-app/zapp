@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 const msgbusTopicKey = "msgbus_topic"
@@ -23,7 +23,7 @@ type Context struct {
 
 func newContext(msg *channelMsg) core.IMsgbusContext {
 	return &Context{
-		ILogger: logger.Log.NewSessionLogger(zap.String(msgbusTopicKey, msg.topic)),
+		ILogger: log.Log.NewSessionLogger(zap.String(msgbusTopicKey, msg.topic)),
 		topic:   msg.topic,
 		msg:     msg.msg,
 	}

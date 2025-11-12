@@ -107,9 +107,8 @@ type hookConfig struct {
 }
 
 // 添加附加核心
-func (h *hookConfig) SetCore(core zapcore.Core) *hookConfig {
+func (h *hookConfig) SetCore(core zapcore.Core) {
 	h.core = core
-	return h
 }
 
 // 添加开始hook回调

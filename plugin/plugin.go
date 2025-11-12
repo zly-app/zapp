@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 // 插件建造者
@@ -20,7 +20,7 @@ var creators = make(map[core.PluginType]core.IPluginCreator)
 // 注册插件建造者
 func RegisterCreator(pluginType core.PluginType, creator core.IPluginCreator) {
 	if _, ok := creators[pluginType]; ok {
-		logger.Log.Fatal("重复注册建造者", zap.String("pluginType", string(pluginType)))
+		log.Log.Fatal("重复注册建造者", zap.String("pluginType", string(pluginType)))
 	}
 	creators[pluginType] = creator
 }

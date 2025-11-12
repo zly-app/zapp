@@ -11,7 +11,7 @@ import (
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/config/apollo_sdk"
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 // 观察失败等待时间
@@ -131,7 +131,7 @@ func (p *ApolloProvider) startWatchNamespace() {
 			param := p.makeNotificationParam()
 			rsp, err := p.client.WaitNotification(p.watchCtx, param)
 			if err != nil {
-				logger.Log.Error("创建观察apollo通知失败", zap.Any("param", param), zap.Error(err))
+				log.Log.Error("创建观察apollo通知失败", zap.Any("param", param), zap.Error(err))
 				time.Sleep(WatchErrWaitTime)
 				continue
 			}

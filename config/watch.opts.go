@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 type StructType string
@@ -38,14 +38,14 @@ func (o *watchOptions) check() {
 		o.Provider = GetDefaultConfigWatchProvider()
 	}
 	if o.Provider == nil {
-		logger.Log.Fatal("默认配置观察提供者不存在")
+		log.Log.Fatal("默认配置观察提供者不存在")
 	}
 }
 
 func getWatchOptions(a interface{}) *watchOptions {
 	opts, ok := a.(*watchOptions)
 	if !ok {
-		logger.Log.Fatal("无法转换为*watchOptions", zap.Any("a", a))
+		log.Log.Fatal("无法转换为*watchOptions", zap.Any("a", a))
 	}
 	return opts
 }
@@ -55,7 +55,7 @@ func WithWatchProvider(name string) core.ConfigWatchOption {
 	return func(a interface{}) {
 		p := GetConfigWatchProvider(name)
 		if p == nil {
-			logger.Log.Fatal("配置观察提供者不存在", zap.String("name", name))
+			log.Log.Fatal("配置观察提供者不存在", zap.String("name", name))
 		}
 
 		opts := getWatchOptions(a)

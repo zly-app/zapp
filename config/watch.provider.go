@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 // 用于承载配置观察提供者
@@ -28,10 +28,10 @@ func GetConfigWatchProvider(name string) core.IConfigWatchProvider {
 // 注册配置观察提供者
 func RegistryConfigWatchProvider(name string, p core.IConfigWatchProvider) {
 	if name == "default" {
-		logger.Log.Fatal("配置提供者名不能为default")
+		log.Log.Fatal("配置提供者名不能为default")
 	}
 	if _, ok := configWatchProviders[name]; ok {
-		logger.Log.Fatal("配置提供者已存在", zap.String("name", name))
+		log.Log.Fatal("配置提供者已存在", zap.String("name", name))
 	}
 	configWatchProviders[name] = p
 }

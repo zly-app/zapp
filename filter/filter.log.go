@@ -9,7 +9,7 @@ import (
 
 	"github.com/zly-app/zapp/config"
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/pkg/utils"
 	"github.com/zly-app/zapp/pkg/zlog"
 )
@@ -122,7 +122,7 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 	}
 
 	level := t.getLevel(ctx)
-	logger.Log.Log(level,
+	log.Log.Log(level,
 		customCaller,
 		instance,
 		callerService,
@@ -130,6 +130,7 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 		calleeService,
 		calleeMethod,
 		ctx, t.getMethodName(meta)+eventName, zap.String("data", t.marshal(req)),
+		log.WithoutAttachLog2Trace(),
 	)
 	return ctx, meta, logFields
 }
@@ -152,6 +153,7 @@ func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err
 		zap.String("durationText", time.Duration(duration).String()),
 		zap.Int("code", code),
 		zap.String("codeType", codeType),
+		log.WithoutAttachLog2Trace(),
 	)
 	if err != nil {
 		if meta.HasPanic() {
@@ -164,10 +166,10 @@ func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err
 		} else {
 			logFields = append(logFields, zap.Error(err))
 		}
-		logger.Log.Log(zlog.ErrorLevel, logFields...)
+		log.Log.Log(zlog.ErrorLevel, logFields...)
 	} else {
 		level := t.getLevel(ctx)
-		logger.Log.Log(level, logFields...)
+		log.Log.Log(level, logFields...)
 	}
 	return err
 }

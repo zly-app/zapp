@@ -25,7 +25,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 // apollo获取配置api
@@ -123,7 +123,7 @@ func (a *ApolloClient) GetNamespacesData() (MultiNamespaceData, error) {
 	if a.isAllowLoadFromBackupFile() {
 		backupData, err := a.loadDataFromBackupFile()
 		if err != nil {
-			logger.Log.Error("从本地加载配置失败", zap.Error(err))
+			log.Log.Error("从本地加载配置失败", zap.Error(err))
 		} else {
 			a.writeCache(backupData)
 		}
@@ -155,7 +155,7 @@ func (a *ApolloClient) GetNamespacesData() (MultiNamespaceData, error) {
 			return nil, fmt.Errorf("从远程获取命名空间<%s>的数据失败: %s", namespace, err)
 		}
 
-		logger.Log.Error("从远程获取配置失败", zap.String("namespace", namespace), zap.Error(err))
+		log.Log.Error("从远程获取配置失败", zap.String("namespace", namespace), zap.Error(err))
 		_, ok := a.cache[namespace]
 		if !ok {
 			return nil, fmt.Errorf("本地命名空间<%s>的数据不存在", namespace)
@@ -252,7 +252,7 @@ func (a *ApolloClient) GetNamespaceData(namespace string, ignoreRemoteErr bool) 
 
 	newData, changed, err = a.loadNamespaceDataFromRemote(namespace)
 	if err != nil && ignoreRemoteErr {
-		logger.Log.Error("获取远程命名空间数据失败",
+		log.Log.Error("获取远程命名空间数据失败",
 			zap.String("namespace", namespace),
 			zap.Error(err),
 		)
@@ -347,7 +347,7 @@ func (a *ApolloClient) saveDataToBackupFile() {
 		err = os.WriteFile(a.BackupFile, bs, 0644)
 	}
 	if err != nil {
-		logger.Log.Error("备份配置文件失败", zap.Error(err))
+		log.Log.Error("备份配置文件失败", zap.Error(err))
 	}
 }
 

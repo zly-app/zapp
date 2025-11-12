@@ -3,14 +3,13 @@ package zapp
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/kardianos/service"
 	"go.uber.org/zap"
 
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 type daemonService struct {
@@ -87,35 +86,35 @@ func (app *appCli) enableDaemon() {
 	case "status", "-status":
 		status, err := s.Status()
 		if err != nil {
-			logger.Log.Error(zap.Error(err))
+			log.Log.Error(zap.Error(err))
 			os.Exit(1)
 		}
 
 		switch status {
 		case service.StatusRunning:
-			logger.Log.Info(fmt.Sprintf("service %s is Running", app.name))
+			log.Log.Info(fmt.Sprintf("service %s is Running", app.name))
 		case service.StatusStopped:
-			logger.Log.Info(fmt.Sprintf("service %s is Stopped", app.name))
+			log.Log.Info(fmt.Sprintf("service %s is Stopped", app.name))
 		default:
-			logger.Log.Info(fmt.Sprintf("service %s status is Unknown", app.name))
+			log.Log.Info(fmt.Sprintf("service %s status is Unknown", app.name))
 		}
 		os.Exit(0)
 	}
 
 	if err != nil {
-		logger.Log.Error(zap.Error(err))
+		log.Log.Error(zap.Error(err))
 		os.Exit(1)
 	}
 
-	logger.Log.Info("ok")
+	log.Log.Info("ok")
 	os.Exit(0)
 }
 
 func Run() {
-	logger.Info("Service start...")
+	log.Info("Service start...")
 	// 在这里编写你的服务逻辑
 	for {
-		logger.Info("Service is running...")
+		log.Info("Service is running...")
 		time.Sleep(1 * time.Second)
 	}
 }

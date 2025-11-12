@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
-	"github.com/zly-app/zapp/logger"
+	"github.com/zly-app/zapp/log"
 )
 
 // 过滤器链
@@ -73,14 +73,14 @@ func RegisterFilterCreator(filterType string, c core.FilterCreator, s core.Filte
 		l := len(clientFilterCreator)
 		clientFilterCreator[filterType] = c
 		if l == len(clientFilterCreator) {
-			logger.Log.Fatal("client filter creator repeat register", zap.String("filterType", filterType))
+			log.Log.Fatal("client filter creator repeat register", zap.String("filterType", filterType))
 		}
 	}
 	if s != nil {
 		l := len(serviceFilterCreator)
 		serviceFilterCreator[filterType] = s
 		if l == len(serviceFilterCreator) {
-			logger.Log.Fatal("service filter creator repeat register", zap.String("filterType", filterType))
+			log.Log.Fatal("service filter creator repeat register", zap.String("filterType", filterType))
 		}
 	}
 }
@@ -122,7 +122,7 @@ func MakeFilter() {
 			for i, t := range filterTypes {
 				f, ok := clientFilter[t]
 				if !ok {
-					logger.Log.Fatal("client filter is not found", zap.String("filter", t))
+					log.Log.Fatal("client filter is not found", zap.String("filter", t))
 				}
 				filters[i] = f
 			}
@@ -140,7 +140,7 @@ func MakeFilter() {
 		for i, t := range filterTypes {
 			f, ok := serviceFilter[t]
 			if !ok {
-				logger.Log.Fatal("service filter is not found", zap.String("filter", t))
+				log.Log.Fatal("service filter is not found", zap.String("filter", t))
 			}
 			filters[i] = f
 		}
@@ -153,13 +153,13 @@ func InitFilter(app core.IApp) {
 	for t, f := range clientFilter {
 		err := f.Init(app)
 		if err != nil {
-			logger.Log.Fatal("init client filter err", zap.String("filter", t), zap.Error(err))
+			log.Log.Fatal("init client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	for t, f := range serviceFilter {
 		err := f.Init(app)
 		if err != nil {
-			logger.Log.Fatal("init service filter err", zap.String("filter", t), zap.Error(err))
+			log.Log.Fatal("init service filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 }
@@ -169,14 +169,14 @@ func CloseFilter() {
 	for t, f := range clientFilter {
 		err := f.Close()
 		if err != nil {
-			logger.Log.Error("close client filter err", zap.String("filter", t), zap.Error(err))
+			log.Log.Error("close client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	clientFilter = make(map[string]core.Filter)
 	for t, f := range serviceFilter {
 		err := f.Close()
 		if err != nil {
-			logger.Log.Error("close service filter err", zap.String("filter", t), zap.Error(err))
+			log.Log.Error("close service filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	serviceFilter = make(map[string]core.Filter)
