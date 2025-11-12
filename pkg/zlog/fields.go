@@ -42,6 +42,8 @@ func convertFieldValue(f zap.Field) string {
 			return base64.StdEncoding.EncodeToString(b)
 		}
 		return "binary data"
+	case zapcore.Complex64Type, zapcore.Complex128Type:
+		return fmt.Sprintf("%v", f.Interface)
 	case zapcore.ByteStringType:
 		b, ok := f.Interface.([]byte)
 		if ok {
