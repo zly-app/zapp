@@ -28,7 +28,7 @@ type traceFilter struct {
 }
 
 func (t traceFilter) getSpanName(meta CallMeta) string {
-	return meta.CalleeService() + "/" + meta.CalleeMethod()
+	return meta.CalleeService() + " " + meta.CalleeMethod()
 }
 func (t traceFilter) marshal(a any) string {
 	s, _ := sonic.MarshalString(a)
