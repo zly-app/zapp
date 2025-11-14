@@ -28,7 +28,10 @@ type traceFilter struct {
 }
 
 func (t traceFilter) getSpanName(meta CallMeta) string {
-	return meta.CalleeService() + " " + meta.CalleeMethod()
+	if meta.IsServiceMeta() {
+		return meta.CalleeService() + " " + meta.CalleeMethod() + " 被"
+	}
+	return meta.CalleeService() + " " + meta.CalleeMethod() + " 发"
 }
 func (t traceFilter) marshal(a any) string {
 	s, _ := sonic.MarshalString(a)
@@ -96,19 +99,19 @@ func (t traceFilter) end(ctx context.Context, span trace.Span, meta CallMeta, rs
 
 func (t traceFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
 	ctx, span, meta := t.start(ctx, req)
-	defer span.End()
 
 	err := next(ctx, req, rsp)
 	err = t.end(ctx, span, meta, rsp, err)
+	span.End()
 	return err
 }
 
 func (t traceFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
 	ctx, span, meta := t.start(ctx, req)
-	defer span.End()
 
 	rsp, err := next(ctx, req)
 	err = t.end(ctx, span, meta, rsp, err)
+	span.End()
 	return rsp, err
 }
 
