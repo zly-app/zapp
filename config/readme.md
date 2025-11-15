@@ -71,6 +71,7 @@ frame: # 框架配置
         #Foo: Bar
     Log: # 日志配置
         Level: 'debug' # 日志等级, debug, info, warn, error, dpanic, panic, fatal
+        TraceLevel: 'debug' # 将日志附加到trace的等级, debug, info, warn, error, dpanic, panic, fatal
         Json: false # 启用json编码器, 输出的每一行日志转为json格式
         WriteToStream: true # 输出到屏幕
         WriteToFile: false # 日志是否输出到文件
@@ -85,8 +86,8 @@ frame: # 框架配置
         Color: true # 是否打印彩色日志等级, 只有关闭json编码器才生效
         CapitalLevel: false # 是否大写日志等级
         DevelopmentMode: true # 开发者模式, 在开发者模式下日志记录器在写完DPanic消息后程序会感到恐慌
-        ShowFileAndLinenum: true # 显示文件路径和行号
-        ShowFileAndLinenumMinLevel: 'debug' # 最小显示文件路径和行号的等级. 推荐所有等级都打印代码行, 相对于能快速定位问题来说, 这点性能损耗无关紧要
+        ShowFileAndLinenumMinLevel: 'debug' # 最小显示文件路径和行号的等级, 空表示不显示. 推荐所有等级都打印代码行, 相对于能快速定位问题来说, 这点性能损耗无关紧要
+        ShowStacktraceLevel: 'error' # 显示调用链的等级, 空表示不显示, 推荐error以上才打印调用链. debug, info, warn, error, dpanic, panic, fatal
         MillisDuration: true # 对zap.Duration转为毫秒
     PrintConfig: true # app初始时是否打印配置
 ```
