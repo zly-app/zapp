@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -27,16 +26,18 @@ const logIdKey = "logID"
 const logTraceIdKey = "traceID"
 const logTraceSpanIdKey = "spanID"
 
-var DefaultLogger core.ILogger = New(DefaultConfig)
+var DefaultLogger = func() core.ILogger {
+	conf := DefaultConfig
+	return New(&conf)
+}()
 
-func New(conf core.LogConfig, opts ...zap.Option) *logWrap {
-	var encoder = makeEncoder(&conf) // 编码器配置
-	var ws = makeWriteSyncer(&conf)  // 输出合成器
-	var level = makeLevel(&conf)     // 日志级别
+func New(conf *core.LogConfig, opts ...zap.Option) *logWrap {
+	var encoder = makeEncoder(conf) // 编码器配置
+	var ws = makeWriteSyncer(conf)  // 输出合成器
 
-	opts = makeOpts(&conf, opts...)
-	zapCore := zapcore.NewCore(encoder, ws, level)
-	log := newLogCore(zap.New(zapCore, opts...), parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)), ws)
+	opts = makeOpts(conf, opts...)
+	zapCore := zapcore.NewCore(encoder, ws, zapcore.DebugLevel)
+	log := newLogCore(conf, zap.New(zapCore, opts...), ws)
 	return newLogWrap(log)
 }
 
@@ -109,11 +110,6 @@ func makeWriteSyncer(conf *core.LogConfig) zapcore.WriteSyncer {
 	return zapcore.NewMultiWriteSyncer(ws...)
 }
 
-func makeLevel(conf *core.LogConfig) zapcore.Level {
-	level := Level(strings.ToLower(conf.Level))
-	return parserLogLevel(level)
-}
-
 func makeOpts(conf *core.LogConfig, o ...zap.Option) []zap.Option {
 	const callerSkipOffset = 3
 
@@ -121,8 +117,11 @@ func makeOpts(conf *core.LogConfig, o ...zap.Option) []zap.Option {
 	if conf.DevelopmentMode {
 		opts = append(opts, zap.Development())
 	}
-	if conf.ShowFileAndLinenum {
+	if conf.ShowFileAndLinenumMinLevel != "" || conf.ShowStacktraceLevel != "" {
 		opts = append(opts, zap.AddCaller())
+	}
+	if conf.ShowStacktraceLevel != "" {
+		opts = append(opts, zap.AddStacktrace(parserLogLevel(Level(conf.ShowStacktraceLevel))))
 	}
 	if !conf.Json && conf.Color {
 		opts = append(opts, withColoursMessageOfLoggerId(), withColoursMessageOfTraceId())

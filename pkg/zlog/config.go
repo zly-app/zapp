@@ -48,6 +48,7 @@ var levelMappingReverse = map[zapcore.Level]Level{
 
 var DefaultConfig = core.LogConfig{
 	Level:                      "debug",
+	TraceLevel:                 "debug",
 	Json:                       false,
 	WriteToStream:              true,
 	WriteToFile:                false,
@@ -61,7 +62,7 @@ var DefaultConfig = core.LogConfig{
 	Color:                      true,
 	CapitalLevel:               false,
 	DevelopmentMode:            true,
-	ShowFileAndLinenum:         true,
 	ShowFileAndLinenumMinLevel: "debug", // 推荐所有等级都打印代码行, 相对于能快速定位问题来说, 这点性能损耗无关紧要
+	ShowStacktraceLevel:        "error", // 显示调用链的等级, 空表示不显示, 推荐error以上才打印调用链
 	MillisDuration:             true,
 }

@@ -29,7 +29,7 @@ func NewLogger(appName string, c core.IConfig, opts ...zap.Option) core.ILogger 
 	}
 	c.Config().Frame.Log = conf
 
-	log := zlog.New(conf, opts...)
+	log := zlog.New(&conf, opts...)
 	Log = log
 	return log
 }

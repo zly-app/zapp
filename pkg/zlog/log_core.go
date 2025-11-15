@@ -45,19 +45,25 @@ func (l *logCore) nextLoggerId() string {
 }
 
 type logCore struct {
+	conf           *core.LogConfig
 	log            *zap.Logger
 	fields         []zap.Field
+	level          zapcore.Level
 	callerMinLevel zapcore.Level
+	traceLevel     zapcore.Level
 	ws             zapcore.WriteSyncer
 }
 
 var _ core.ILogger = (*logCore)(nil)
 
-func newLogCore(log *zap.Logger, callerMinLevel zapcore.Level, ws zapcore.WriteSyncer) *logCore {
+func newLogCore(conf *core.LogConfig, log *zap.Logger, ws zapcore.WriteSyncer) *logCore {
 	l := &logCore{
+		conf:           conf,
 		log:            log,
 		fields:         nil,
-		callerMinLevel: callerMinLevel,
+		level:          parserLogLevel(Level(conf.Level)),
+		callerMinLevel: parserLogLevel(Level(conf.ShowFileAndLinenumMinLevel)),
+		traceLevel:     parserLogLevel(Level(conf.TraceLevel)),
 		ws:             ws,
 	}
 	return l
@@ -77,19 +83,21 @@ func (l *logCore) print(level Level, v []interface{}) {
 	ce := l.log.Check(zapLevel, body.msg)
 	if ce != nil {
 		if body.customCaller != nil {
-			ce.Caller.Function = body.customCaller.fn
-			ce.Caller.File = body.customCaller.file
-			ce.Caller.Line = body.customCaller.line
+			ce.Caller.Function = body.customCaller.Fn
+			ce.Caller.File = body.customCaller.File
+			ce.Caller.Line = body.customCaller.Line
 			ce.Caller.Defined = true
 		}
-		if zapLevel < l.callerMinLevel {
-			ce.Caller.Defined = false
+		ce.Caller.Defined = l.conf.ShowFileAndLinenumMinLevel != "" && zapLevel >= l.callerMinLevel
+		if zapLevel >= l.level {
+			ce.Write(body.fields...)
 		}
-		ce.Write(body.fields...)
 	}
 
 	// 将log附到trace上
-	l.attachLog2Trace(ce, body)
+	if l.conf.TraceLevel != "" && zapLevel >= l.traceLevel {
+		l.attachLog2Trace(ce, body)
+	}
 }
 
 func (l *logCore) makeBody(v []interface{}) logBody {
@@ -265,22 +273,27 @@ func (l *logCore) attachLog2Trace(ce *zapcore.CheckedEntry, body logBody) {
 	for _, f := range body.fields {
 		attr = append(attr, utils.OtelSpanKey(f.Key).String(convertFieldValue(f)))
 	}
-	attr = append(attr,
-		utils.OtelSpanKey("line").String(ce.Caller.File+":"+strconv.Itoa(ce.Caller.Line)),
-		utils.OtelSpanKey("func").String(ce.Caller.Function),
-	)
+	if ce.Caller.Defined {
+		attr = append(attr,
+			utils.OtelSpanKey("line").String(ce.Caller.File+":"+strconv.Itoa(ce.Caller.Line)),
+			utils.OtelSpanKey("func").String(ce.Caller.Function),
+		)
+	}
+	if ce.Stack != "" {
+		attr = append(attr, utils.OtelSpanKey("stack").String(ce.Stack))
+	}
 	utils.Otel.CtxEvent(body.ctx, "Log", attr...)
 }
 
 type customCaller struct {
-	fn, file string
-	line     int
+	Fn, File string
+	Line     int
 }
 
 func WithCaller(fn, file string, line int) zap.Field {
 	return zap.Reflect("caller", &customCaller{
-		fn:   fn,
-		file: file,
-		line: line,
+		Fn:   fn,
+		File: file,
+		Line: line,
 	})
 }
