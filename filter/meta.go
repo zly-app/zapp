@@ -19,6 +19,10 @@ type CallMeta interface {
 	// 获取服务名
 	ServiceName() string
 
+	// 获取主调instance
+	CallerInstance() string
+	// 获取主调env
+	CallerEnv() string
 	// 获取主调服务
 	CallerService() string
 	// 获取主调方法
@@ -58,10 +62,12 @@ type callMeta struct {
 
 	serviceName string // 服务名
 
-	callerService string // 主调服务
-	callerMethod  string // 主调方法
-	calleeService string // 被调服务
-	calleeMethod  string // 被调方法
+	callerInstance string // 主调Instance
+	callerEnv      string // 主调环境
+	callerService  string // 主调服务
+	callerMethod   string // 主调方法
+	calleeService  string // 被调服务
+	calleeMethod   string // 被调方法
 
 	callersSkip int
 
@@ -81,8 +87,10 @@ func newClientMeta(clientType, clientName, methodName string) *callMeta {
 		clientType: clientType,
 		clientName: clientName,
 
-		calleeService: clientType + "/" + clientName,
-		calleeMethod:  methodName,
+		callerInstance: config.Conf.Config().Frame.Instance,
+		callerEnv:      config.Conf.Config().Frame.Env,
+		calleeService:  clientType + "/" + clientName,
+		calleeMethod:   methodName,
 	}
 }
 
@@ -114,6 +122,12 @@ func (m *callMeta) fillCallerMeta(ctx context.Context) {
 		return
 	}
 
+	if callerMeta.CallerInstance != "" {
+		m.callerInstance = callerMeta.CallerInstance
+	}
+	if callerMeta.CallerEnv != "" {
+		m.callerEnv = callerMeta.CallerEnv
+	}
 	if callerMeta.CallerService != "" {
 		m.callerService = callerMeta.CallerService
 	}
@@ -155,10 +169,12 @@ func (m *callMeta) ClientName() string { return m.clientName }
 func (m *callMeta) IsServiceMeta() bool { return m.kind == MetaKindService }
 func (m *callMeta) ServiceName() string { return m.serviceName }
 
-func (m *callMeta) CallerService() string { return m.callerService }
-func (m *callMeta) CallerMethod() string  { return m.callerMethod }
-func (m *callMeta) CalleeService() string { return m.calleeService }
-func (m *callMeta) CalleeMethod() string  { return m.calleeMethod }
+func (m *callMeta) CallerInstance() string { return m.callerInstance }
+func (m *callMeta) CallerEnv() string      { return m.callerEnv }
+func (m *callMeta) CallerService() string  { return m.callerService }
+func (m *callMeta) CallerMethod() string   { return m.callerMethod }
+func (m *callMeta) CalleeService() string  { return m.calleeService }
+func (m *callMeta) CalleeMethod() string   { return m.calleeMethod }
 
 func (m *callMeta) StartTime() int64 {
 	if m.startTime == 0 {
@@ -199,10 +215,12 @@ type callerMetaKey struct{}
 
 // 主调信息
 type CallerMeta struct {
-	CallerService string // 主调服务
-	CallerMethod  string // 主调方法
-	CalleeService string // 被调服务
-	CalleeMethod  string // 被调方法
+	CallerInstance string // 主调Instance
+	CallerEnv      string // 主调env
+	CallerService  string // 主调服务
+	CallerMethod   string // 主调方法
+	CalleeService  string // 被调服务
+	CalleeMethod   string // 被调方法
 }
 
 func GetCallerMeta(ctx context.Context) (CallerMeta, bool) {
