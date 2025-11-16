@@ -51,6 +51,8 @@ func (t traceFilter) start(ctx context.Context, req interface{}) (context.Contex
 		utils.OtelSpanKey("line").String(file + ":" + strconv.Itoa(line)),
 		utils.OtelSpanKey("func").String(fn),
 		utils.OtelSpanKey("instance").String(config.Conf.Config().Frame.Instance),
+		utils.OtelSpanKey("callerInstance").String(meta.CallerInstance()),
+		utils.OtelSpanKey("callerEnv").String(meta.CallerEnv()),
 		utils.OtelSpanKey("callerService").String(meta.CallerService()),
 		utils.OtelSpanKey("callerMethod").String(meta.CallerMethod()),
 		utils.OtelSpanKey("calleeService").String(meta.CalleeService()),
@@ -59,10 +61,6 @@ func (t traceFilter) start(ctx context.Context, req interface{}) (context.Contex
 	kind := trace.SpanKindClient
 	if meta.IsServiceMeta() {
 		kind = trace.SpanKindServer
-		opts = append(opts,
-			utils.OtelSpanKey("callerInstance").String(meta.CallerInstance()),
-			utils.OtelSpanKey("callerEnv").String(meta.CallerEnv()),
-		)
 	}
 	ctx, span := otel.Tracer("").Start(ctx, t.getSpanName(meta),
 		trace.WithAttributes(opts...),

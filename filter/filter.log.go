@@ -96,7 +96,7 @@ func (t *logFilter) getLevel(ctx context.Context) string {
 	return l
 }
 
-func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context, CallMeta, []interface{}) {
+func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context, CallMeta) {
 	meta := GetCallMeta(ctx)
 
 	eventName := " Send"
@@ -106,36 +106,24 @@ func (t *logFilter) start(ctx context.Context, req interface{}) (context.Context
 	fn, file, line := meta.FuncFileLine()
 	customCaller := zlog.WithCaller(fn, file, line)
 
-	instance := zap.String("instance", config.Conf.Config().Frame.Instance)
-	callerService := zap.String("callerService", meta.CallerService())
-	callerMethod := zap.String("callerMethod", meta.CallerMethod())
-	calleeService := zap.String("calleeService", meta.CalleeService())
-	calleeMethod := zap.String("calleeMethod", meta.CalleeMethod())
-
 	logFields := []interface{}{
-		customCaller,
-		instance,
-		callerService,
-		callerMethod,
-		calleeService,
-		calleeMethod,
+		customCaller, zap.String("instance", config.Conf.Config().Frame.Instance),
+		zap.String("callerInstance", meta.CallerInstance()),
+		zap.String("callerEnv", meta.CallerEnv()),
+		zap.String("callerService", meta.CallerService()),
+		zap.String("callerMethod", meta.CallerMethod()),
+		zap.String("calleeService", meta.CalleeService()),
+		zap.String("calleeMethod", meta.CalleeMethod()),
+		ctx, t.getMethodName(meta) + eventName, zap.String("data", t.marshal(req)),
+		log.WithoutAttachLog2Trace(),
 	}
 
 	level := t.getLevel(ctx)
-	log.Log.Log(level,
-		customCaller,
-		instance,
-		callerService,
-		callerMethod,
-		calleeService,
-		calleeMethod,
-		ctx, t.getMethodName(meta)+eventName, zap.String("data", t.marshal(req)),
-		log.WithoutAttachLog2Trace(),
-	)
-	return ctx, meta, logFields
+	log.Log.Log(level, logFields...)
+	return ctx, meta
 }
 
-func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error, logFields []interface{}) error {
+func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error) error {
 	code, codeType, replaceErr := DefaultGetErrCodeFunc(ctx, rsp, err)
 	err = replaceErr
 
@@ -144,17 +132,27 @@ func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err
 		eventName = " Send"
 	}
 
+	fn, file, line := meta.FuncFileLine()
+	customCaller := zlog.WithCaller(fn, file, line)
+
 	duration := meta.EndTime() - meta.StartTime()
-	logFields = append(logFields,
+	logFields := []interface{}{
 		ctx,
-		t.getMethodName(meta)+eventName,
+		customCaller, zap.String("instance", config.Conf.Config().Frame.Instance),
+		zap.String("callerInstance", meta.CallerInstance()),
+		zap.String("callerEnv", meta.CallerEnv()),
+		zap.String("callerService", meta.CallerService()),
+		zap.String("callerMethod", meta.CallerMethod()),
+		zap.String("calleeService", meta.CalleeService()),
+		zap.String("calleeMethod", meta.CalleeMethod()),
+		t.getMethodName(meta) + eventName,
 		zap.String("data", t.marshal(rsp)),
 		zap.Int64("duration", duration),
 		zap.String("durationText", time.Duration(duration).String()),
 		zap.Int("code", code),
 		zap.String("codeType", codeType),
 		log.WithoutAttachLog2Trace(),
-	)
+	}
 	if err != nil {
 		if meta.HasPanic() {
 			detail := utils.Recover.GetRecoverErrors(err)
@@ -175,18 +173,18 @@ func (t *logFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err
 }
 
 func (t *logFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
-	ctx, meta, logFields := t.start(ctx, req)
+	ctx, meta := t.start(ctx, req)
 
 	err := next(ctx, req, rsp)
-	err = t.end(ctx, meta, rsp, err, logFields)
+	err = t.end(ctx, meta, rsp, err)
 	return err
 }
 
 func (t *logFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
-	ctx, meta, logFields := t.start(ctx, req)
+	ctx, meta := t.start(ctx, req)
 
 	rsp, err := next(ctx, req)
-	err = t.end(ctx, meta, rsp, err, logFields)
+	err = t.end(ctx, meta, rsp, err)
 	return rsp, err
 }
 
