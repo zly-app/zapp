@@ -31,7 +31,8 @@ type GPoolFilterConfig struct {
 type gPoolFilter struct {
 	once sync.Once
 
-	defPool core.IGPool
+	defClientPool  core.IGPool
+	defServicePool core.IGPool
 
 	clientPool  map[string]map[string]core.IGPool
 	servicePool map[string]core.IGPool
@@ -47,7 +48,8 @@ func (g *gPoolFilter) Init(app core.IApp) error {
 			return
 		}
 
-		g.defPool = gpool.NewGPool(g.genGPoolConfig(conf.Config))
+		g.defClientPool = gpool.NewGPool(g.genGPoolConfig(conf.Config))
+		g.defServicePool = gpool.NewGPool(g.genGPoolConfig(conf.Config))
 
 		g.clientPool = make(map[string]map[string]core.IGPool, len(conf.Client))
 		for clientType, clientConf := range conf.Client {
@@ -117,7 +119,7 @@ func (g *gPoolFilter) getClientGPool(clientType, clientName string) core.IGPool 
 			return gp
 		}
 	}
-	return g.defPool
+	return g.defClientPool
 }
 func (g *gPoolFilter) getServicGPool(serviceName string) core.IGPool {
 	gp, ok := g.servicePool[serviceName]
@@ -128,7 +130,7 @@ func (g *gPoolFilter) getServicGPool(serviceName string) core.IGPool {
 	if ok {
 		return gp
 	}
-	return g.defPool
+	return g.defServicePool
 }
 func (g *gPoolFilter) getGPool(ctx context.Context) core.IGPool {
 	meta := GetCallMeta(ctx)
@@ -137,11 +139,12 @@ func (g *gPoolFilter) getGPool(ctx context.Context) core.IGPool {
 	} else if meta.IsServiceMeta() {
 		return g.getServicGPool(meta.ServiceName())
 	}
-	return g.defPool
+	return g.defClientPool
 }
 
 func (g *gPoolFilter) Close() error {
-	g.defPool.Close()
+	g.defClientPool.Close()
+	g.defServicePool.Close()
 	for _, clientPool := range g.clientPool {
 		for _, client := range clientPool {
 			client.Close()

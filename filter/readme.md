@@ -4,14 +4,14 @@
 
 默认提供了这些过滤器:
 
-| 名称          | 说明                 |
-| ------------- | -------------------- |
-| gpool.timeout | 请求超时             |
+| 名称          | 说明                 | 默认参数                                  |
+| ------------- | -------------------- | ----------------------------------------- |
+| gpool.timeout | 请求超时             | 5s                                        |
 | gpool.trace   | 链路追踪             |
 | gpool.metrics | 指标收集             |
-| gpool.log     | 请求日志             |
+| gpool.log     | 请求日志             | Level = debug                             |
 | gpool.recover | panic恢复            |
-| gpool.gpool   | 协程池               |
+| gpool.gpool   | 协程池               | ThreadCount = 100 , JobQueueSize = 100000 |
 | gpool.base    | 对以上过滤器的包装器 |
 
 # 组件请求、响应时接入过滤器
@@ -122,10 +122,10 @@ filters:
 在这个配置中. 组件类型查找到的配置如下:
 
  | client类型 | client名 | 匹配过滤器 | 查找路径                      |
- | ---------- | -------- | ---------- | ----------------------------- |
- | a          | foo      | filter3    | filters.client.a.foo          |
- | a          | bar      | filter2    | filter.client.a.default       |
- | other      | test     | filter1    | filter.client.default.default |
+ | ---------- |---------| ---------- | ----------------------------- |
+ | a          | foo     | filter3    | filters.client.a.foo          |
+ | a          | bar     | filter2    | filters.client.a.default       |
+ | other      | any     | filter1    | filters.client.default.default |
 
 ### 配置参考
 
