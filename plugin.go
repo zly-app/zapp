@@ -37,11 +37,6 @@ func (app *appCli) makePlugin() {
 func (app *appCli) startPlugin() {
 	app.Info("启动插件")
 	app.handler(BeforeStartPlugin)
-	type Item struct {
-		Name      string
-		DependsOn []string
-		Close     func()
-	}
 	items := make([]depender.Item, len(app.opt.Plugins))
 	for i, pluginType := range app.opt.Plugins {
 		p, ok := app.plugins[pluginType]
