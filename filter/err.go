@@ -2,6 +2,8 @@ package filter
 
 import (
 	"context"
+
+	"github.com/zly-app/zapp/pkg/utils"
 )
 
 const (
@@ -20,12 +22,15 @@ var DefaultGetErrCodeFunc GetErrCodeFunc = func(ctx context.Context, rsp interfa
 	}
 
 	switch err {
-	case context.DeadlineExceeded, context.Canceled:
+	case context.DeadlineExceeded:
 		return -1, CodeTypeTimeoutOrCancel, err
 	}
 
 	meta := GetCallMeta(ctx)
 	if meta.HasPanic() {
+		return -2, CodeTypeException, err
+	}
+	if utils.Recover.IsRecoverError(err) {
 		return -2, CodeTypeException, err
 	}
 
