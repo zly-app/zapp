@@ -9,15 +9,27 @@
 package msgbus
 
 import (
-	"runtime"
+	"strconv"
 	"sync/atomic"
 
-	"go.uber.org/zap"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/zly-app/zapp/consts"
 	"github.com/zly-app/zapp/core"
+	"github.com/zly-app/zapp/log"
 	"github.com/zly-app/zapp/pkg/utils"
 )
+
+type Subscriber interface {
+	// 获取订阅者id
+	GetSubId() uint32
+	// 启动
+	Start()
+	// 关闭订阅者, 程序结束前注意要调用这个方法
+	Close()
+
+	Handler(msg core.IMsgbusMessage)
+}
 
 // 全局自增订阅者id
 var autoIncrSubscriberId uint32
@@ -29,59 +41,97 @@ func nextSubscriberId() uint32 {
 
 // 订阅者
 type subscriber struct {
-	handler core.MsgbusHandler
-	queue   chan *channelMsg
+	isGlobal    bool
+	subId       uint32
+	handler     core.MsgbusHandler
+	queue       chan core.IMsgbusMessage
+	threadCount int
 
-	isClose uint32
+	onceStart int32
+	onceClose int32
 }
 
-func newSubscriber(threadCount int, handler core.MsgbusHandler) *subscriber {
+func newSubscriber(msgQueueSize int, threadCount int, handler core.MsgbusHandler) Subscriber {
 	if threadCount < 1 {
-		threadCount = runtime.NumCPU() >> 1
-		if threadCount < 1 {
-			threadCount = 1
-		}
+		threadCount = 1
 	}
 	// 创建订阅者
 	sub := &subscriber{
-		handler: handler,
-		queue:   make(chan *channelMsg, consts.DefaultMsgbusQueueSize),
+		subId:       nextSubscriberId(),
+		handler:     handler,
+		queue:       make(chan core.IMsgbusMessage, msgQueueSize),
+		threadCount: threadCount,
 	}
-
-	// 开始消费
-	for i := 0; i < threadCount; i++ {
-		go sub.start()
-	}
-
 	return sub
 }
+func newGlobalSubscriber(msgQueueSize int, threadCount int, handler core.MsgbusHandler) Subscriber {
+	if threadCount < 1 {
+		threadCount = 1
+	}
+	// 创建订阅者
+	sub := &subscriber{
+		isGlobal:    true,
+		subId:       nextSubscriberId(),
+		handler:     handler,
+		queue:       make(chan core.IMsgbusMessage, msgQueueSize),
+		threadCount: threadCount,
+	}
+	return sub
+}
+func (s *subscriber) GetSubId() uint32 {
+	return s.subId
+}
+func (s *subscriber) Start() {
+	if atomic.AddInt32(&s.onceStart, 1) != 1 {
+		return
+	}
 
+	for i := 0; i < s.threadCount; i++ {
+		go s.start()
+	}
+}
 func (s *subscriber) start() {
 	for msg := range s.queue {
 		s.process(msg)
 	}
 }
 
-func (s *subscriber) process(msg *channelMsg) {
-	ctx := newContext(msg)
+func (s *subscriber) Close() {
+	if atomic.AddInt32(&s.onceClose, 1) == 1 {
+		close(s.queue)
+	}
+}
 
-	ctx.Debug("msgbus.receive")
+func (s *subscriber) Handler(msg core.IMsgbusMessage) {
+	s.queue <- msg
+}
+
+func (s *subscriber) process(msg core.IMsgbusMessage) {
+	var spanName string
+	if s.isGlobal {
+		spanName = "msgbus/subsriber/global_" + strconv.Itoa(int(s.subId))
+	} else {
+		spanName = "msgbus/subsriber/" + strconv.Itoa(int(s.subId))
+	}
+
+	ctx, span := otel.Tracer("").Start(msg.Ctx(), spanName, trace.WithSpanKind(trace.SpanKindInternal))
+	defer span.End()
+
+	log.Debug(ctx, "msgbus.receive", log.String("topic", msg.Topic()), log.Uint32("subId", s.subId), log.Bool("isGlobal", s.isGlobal), log.Any("msg", msg.Msg()))
+	msgData, _ := getMsgData(ctx)
+	utils.Otel.CtxEvent(ctx, "receive", utils.OtelSpanKey("msg").String(msgData), utils.OtelSpanKey("isGlobal").Bool(s.isGlobal))
 
 	err := utils.Recover.WrapCall(func() error {
-		return s.handler(ctx)
+		s.handler(msg.Ctx(), msg)
+		return nil
 	})
 
 	if err == nil {
-		ctx.Debug("msgbus.success")
+		log.Debug(ctx, "msgbus.success", log.String("topic", msg.Topic()), log.Uint32("subId", s.subId), log.Bool("isGlobal", s.isGlobal))
+		utils.Otel.CtxEvent(ctx, "handler success")
 		return
 	}
 
-	ctx.Error("msgbus.error!", zap.String("error", utils.Recover.GetRecoverErrorDetail(err)))
-}
-
-// 关闭
-func (s *subscriber) Close() {
-	if atomic.CompareAndSwapUint32(&s.isClose, 0, 1) {
-		close(s.queue)
-	}
+	log.Error(ctx, "msgbus.error", log.String("topic", msg.Topic()), log.Uint32("subId", s.subId), log.Bool("isGlobal", s.isGlobal), log.String("error", utils.Recover.GetRecoverErrorDetail(err)))
+	utils.Otel.CtxErrEvent(ctx, "handler error", err)
 }

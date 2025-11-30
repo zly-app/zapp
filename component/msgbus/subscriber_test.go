@@ -9,29 +9,38 @@
 package msgbus
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"testing"
 
 	"github.com/zly-app/zapp/core"
 )
 
-func TestSubscriber(t *testing.T) {
+func TestSimple(t *testing.T) {
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(2) // global两次
 
-	s := newSubscriber(1, func(ctx core.IMsgbusContext) error {
-		ctx.Info(ctx.Msg())
+	Publish(context.Background(), "topic1", "msg")
+
+	Subscribe("topic1", 0, func(ctx context.Context, msg core.IMsgbusMessage) {
+		fmt.Println("Subscribe.topic1", msg.Topic(), msg)
 		wg.Done()
-		return nil
 	})
-	defer s.Close()
 
-	for i := 0; i < 10; i++ {
-		s.queue <- &channelMsg{
-			topic: "topic",
-			msg:   i,
-		}
-	}
+	Subscribe("topic2", 0, func(ctx context.Context, msg core.IMsgbusMessage) {
+		fmt.Println("Subscribe.topic2", msg.Topic(), msg)
+		wg.Done()
+	})
+
+	// 全局订阅
+	SubscribeGlobal(0, func(ctx context.Context, msg core.IMsgbusMessage) {
+		fmt.Println("SubscribeGlobal", msg.Topic(), msg)
+		wg.Done()
+	})
+
+	Publish(context.Background(), "topic1", "msg")
+	Publish(context.Background(), "topic2", "msg")
 
 	wg.Wait()
 }

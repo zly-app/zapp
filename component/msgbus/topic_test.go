@@ -9,17 +9,19 @@
 package msgbus
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"testing"
-
-	"go.uber.org/zap"
 
 	"github.com/zly-app/zapp/core"
 )
 
 func TestTopic(t *testing.T) {
+	const loopCount = 3
+
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(loopCount * 2)
 
 	topic1 := newMsgTopic()
 	defer topic1.Close()
@@ -27,21 +29,19 @@ func TestTopic(t *testing.T) {
 	topic2 := newMsgTopic()
 	defer topic2.Close()
 
-	subscribe1 := topic1.Subscribe(1, func(ctx core.IMsgbusContext) error {
-		ctx.Info("subscribe.topic1", zap.Any("msg", ctx.Msg()))
+	subscribe1 := topic1.Subscribe(10, 0, func(ctx context.Context, msg core.IMsgbusMessage) {
+		fmt.Println("subscribe.topic1", msg)
 		wg.Done()
-		return nil
 	})
 
-	subscribe2 := topic2.Subscribe(1, func(ctx core.IMsgbusContext) error {
-		ctx.Info("subscribe.topic2", zap.Any("msg", ctx.Msg()))
+	subscribe2 := topic2.Subscribe(10, 0, func(ctx context.Context, msg core.IMsgbusMessage) {
+		fmt.Println("subscribe.topic2", msg)
 		wg.Done()
-		return nil
 	})
 
-	for i := 0; i < 5; i++ {
-		topic1.Publish("topic1", i)
-		topic2.Publish("topic2", i)
+	for i := 0; i < loopCount; i++ {
+		topic1.Publish(context.Background(), "topic1", i)
+		topic2.Publish(context.Background(), "topic2", i)
 	}
 
 	topic1.Unsubscribe(subscribe1)
