@@ -9,9 +9,9 @@
 | gpool.timeout | 请求超时             |
 | gpool.trace   | 链路追踪             |
 | gpool.metrics | 指标收集             |
-| gpool.gpool   | 协程池               |
 | gpool.log     | 请求日志             |
 | gpool.recover | panic恢复            |
+| gpool.gpool   | 协程池               |
 | gpool.base    | 对以上过滤器的包装器 |
 
 # 组件请求、响应时接入过滤器
