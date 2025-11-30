@@ -24,10 +24,8 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 4,
-  "iteration": 1721649564349,
+  "id": 0,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
@@ -46,7 +44,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -66,6 +64,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -73,24 +72,28 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
           "expr": "sum(increase(rpc_server_started_total{env=~\"$env\"}[1m]))/60",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "总请求(每秒)",
+      "title": "被调总请求(每秒)",
       "type": "stat"
     },
     {
@@ -109,7 +112,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -129,6 +132,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -136,24 +140,28 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
           "expr": "sum(increase(rpc_server_handled_total{env=~\"$env\", code_type!=\"success\"}[1m])) / sum(increase(rpc_server_handled_total{env=~\"$env\"}[1m]))",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "总异常率",
+      "title": "被调总异常率",
       "type": "stat"
     },
     {
@@ -182,7 +190,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -202,6 +210,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -209,10 +218,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "alias": "",
@@ -233,9 +244,9 @@
           "editorMode": "code",
           "exemplar": false,
           "expr": "sum(increase(rpc_server_handled_total{env=~\"$env\", code_type=\"timeoutOrCancel\"}[1m])) / sum(increase(rpc_server_handled_total{env=~\"$env\"}[1m]))",
-          "instant": true,
+          "instant": false,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "metrics": [
             {
               "id": "1",
@@ -243,11 +254,12 @@
             }
           ],
           "query": "",
+          "range": true,
           "refId": "A",
           "timeField": "timestamp"
         }
       ],
-      "title": "总超时率",
+      "title": "被调总超时率",
       "type": "stat"
     },
     {
@@ -269,7 +281,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -310,6 +322,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -317,9 +330,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "alias": "",
@@ -340,9 +355,9 @@
           "editorMode": "code",
           "exemplar": false,
           "expr": "sum(increase(rpc_server_panic_total{env=~\"$env\"}[$__range]))",
-          "instant": true,
+          "instant": false,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "metrics": [
             {
               "id": "1",
@@ -350,11 +365,12 @@
             }
           ],
           "query": "",
+          "range": true,
           "refId": "A",
           "timeField": "timestamp"
         }
       ],
-      "title": "总Panic数量",
+      "title": "被调总Panic数量",
       "type": "stat"
     },
     {
@@ -374,7 +390,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -393,6 +409,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -400,10 +417,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -412,10 +431,10 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(rate(process_cpu_seconds_total{env=~\"$env\"}[5m]))",
+          "expr": "sum(rate(process_cpu_time_seconds_total{env=~\"$env\"}[5m]))",
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "queryType": "randomWalk",
           "refId": "A"
         }
@@ -442,7 +461,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -462,6 +481,8 @@
       },
       "id": 6,
       "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -472,9 +493,10 @@
         },
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
+        "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -483,10 +505,10 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(rate(process_cpu_seconds_total{env=~\"$env\"}[5m])) / sum(process_cpu_cores{env=~\"$env\"})",
+          "expr": "sum(rate(process_cpu_time_seconds_total{env=~\"$env\"}[5m])) / sum(process_cpu_cores{env=~\"$env\"})",
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "queryType": "randomWalk",
           "refId": "A"
         }
@@ -511,7 +533,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -531,6 +553,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -538,10 +561,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -553,7 +578,7 @@
           "expr": "sum(process_resident_memory_bytes{env=~\"$env\"})",
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "queryType": "randomWalk",
           "refId": "A"
         }
@@ -580,7 +605,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -600,6 +625,8 @@
       },
       "id": 9,
       "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -610,9 +637,10 @@
         },
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
+        "sizing": "auto",
         "text": {}
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -624,7 +652,7 @@
           "expr": "avg(process_resident_memory_bytes{env=~\"$env\"}/process_memory_quota{env=~\"$env\"})",
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "queryType": "randomWalk",
           "refId": "A"
         }
@@ -649,7 +677,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -668,6 +696,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -675,10 +704,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -690,7 +721,7 @@
           "expr": "sum(process_cpu_cores{env=~\"$env\"})",
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "queryType": "randomWalk",
           "refId": "A"
         }
@@ -715,7 +746,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -735,6 +766,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -742,10 +774,12 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -757,7 +791,7 @@
           "expr": "sum(process_memory_quota{env=~\"$env\"}) ",
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "queryType": "randomWalk",
           "refId": "A"
         }
@@ -767,10 +801,6 @@
     },
     {
       "collapsed": false,
-      "datasource": {
-        "type": "elasticsearch",
-        "uid": "trace-index-uid"
-      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -794,8 +824,14 @@
           },
           "custom": {
             "align": "left",
-            "displayMode": "auto",
-            "filterable": true
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
           },
           "decimals": 2,
           "mappings": [
@@ -814,7 +850,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -864,7 +900,7 @@
                   {
                     "targetBlank": true,
                     "title": "点击查看日志详情",
-                    "url": "/explore?orgId=1&left=%5B\"${__from}\",\"${__to}\"﻿,%22﻿${DS_LOKI}%22,%7B%22refId%22:%22A%22,%22expr%22:%22%7Bapp%3D%5C%22${__data.fields.app}%5C%22,%20env%3D%5C%22$env%5C%22%7D%22%7D%5D"
+                    "url": "/explore?orgId=1&left=%5B\"${__from}\",\"${__to}\"﻿,%22﻿${DS_LOKI}%22,%7B%22refId%22:%22A%22,%22expr%22:%22%7Bapp%3D%5C%22${__data.fields.app}%5C%22,%20env%3D~%5C%22$env%5C%22%7D%22%7D%5D"
                   }
                 ]
               },
@@ -901,7 +937,7 @@
                   "steps": [
                     {
                       "color": "green",
-                      "value": null
+                      "value": 0
                     },
                     {
                       "color": "#EAB839",
@@ -933,7 +969,7 @@
                   "steps": [
                     {
                       "color": "green",
-                      "value": null
+                      "value": 0
                     },
                     {
                       "color": "dark-yellow",
@@ -955,7 +991,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "QPS"
+              "options": "被调QPS"
             },
             "properties": [
               {
@@ -967,7 +1003,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "平均耗时"
+              "options": "被调平均耗时"
             },
             "properties": [
               {
@@ -983,7 +1019,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "成功率"
+              "options": "被调成功率"
             },
             "properties": [
               {
@@ -995,7 +1031,63 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "耗时P99"
+              "options": "被调耗时P99"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "主调QPS"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "主调平均耗时"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "主调成功率"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "主调耗时P99"
             },
             "properties": [
               {
@@ -1019,19 +1111,11 @@
       "id": 32,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "enablePagination": true,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
+        "enablePagination": true,
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "alias": "",
@@ -1056,7 +1140,7 @@
           "hide": false,
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "metrics": [
             {
               "id": "1",
@@ -1072,13 +1156,14 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(rate(process_cpu_seconds_total{env=~\"$env\"}[5m])) by (app) / sum(process_cpu_cores{env=~\"$env\"}) by (app)",
+          "expr": "sum(rate(process_cpu_time_seconds_total{env=~\"$env\"}[5m])) by (app) * 2 / sum(process_cpu_cores{env=~\"$env\"}) by (app)",
           "format": "table",
           "hide": false,
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "refId": "B"
         },
         {
@@ -1086,13 +1171,14 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": false,
           "expr": "avg(process_resident_memory_bytes{env=~\"$env\"}/process_memory_quota{env=~\"$env\"}) by (app)",
           "format": "table",
           "hide": false,
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "refId": "C"
         },
         {
@@ -1100,13 +1186,14 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": false,
           "expr": "sum(increase(rpc_server_handled_total{env=~\"$env\"}[1m])) by (app)",
           "format": "table",
           "hide": false,
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "refId": "D"
         },
         {
@@ -1114,13 +1201,14 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": false,
           "expr": "sum(increase(rpc_server_handled_msec_sum{env=~\"$env\"}[1m]))  by (app) /sum(increase(rpc_server_handled_msec_count{env=~\"$env\"}[1m])) by (app)",
           "format": "table",
           "hide": false,
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "refId": "E"
         },
         {
@@ -1128,13 +1216,14 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": false,
           "expr": "topk(1, histogram_quantile(0.99, sum(rate(rpc_server_handled_msec_bucket{env=~\"$env\"}[1m])) by (le, app)))",
           "format": "table",
           "hide": false,
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "refId": "F"
         },
         {
@@ -1142,14 +1231,76 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": false,
           "expr": "sum(increase(rpc_server_handled_total{env=~\"$env\", code_type=\"success\"}[1m])) by (app) / sum(increase(rpc_server_handled_total{env=~\"$env\"}[1m])) by (app)",
           "format": "table",
           "hide": false,
           "instant": true,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "__auto",
           "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{env=~\"$env\"}[1m])) by (app)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "H"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_msec_sum{env=~\"$env\"}[1m]))  by (app) /sum(increase(rpc_client_handled_msec_count{env=~\"$env\"}[1m])) by (app)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "I"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "topk(1, histogram_quantile(0.99, sum(rate(rpc_client_handled_msec_bucket{env=~\"$env\"}[1m])) by (le, app)))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "J"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum(increase(rpc_client_handled_total{env=~\"$env\", code_type=\"success\"}[1m])) by (app) / sum(increase(rpc_client_handled_total{env=~\"$env\"}[1m])) by (app)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "K"
         }
       ],
       "title": "服务列表",
@@ -1207,6 +1358,30 @@
                 ],
                 "operation": "aggregate"
               },
+              "Value #H": {
+                "aggregations": [
+                  "last"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #I": {
+                "aggregations": [
+                  "last"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #J": {
+                "aggregations": [
+                  "last"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #K": {
+                "aggregations": [
+                  "last"
+                ],
+                "operation": "aggregate"
+              },
               "__name__": {
                 "aggregations": []
               },
@@ -1248,22 +1423,39 @@
           "id": "organize",
           "options": {
             "excludeByName": {},
-            "indexByName": {},
+            "includeByName": {},
+            "indexByName": {
+              "Value #B (last)": 1,
+              "Value #C (last)": 2,
+              "Value #D (last)": 3,
+              "Value #E (last)": 4,
+              "Value #F (last)": 5,
+              "Value #G (last)": 6,
+              "Value #H (last)": 7,
+              "Value #I (last)": 8,
+              "Value #J (last)": 9,
+              "Value #K (last)": 10,
+              "app": 0
+            },
             "renameByName": {
               "Value #B (last)": "CPU平均使用率",
               "Value #B (lastNotNull)": "cpu使用率",
               "Value #C (last)": "内存平均使用率",
               "Value #C (lastNotNull)": "内存平均使用率",
               "Value #C (mean)": "CPU平均使用率",
-              "Value #D (last)": "QPS",
+              "Value #D (last)": "被调QPS",
               "Value #D (lastNotNull)": "内存平均使用率",
               "Value #D (mean)": "内存平均使用率",
-              "Value #E (last)": "平均耗时",
+              "Value #E (last)": "被调平均耗时",
               "Value #E (lastNotNull)": "QPS",
-              "Value #F (last)": "耗时P99",
+              "Value #F (last)": "被调耗时P99",
               "Value #F (lastNotNull)": "平均耗时",
-              "Value #G (last)": "成功率",
+              "Value #G (last)": "被调成功率",
               "Value #G (lastNotNull)": "成功率",
+              "Value #H (last)": "主调QPS",
+              "Value #I (last)": "主调平均耗时",
+              "Value #J (last)": "主调耗时P99",
+              "Value #K (last)": "主调成功率",
               "Value (mean)": "",
               "app": "应用名",
               "env": "",
@@ -1277,10 +1469,19 @@
           "options": {
             "alias": "监控",
             "binary": {
-              "left": "应用名",
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "应用名"
+                }
+              },
               "operator": "-",
-              "reducer": "sum",
-              "right": "应用名"
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "应用名"
+                }
+              }
             },
             "mode": "binary",
             "reduce": {
@@ -1294,7 +1495,22 @@
           "id": "calculateField",
           "options": {
             "alias": "日志",
-            "mode": "reduceRow",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "应用名"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "应用名"
+                }
+              }
+            },
+            "mode": "binary",
             "reduce": {
               "reducer": "sum"
             }
@@ -1327,9 +1543,13 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -1338,6 +1558,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineStyle": {
               "fill": "solid"
@@ -1348,6 +1569,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -1363,7 +1585,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -1414,30 +1636,34 @@
       "options": {
         "legend": {
           "calcs": [
-            "mean",
+            "lastNotNull",
             "min",
             "max"
           ],
           "displayMode": "table",
-          "placement": "right"
+          "placement": "right",
+          "showLegend": true
         },
         "tooltip": {
-          "mode": "single"
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
         }
       },
-      "pluginVersion": "8.3.3",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "topk(10, sum(increase(rpc_server_handled_total{env=~\"$env\", code_type!=\"success\"}[1m])) by (app) / sum(increase(rpc_server_handled_total{env=~\"$env\"}[1m])) by (app))",
+          "expr": "topk(10, sum(increase(rpc_server_handled_total{env=~\"$env\", code_type!=\"success\"}[1m])) by (app, instance) / sum(increase(rpc_server_handled_total{env=~\"$env\"}[1m])) by (app, instance))",
           "format": "time_series",
           "instant": false,
           "interval": "",
-          "legendFormat": "{{app}}",
+          "legendFormat": "{{app}}.{{instance}}",
           "refId": "A"
         }
       ],
@@ -1455,9 +1681,13 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -1466,6 +1696,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1473,6 +1704,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1488,7 +1720,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -1516,21 +1748,26 @@
           ],
           "displayMode": "table",
           "placement": "right",
+          "showLegend": true,
           "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single"
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
         }
       },
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "topk(10, rate(process_cpu_seconds_total{env=~\"$env\"}[1m]) / process_cpu_cores{env=~\"$env\"})",
+          "expr": "topk(10, sum(rate(process_cpu_time_seconds_total{env=~\"$env\"}[1m])) by (app, instance) * 2 / sum(process_cpu_cores{env=~\"$env\"}) by (app, instance))",
           "instant": false,
           "interval": "",
           "legendFormat": "{{app}}.{{instance}}",
@@ -1551,9 +1788,13 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -1562,6 +1803,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -1569,6 +1811,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1584,7 +1827,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -1612,19 +1855,24 @@
           ],
           "displayMode": "table",
           "placement": "right",
+          "showLegend": true,
           "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single"
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
         }
       },
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
           "expr": "topk(10, process_resident_memory_bytes{env=~\"$env\"}/process_memory_quota{env=~\"$env\"})",
           "instant": false,
@@ -1637,52 +1885,43 @@
       "type": "timeseries"
     }
   ],
-  "refresh": false,
-  "schemaVersion": 34,
-  "style": "dark",
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 42,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "Prometheus",
-          "value": "Prometheus"
+          "text": "prometheus",
+          "value": "ff3sx0ioec1dsd"
         },
-        "hide": 0,
         "includeAll": false,
         "label": "数据源",
-        "multi": false,
         "name": "DS_PROMETHEUS",
         "options": [],
         "query": "prometheus",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "type": "datasource"
       },
       {
         "current": {
-          "selected": false,
           "text": "Loki",
-          "value": "Loki"
+          "value": "RbMgEARSz"
         },
-        "hide": 0,
         "includeAll": false,
         "label": "LOKI日志服务",
-        "multi": false,
         "name": "DS_LOKI",
         "options": [],
         "query": "loki",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "type": "datasource"
       },
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -1691,10 +1930,8 @@
           "uid": "${DS_PROMETHEUS}"
         },
         "definition": "label_values(env)",
-        "hide": 0,
         "includeAll": true,
         "label": "环境名",
-        "multi": false,
         "name": "env",
         "options": [],
         "query": {
@@ -1703,7 +1940,6 @@
         },
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       }
@@ -1713,12 +1949,9 @@
     "from": "now-1h",
     "to": "now"
   },
-  "timepicker": {
-    "hidden": false
-  },
+  "timepicker": {},
   "timezone": "",
   "title": "zapp大盘",
   "uid": "zapp-overview",
-  "version": 24,
-  "weekStart": ""
+  "version": 20
 }
