@@ -79,19 +79,19 @@ func (g *gPoolFilter) genGPoolConfig(raw *gpool.GPoolConfig) *gpool.GPoolConfig 
 }
 
 func (g *gPoolFilter) HandleInject(ctx context.Context, req, rsp interface{}, next core.FilterInjectFunc) error {
-	utils.Otel.CtxEvent(ctx, "gpool.wait")
+	utils.Trace.CtxEvent(ctx, "gpool.wait")
 	err := g.getGPool(ctx).GoSync(func() error {
-		utils.Otel.CtxEvent(ctx, "gpool.do")
+		utils.Trace.CtxEvent(ctx, "gpool.do")
 		return next(ctx, req, rsp)
 	})
 	return err
 }
 
 func (g *gPoolFilter) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (interface{}, error) {
-	utils.Otel.CtxEvent(ctx, "gpool.wait")
+	utils.Trace.CtxEvent(ctx, "gpool.wait")
 	var rsp interface{}
 	err := g.getGPool(ctx).GoSync(func() error {
-		utils.Otel.CtxEvent(ctx, "gpool.do")
+		utils.Trace.CtxEvent(ctx, "gpool.do")
 		var e error
 		rsp, e = next(ctx, req)
 		return e

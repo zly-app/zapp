@@ -58,7 +58,7 @@ func (m *msgBus) Publish(ctx context.Context, topic string, msg interface{}) {
 	msgData, _ := sonic.MarshalString(msg)
 	ctx = saveMsgData(ctx, msgData)
 	log.Debug(ctx, "msgbus.publish", log.String("topic", topic), log.Any("msg", msgData))
-	utils.Otel.CtxEvent(ctx, "publish", utils.OtelSpanKey("msg").String(msgData))
+	utils.Trace.CtxEvent(ctx, "publish", utils.OtelSpanKey("msg").String(msgData))
 
 	m.global.Publish(ctx, topic, msg) // 发送消息到全局
 

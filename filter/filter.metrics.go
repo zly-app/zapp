@@ -150,9 +150,9 @@ func (m *metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{},
 
 	// 不成功的则上报标本
 	if codeType != CodeTypeSuccess {
-		traceID, _ := utils.Otel.GetOTELTraceID(ctx)
+		traceID, _ := utils.Trace.GetOTELTraceID(ctx)
 		exemplar = metrics.Labels{"traceID": traceID}
-		utils.Otel.SaveToMap(ctx, exemplar)
+		utils.Trace.SaveToMap(ctx, exemplar)
 	}
 
 	switch meta.Kind() {

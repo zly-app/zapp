@@ -119,7 +119,7 @@ func (s *subscriber) process(msg core.IMsgbusMessage) {
 
 	log.Debug(ctx, "msgbus.receive", log.String("topic", msg.Topic()), log.Uint32("subId", s.subId), log.Bool("isGlobal", s.isGlobal), log.Any("msg", msg.Msg()))
 	msgData, _ := getMsgData(ctx)
-	utils.Otel.CtxEvent(ctx, "receive", utils.OtelSpanKey("msg").String(msgData), utils.OtelSpanKey("isGlobal").Bool(s.isGlobal))
+	utils.Trace.CtxEvent(ctx, "receive", utils.OtelSpanKey("msg").String(msgData), utils.OtelSpanKey("isGlobal").Bool(s.isGlobal))
 
 	err := utils.Recover.WrapCall(func() error {
 		s.handler(msg.Ctx(), msg)
@@ -128,10 +128,10 @@ func (s *subscriber) process(msg core.IMsgbusMessage) {
 
 	if err == nil {
 		log.Debug(ctx, "msgbus.success", log.String("topic", msg.Topic()), log.Uint32("subId", s.subId), log.Bool("isGlobal", s.isGlobal))
-		utils.Otel.CtxEvent(ctx, "handler success")
+		utils.Trace.CtxEvent(ctx, "handler success")
 		return
 	}
 
 	log.Error(ctx, "msgbus.error", log.String("topic", msg.Topic()), log.Uint32("subId", s.subId), log.Bool("isGlobal", s.isGlobal), log.String("error", utils.Recover.GetRecoverErrorDetail(err)))
-	utils.Otel.CtxErrEvent(ctx, "handler error", err)
+	utils.Trace.CtxErrEvent(ctx, "handler error", err)
 }

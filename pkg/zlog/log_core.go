@@ -127,7 +127,7 @@ func (l *logCore) makeBody(v []interface{}) logBody {
 			}
 			fields = append(fields, *val)
 		case context.Context:
-			traceID, spanID := utils.Trace.GetTraceIDWithContext(val)
+			traceID, spanID := utils.Trace.GetOTELTraceID(val)
 			if traceID != "" {
 				fields = append(fields, zap.String(logTraceIdKey, traceID))
 			}
@@ -251,7 +251,7 @@ func (l *logCore) NewSessionLogger(fields ...zap.Field) core.ILogger {
 
 // 创建一个带链路id的log
 func (l *logCore) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.ILogger {
-	traceID, _ := utils.Trace.GetTraceIDWithContext(ctx)
+	traceID, _ := utils.Trace.GetOTELTraceID(ctx)
 	return &logCore{
 		log:            l.log,
 		fields:         append(append(append([]zap.Field{}, l.fields...), zap.String(logTraceIdKey, traceID)), fields...),
@@ -282,7 +282,7 @@ func (l *logCore) attachLog2Trace(ce *zapcore.CheckedEntry, body logBody) {
 	if ce.Stack != "" {
 		attr = append(attr, utils.OtelSpanKey("stack").String(ce.Stack))
 	}
-	utils.Otel.CtxEvent(body.ctx, "Log", attr...)
+	utils.Trace.CtxEvent(body.ctx, "Log", attr...)
 }
 
 type customCaller struct {
