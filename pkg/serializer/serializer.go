@@ -4,6 +4,8 @@ import (
 	"io"
 
 	"go.uber.org/zap"
+
+	"github.com/zly-app/zapp/log"
 )
 
 // 序列化器
