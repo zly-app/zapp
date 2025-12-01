@@ -242,9 +242,12 @@ func (l *logCore) RemoveFields(count int, fieldKeys ...string) int {
 // 创建一个会话log
 func (l *logCore) NewSessionLogger(fields ...zap.Field) core.ILogger {
 	return &logCore{
+		conf:           l.conf,
 		log:            l.log,
 		fields:         append(append(append([]zap.Field{}, l.fields...), zap.String(logIdKey, l.nextLoggerId())), fields...),
+		level:          l.level,
 		callerMinLevel: l.callerMinLevel,
+		traceLevel:     l.traceLevel,
 		ws:             l.ws,
 	}
 }
@@ -253,9 +256,12 @@ func (l *logCore) NewSessionLogger(fields ...zap.Field) core.ILogger {
 func (l *logCore) NewTraceLogger(ctx context.Context, fields ...zap.Field) core.ILogger {
 	traceID, _ := utils.Trace.GetOTELTraceID(ctx)
 	return &logCore{
+		conf:           l.conf,
 		log:            l.log,
 		fields:         append(append(append([]zap.Field{}, l.fields...), zap.String(logTraceIdKey, traceID)), fields...),
+		level:          l.level,
 		callerMinLevel: l.callerMinLevel,
+		traceLevel:     l.traceLevel,
 		ws:             l.ws,
 	}
 }
