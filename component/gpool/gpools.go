@@ -21,36 +21,43 @@ import (
 )
 
 type gpools struct {
-	conn *conn.Conn
+	conn    *conn.AnyConn[core.IGPool]
+	defPool core.IGPool
 }
 
 func NewCreator() core.IGPools {
 	g := &gpools{
-		conn: conn.NewConn(),
+		defPool: NewGPool(new(GPoolConfig)),
 	}
+	g.conn = conn.NewAnyConn[core.IGPool](g.Close)
 	handler.AddHandler(handler.AfterCloseComponent, func(_ core.IApp, _ handler.HandlerType) {
-		g.Close()
+		g.conn.CloseAll()
 	})
 	return g
 }
 
 func (g *gpools) GetGPool(name ...string) core.IGPool {
-	return g.conn.GetInstance(g.makeGPoolGroup, name...).(core.IGPool)
+	pool, err := g.conn.GetConn(g.makeGPoolGroup, name...)
+	if err != nil {
+		log.Warn("GetGPool call GetConn fail. use default pool", zap.Strings("name", name), zap.Error(err))
+		return g.defPool
+	}
+	return pool
 }
 
-func (g *gpools) makeGPoolGroup(name string) (conn.IInstance, error) {
+func (g *gpools) makeGPoolGroup(name string) (core.IGPool, error) {
 	componentName := utils.Ternary.Or(name, consts.DefaultComponentName).(string)
 
 	conf := new(GPoolConfig)
 	err := config.Conf.ParseComponentConfig(DefaultComponentType, componentName, conf, true)
 	if err != nil {
-		log.Log.Warn("gpool组件配置解析失败, 将使用默认配置", zap.String("name", componentName), zap.Error(err))
+		log.Warn("makeGPoolGroup call ParseComponentConfig fail. use default config", zap.String("name", componentName), zap.Error(err))
 	}
 	conf.check()
 
 	return NewGPool(conf), nil
 }
 
-func (g *gpools) Close() {
-	g.conn.CloseAll()
+func (g *gpools) Close(name string, pool core.IGPool) {
+	pool.Close()
 }
