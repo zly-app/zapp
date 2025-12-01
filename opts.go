@@ -197,16 +197,6 @@ func WithCustomEnableService(fn func(app core.IApp, services []core.ServiceType)
 }
 
 // 自定义组件
-// Deprecated: Use CustomComponentFns
-func WithCustomComponent(creator func(app core.IApp) core.IComponent) Option {
-	return func(opt *option) {
-		opt.CustomComponentFn = append(opt.CustomComponentFn, func(app core.IApp, c core.IComponent) core.IComponent {
-			return creator(app)
-		})
-	}
-}
-
-// 自定义组件
 func CustomComponentFns(creator func(app core.IApp, c core.IComponent) core.IComponent) Option {
 	return func(opt *option) {
 		opt.CustomComponentFn = append(opt.CustomComponentFn, creator)

@@ -29,12 +29,6 @@ func (*otelCli) SaveSpan(ctx context.Context, span trace.Span) context.Context {
 	return trace.ContextWithSpan(ctx, span)
 }
 
-// 将span存入ctx中
-// Deprecated: use SaveSpan
-func (*otelCli) SaveToContext(ctx context.Context, span trace.Span) context.Context {
-	return trace.ContextWithSpan(ctx, span)
-}
-
 // 从ctx中获取span
 func (*otelCli) GetSpan(ctx context.Context) trace.Span {
 	return trace.SpanFromContext(ctx)
