@@ -7,7 +7,6 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/kardianos/service v1.2.2
 	github.com/klauspost/compress v1.15.9
-	github.com/opentracing/opentracing-go v1.2.0
 	github.com/shirou/gopsutil/v3 v3.23.10
 	github.com/spf13/cast v1.3.0
 	github.com/spf13/viper v1.7.1
