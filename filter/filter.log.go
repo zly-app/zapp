@@ -35,7 +35,10 @@ type logFilter struct {
 }
 
 func (t *logFilter) getMethodName(meta CallMeta) string {
-	return meta.CalleeMethod() + "/" + meta.CalleeMethod()
+	if meta.IsServiceMeta() {
+		return "被 " + meta.CalleeService() + " " + meta.CalleeMethod()
+	}
+	return "主 " + meta.CalleeService() + " " + meta.CalleeMethod()
 }
 
 func (t *logFilter) marshal(a any) string {

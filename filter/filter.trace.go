@@ -30,9 +30,9 @@ type traceFilter struct {
 
 func (t traceFilter) getSpanName(meta CallMeta) string {
 	if meta.IsServiceMeta() {
-		return meta.CalleeService() + " " + meta.CalleeMethod() + " 被"
+		return "被 " + meta.CalleeService() + " " + meta.CalleeMethod()
 	}
-	return meta.CalleeService() + " " + meta.CalleeMethod() + " 主"
+	return "主 " + meta.CalleeService() + " " + meta.CalleeMethod()
 }
 func (t traceFilter) marshal(a any) string {
 	s, _ := sonic.MarshalString(a)
