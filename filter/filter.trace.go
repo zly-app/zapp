@@ -32,7 +32,7 @@ func (t traceFilter) getSpanName(meta CallMeta) string {
 	if meta.IsServiceMeta() {
 		return meta.CalleeService() + " " + meta.CalleeMethod() + " 被"
 	}
-	return meta.CalleeService() + " " + meta.CalleeMethod() + " 发"
+	return meta.CalleeService() + " " + meta.CalleeMethod() + " 主"
 }
 func (t traceFilter) marshal(a any) string {
 	s, _ := sonic.MarshalString(a)
