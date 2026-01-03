@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -28,7 +29,8 @@ type ApolloProvider struct {
 	watchCtxCancel context.CancelFunc
 
 	// 用于锁 watchNamespaces, watchNamespaceList
-	mx sync.Mutex
+	mx        sync.Mutex
+	isStarted int32
 }
 
 // key回调列表
@@ -55,7 +57,6 @@ func NewApolloProvider(app core.IApp) *ApolloProvider {
 		namespaceCallbackList: make(map[string]KeyCallbacks),
 	}
 	p.watchCtx, p.watchCtxCancel = context.WithCancel(app.BaseContext())
-	go p.startWatchNamespace()
 	return p
 }
 
@@ -93,7 +94,8 @@ func (p *ApolloProvider) Watch(groupName, keyName string, callback core.ConfigWa
 	p.addWatchNamespace(groupName)
 	// 添加回调
 	p.addCallback(groupName, keyName, callback)
-
+	// 启动监听
+	go p.startWatchNamespace()
 	return nil
 }
 
@@ -123,6 +125,10 @@ func (p *ApolloProvider) addCallback(groupName, keyName string, callback core.Co
 
 // 开始观察命名空间
 func (p *ApolloProvider) startWatchNamespace() {
+	if atomic.AddInt32(&p.isStarted, 1) != 1 {
+		return
+	}
+
 	for {
 		select {
 		case <-p.watchCtx.Done():
