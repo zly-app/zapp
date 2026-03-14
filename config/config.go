@@ -152,13 +152,13 @@ func (c *configCli) fill() {
 
 func (c *configCli) makeFlags() {
 	c.flags = make(map[string]struct{}, len(c.conf.Frame.Flags))
-	for _, flag := range c.conf.Frame.Flags {
-		c.flags[strings.ToLower(flag)] = struct{}{}
+	for _, flagStr := range c.conf.Frame.Flags {
+		c.flags[strings.ToLower(flagStr)] = struct{}{}
 	}
 
 	flags := make([]string, 0, len(c.flags))
-	for flag := range c.flags {
-		flags = append(flags, flag)
+	for flagStr := range c.flags {
+		flags = append(flags, flagStr)
 	}
 	c.conf.Frame.Flags = flags
 }
@@ -203,7 +203,7 @@ func mergeFile(vi *viper.Viper, file string, ignoreNotExist bool) error {
 				log.Log.Warn("配置文件不存在", zap.String("file", file))
 				return nil
 			}
-			return fmt.Errorf("配置文件不存在")
+			return fmt.Errorf("配置文件不存在: %s", file)
 		}
 		return fmt.Errorf("读取配置文件信息失败: %s", err)
 	}
@@ -220,7 +220,7 @@ func makeViperFromFile(files []string, ignoreNotExist bool) (*viper.Viper, error
 	vi := newViper()
 	for _, file := range files {
 		if err := mergeFile(vi, file, ignoreNotExist); err != nil {
-			return nil, fmt.Errorf("合并配置文件'%s'失败: %s", file, err.Error())
+			return nil, fmt.Errorf("合并配置文件'%s'失败: %s", file, err)
 		}
 	}
 	return vi, nil

@@ -51,3 +51,4 @@ var Duration = zap.Duration
 var Durationp = zap.Durationp
 var Object = zap.Object
 var Any = zap.Any
+var ErrField = zap.Error

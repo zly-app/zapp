@@ -86,8 +86,12 @@ func (g *gpool) dispatch() {
 
 	// 释放job
 	jobLen := len(g.jobQueue)
+	jobQueue := g.jobQueue
 	g.jobQueue = nil
+	
+	// 释放剩余的job
 	for i := 0; i < jobLen; i++ {
+		<-jobQueue
 		g.wg.Done()
 	}
 
@@ -211,12 +215,11 @@ func (g *gpool) Wait() {
 // 关闭
 //
 // 命令所有没有收到任务的工人立即停工, 收到任务的工人完成当前任务后停工, 不管任务队列是否清空.
-// 表现为加入队列的任务不一定会执行, 但是正在执行的任务不会被取消并会等待这些任务执行完毕.
+// 表现为加入队列的任务不一定会执行, 但正在执行的任务不会被取消并会等待这些任务执行完毕.
 func (g *gpool) Close() {
 	g.onceClose.Do(func() {
-		g.stop <- struct{}{}
-		<-g.stop
 		close(g.stop)
+		<-g.stop
 	})
 }
 
