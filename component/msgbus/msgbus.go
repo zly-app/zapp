@@ -55,7 +55,11 @@ func (m *msgBus) Publish(ctx context.Context, topic string, msg interface{}) {
 	ctx, span := otel.Tracer("").Start(ctx, "msgbus/publish/"+topic, trace.WithSpanKind(trace.SpanKindInternal))
 	defer span.End()
 
-	msgData, _ := sonic.MarshalString(msg)
+	msgData, err := sonic.MarshalString(msg)
+	if err != nil {
+		log.Error(ctx, "msgbus marshal message failed", log.String("topic", topic), log.ErrField(err))
+		return
+	}
 	ctx = saveMsgData(ctx, msgData)
 	log.Debug(ctx, "msgbus.publish", log.String("topic", topic), log.Any("msg", msgData))
 	utils.Trace.CtxEvent(ctx, "publish", utils.OtelSpanKey("msg").String(msgData))
@@ -87,6 +91,7 @@ func (m *msgBus) Subscribe(topic string, threadCount int, handler core.MsgbusHan
 	}
 	return t.Subscribe(m.msgQueueSize, threadCount, handler)
 }
+
 func (m *msgBus) SubscribeGlobal(threadCount int, handler core.MsgbusHandler) (subscribeId uint32) {
 	return m.global.Subscribe(m.msgQueueSize, threadCount, handler)
 }
@@ -100,6 +105,7 @@ func (m *msgBus) Unsubscribe(topic string, subscribeId uint32) {
 		t.Unsubscribe(subscribeId)
 	}
 }
+
 func (m *msgBus) UnsubscribeGlobal(subscribeId uint32) {
 	m.global.Unsubscribe(subscribeId)
 }
@@ -120,17 +126,17 @@ func (m *msgBus) CloseTopic(topic string) {
 
 func (m *msgBus) Close() {
 	m.mx.Lock()
-	clearTopic := make([]Topic, 0, 1+len(m.topics))
-	clearTopic = append(clearTopic, m.global)
+	clearTopics := make([]Topic, 0, 1+len(m.topics))
+	clearTopics = append(clearTopics, m.global)
 	for _, t := range m.topics {
-		clearTopic = append(clearTopic, t)
+		clearTopics = append(clearTopics, t)
 	}
 	m.global = newMsgTopic()
 	m.topics = make(map[string]Topic)
 	m.mx.Unlock()
 
 	// 后置关闭
-	for _, t := range clearTopic {
+	for _, t := range clearTopics {
 		t.Close()
 	}
 }

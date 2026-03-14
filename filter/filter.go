@@ -34,6 +34,7 @@ func (c FilterChain) HandleInject(ctx context.Context, req, rsp interface{}, nex
 	}
 	return next(ctx, req, rsp)
 }
+
 func (c FilterChain) Handle(ctx context.Context, req interface{}, next core.FilterFunc) (rsp interface{}, err error) {
 	meta := GetCallMeta(ctx)
 	if v, ok := meta.(*callMeta); ok {
@@ -69,19 +70,33 @@ var (
 
 // 注册服务/客户端过滤器建造者
 func RegisterFilterCreator(filterType string, c core.FilterCreator, s core.FilterCreator) {
-	if c != nil {
-		l := len(clientFilterCreator)
-		clientFilterCreator[filterType] = c
-		if l == len(clientFilterCreator) {
-			log.Log.Fatal("client filter creator repeat register", zap.String("filterType", filterType))
-		}
+	registerClientFilter(filterType, c)
+	registerServiceFilter(filterType, s)
+}
+
+// 注册客户端过滤器
+func registerClientFilter(filterType string, creator core.FilterCreator) {
+	if creator == nil {
+		return
 	}
-	if s != nil {
-		l := len(serviceFilterCreator)
-		serviceFilterCreator[filterType] = s
-		if l == len(serviceFilterCreator) {
-			log.Log.Fatal("service filter creator repeat register", zap.String("filterType", filterType))
-		}
+
+	l := len(clientFilterCreator)
+	clientFilterCreator[filterType] = creator
+	if l == len(clientFilterCreator) {
+		log.Log.Fatal("client filter creator repeat register", zap.String("filterType", filterType))
+	}
+}
+
+// 注册服务过滤器
+func registerServiceFilter(filterType string, creator core.FilterCreator) {
+	if creator == nil {
+		return
+	}
+
+	l := len(serviceFilterCreator)
+	serviceFilterCreator[filterType] = creator
+	if l == len(serviceFilterCreator) {
+		log.Log.Fatal("service filter creator repeat register", zap.String("filterType", filterType))
 	}
 }
 
@@ -89,27 +104,45 @@ func RegisterFilterCreator(filterType string, c core.FilterCreator, s core.Filte
 func MakeFilter() {
 	conf := loadConfig()
 
-	// 建造
+	// 建造过滤器实例
+	buildFilters()
+
+	// 构建客户端过滤器链
+	buildClientFilterChains(conf)
+
+	// 构建服务过滤器链
+	buildServiceFilterChains(conf)
+}
+
+// 构建过滤器实例
+func buildFilters() {
+	// 构建客户端过滤器
 	clientFilter = make(map[string]core.Filter)
 	for filterType, creator := range clientFilterCreator {
 		c := creator()
 		clientFilter[filterType] = c
 	}
 
+	// 构建服务过滤器
 	serviceFilter = make(map[string]core.Filter)
 	for filterType, creator := range serviceFilterCreator {
 		s := creator()
 		serviceFilter[filterType] = s
 	}
+}
 
-	// 分配
+// 构建客户端过滤器链 - 使用正确的Config类型
+func buildClientFilterChains(conf *Config) {
 	clientChain = make(map[string]map[string]FilterChain)
+
+	// 确保默认配置存在
 	if len(conf.Client[defName]) == 0 {
 		conf.Client[defName] = make(map[string][]string)
 	}
 	if len(conf.Client[defName][defName]) == 0 {
 		conf.Client[defName][defName] = []string{"base"} // 写入base
 	}
+
 	for clientType, clientConf := range conf.Client {
 		chain, ok := clientChain[clientType]
 		if !ok {
@@ -118,47 +151,58 @@ func MakeFilter() {
 		}
 
 		for clientName, filterTypes := range clientConf {
-			filters := make(FilterChain, len(filterTypes))
-			for i, t := range filterTypes {
-				f, ok := clientFilter[t]
-				if !ok {
-					log.Log.Fatal("client filter is not found", zap.String("filter", t))
-				}
-				filters[i] = f
-			}
+			filters := buildFilterChain(filterTypes, clientFilter, "client")
 			chain[clientName] = filters
 		}
 	}
+}
 
-	// 分配
+// 构建服务过滤器链 - 使用正确的Config类型
+func buildServiceFilterChains(conf *Config) {
+	// 确保默认配置存在
 	if len(conf.Service[defName]) == 0 {
 		conf.Service[defName] = []string{"base"} // 写入base
 	}
+
 	serviceChain = make(map[string]FilterChain)
 	for name, filterTypes := range conf.Service {
-		filters := make(FilterChain, len(filterTypes))
-		for i, t := range filterTypes {
-			f, ok := serviceFilter[t]
-			if !ok {
-				log.Log.Fatal("service filter is not found", zap.String("filter", t))
-			}
-			filters[i] = f
-		}
+		filters := buildFilterChain(filterTypes, serviceFilter, "service")
 		serviceChain[name] = filters
 	}
 }
 
+// 构建过滤器链
+func buildFilterChain(filterTypes []string, filterMap map[string]core.Filter, filterType string) FilterChain {
+	filters := make(FilterChain, len(filterTypes))
+	for i, t := range filterTypes {
+		f, ok := filterMap[t]
+		if !ok {
+			log.Log.Fatal(filterType+" filter is not found", zap.String("filter", t))
+		}
+		filters[i] = f
+	}
+	return filters
+}
+
 // 初始化过滤器
 func InitFilter(app core.IApp) {
+	initClientFilters(app)
+	initServiceFilters(app)
+}
+
+// 初始化客户端过滤器
+func initClientFilters(app core.IApp) {
 	for t, f := range clientFilter {
-		err := f.Init(app)
-		if err != nil {
+		if err := f.Init(app); err != nil {
 			log.Log.Fatal("init client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
+}
+
+// 初始化服务过滤器
+func initServiceFilters(app core.IApp) {
 	for t, f := range serviceFilter {
-		err := f.Init(app)
-		if err != nil {
+		if err := f.Init(app); err != nil {
 			log.Log.Fatal("init service filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
@@ -166,22 +210,31 @@ func InitFilter(app core.IApp) {
 
 // 关闭过滤器
 func CloseFilter() {
+	closeClientFilters()
+	closeServiceFilters()
+}
+
+// 关闭客户端过滤器
+func closeClientFilters() {
 	for t, f := range clientFilter {
-		err := f.Close()
-		if err != nil {
+		if err := f.Close(); err != nil {
 			log.Log.Error("close client filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	clientFilter = make(map[string]core.Filter)
+}
+
+// 关闭服务过滤器
+func closeServiceFilters() {
 	for t, f := range serviceFilter {
-		err := f.Close()
-		if err != nil {
+		if err := f.Close(); err != nil {
 			log.Log.Error("close service filter err", zap.String("filter", t), zap.Error(err))
 		}
 	}
 	serviceFilter = make(map[string]core.Filter)
 }
 
+// 获取调用方文件行号信息
 func funcFileLine(skip int) (string, string, int) {
 	const depth = 16
 	const defSkip = 5 // 调试结果
@@ -196,6 +249,7 @@ func funcFileLine(skip int) (string, string, int) {
 	return f.Function, f.File, f.Line
 }
 
+// 获取客户端过滤器链
 func getClientFilterChain(clientType, clientName string) FilterChain {
 	chainMap, ok := clientChain[clientType]
 	if ok {
@@ -219,14 +273,15 @@ func getClientFilterChain(clientType, clientName string) FilterChain {
 	return nil
 }
 
+// 获取服务过滤器链
 func getServiceFilterChain(serviceName string) FilterChain {
-	l, ok := serviceChain[serviceName]
+	chain, ok := serviceChain[serviceName]
 	if ok {
-		return l
+		return chain
 	}
-	l, ok = serviceChain[defName]
+	chain, ok = serviceChain[defName]
 	if ok {
-		return l
+		return chain
 	}
 	return nil
 }

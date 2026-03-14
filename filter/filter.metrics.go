@@ -86,42 +86,49 @@ func (m *metricsFilter) Init(app core.IApp) error {
 
 		m.ProcessCpuCores = metrics.RegistryGauge(metricsProcessCpuCores, "cpu数量", nil)
 		m.ProcessMemoryQuota = metrics.RegistryGauge(metricsProcessMemoryQuota, "内存总量", nil)
-		go func() {
-			m.reportSysInfo() // 立即报告
 
-			t := time.NewTicker(time.Second * 15)
-			for {
-				select {
-				case <-t.C:
-					m.reportSysInfo()
-				case <-app.BaseContext().Done():
-					t.Stop()
-				}
-			}
-		}()
-
+		// 启动系统信息报告协程
+		go m.startSystemInfoReporting(app)
 	})
 	return nil
+}
+
+// 启动系统信息报告协程
+func (m *metricsFilter) startSystemInfoReporting(app core.IApp) {
+	m.reportSysInfo() // 立即报告
+
+	ticker := time.NewTicker(time.Second * 15)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			m.reportSysInfo()
+		case <-app.BaseContext().Done():
+			return
+		}
+	}
 }
 
 // 报告系统信息
 func (m *metricsFilter) reportSysInfo() {
 	m.ProcessCpuCores.Set(float64(runtime.NumCPU()), nil)
 
-	total := float64(0)
-	if memory, _ := mem.VirtualMemory(); memory != nil {
-		total = float64(memory.Total)
+	totalMemory := float64(0)
+	if memory, err := mem.VirtualMemory(); err == nil && memory != nil {
+		totalMemory = float64(memory.Total)
 	}
-	m.ProcessMemoryQuota.Set(total, nil)
+	m.ProcessMemoryQuota.Set(totalMemory, nil)
 }
 
 func (m *metricsFilter) start(ctx context.Context) CallMeta {
 	meta := GetCallMeta(ctx)
 	_ = meta.StartTime()
 
+	var label metrics.Labels
 	switch meta.Kind() {
 	case MetaKindService:
-		label := metrics.Labels{
+		label = metrics.Labels{
 			LabelKind:          "server",
 			LabelCallerService: meta.CallerService(),
 			LabelCallerMethod:  meta.CallerMethod(),
@@ -130,7 +137,7 @@ func (m *metricsFilter) start(ctx context.Context) CallMeta {
 		}
 		m.RpcServerStartedTotal.Inc(label, nil)
 	case MetaKindClient:
-		label := metrics.Labels{
+		label = metrics.Labels{
 			LabelKind:          "client",
 			LabelCallerService: meta.CallerService(),
 			LabelCallerMethod:  meta.CallerMethod(),
@@ -142,10 +149,11 @@ func (m *metricsFilter) start(ctx context.Context) CallMeta {
 
 	return meta
 }
-func (m *metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error) {
-	exemplar := (metrics.Labels)(nil)
 
-	duration := meta.EndTime() - meta.StartTime()
+func (m *metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{}, err error) {
+	var exemplar metrics.Labels
+
+	duration := time.Duration(meta.EndTime() - meta.StartTime())
 	code, codeType, _ := DefaultGetErrCodeFunc(ctx, rsp, err)
 
 	// 不成功的则上报标本
@@ -155,9 +163,10 @@ func (m *metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{},
 		utils.Trace.SaveToMap(ctx, exemplar)
 	}
 
+	var label metrics.Labels
 	switch meta.Kind() {
 	case MetaKindService:
-		label := metrics.Labels{
+		label = metrics.Labels{
 			LabelKind:          "server",
 			LabelCallerService: meta.CallerService(),
 			LabelCallerMethod:  meta.CallerMethod(),
@@ -170,9 +179,9 @@ func (m *metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{},
 		if meta.HasPanic() {
 			m.RpcServerPanicTotal.Inc(label, exemplar)
 		}
-		m.RpcServerHandledMsec.Observe(float64(time.Duration(duration)/time.Millisecond), label, exemplar)
+		m.RpcServerHandledMsec.Observe(float64(duration.Milliseconds()), label, exemplar)
 	case MetaKindClient:
-		label := metrics.Labels{
+		label = metrics.Labels{
 			LabelKind:          "client",
 			LabelCallerService: meta.CallerService(),
 			LabelCallerMethod:  meta.CallerMethod(),
@@ -185,7 +194,7 @@ func (m *metricsFilter) end(ctx context.Context, meta CallMeta, rsp interface{},
 		if meta.HasPanic() {
 			m.RpcClientPanicTotal.Inc(label, exemplar)
 		}
-		m.RpcClientHandledMsec.Observe(float64(time.Duration(duration)/time.Millisecond), label, exemplar)
+		m.RpcClientHandledMsec.Observe(float64(duration.Milliseconds()), label, exemplar)
 	}
 }
 
@@ -215,6 +224,7 @@ func (metricsCli) StartClient(ctx context.Context, clientType, clientName, metho
 	ctx = meta.fill(ctx)
 	return ctx, defaultMetrics.start(ctx)
 }
+
 func (metricsCli) StartService(ctx context.Context, serviceName, methodName string) (context.Context, CallMeta) {
 	meta := newServiceMeta(serviceName, methodName)
 	ctx = SaveCallMata(ctx, meta)
