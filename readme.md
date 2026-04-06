@@ -1,5 +1,42 @@
+用于快速构建项目的基础库.
 
-用于快速构建项目的基础库
+---
+
+## AI 开发指引
+
+> 本节专为 AI 助手（如 Claude、GPT 等）设计，帮助 AI 快速理解项目并提供开发协助。
+
+### 何时阅读 AI_REFERENCE.md
+
+**AI 应优先阅读 `AI_REFERENCE.md` 而非扫描整个项目代码**，在以下场景中：
+
+| 场景 | 说明 |
+|------|------|
+| 快速开发任务 | 需要基于 zapp 创建新组件/插件/服务 |
+| 接口查询 | 需要了解核心接口定义（IComponent、IPlugin、IService 等） |
+| 架构理解 | 需要快速理解项目整体架构和生命周期 |
+| 配置使用 | 需要了解配置加载方式、Apollo 配置或配置热加载 |
+| 工具包使用 | 需要使用 pkg 下的序列化器、压缩器、工具函数等 |
+| 代码生成 | 需要生成符合 zapp 规范的代码模板 |
+
+### 何时仍需扫描项目代码
+
+以下场景 AI **仍应扫描具体代码文件**：
+
+| 场景 | 说明 |
+|------|------|
+| Bug 定位与修复 | 需要分析具体实现细节、定位问题根源 |
+| 复杂逻辑理解 | 某个特定模块的深度实现逻辑 |
+| 代码重构 | 需要理解现有代码结构后进行修改 |
+| 具体文件修改 | 用户指定要修改某个具体文件 |
+| 测试编写 | 需要查看现有测试结构和实现细节 |
+| 性能优化 | 需要深入分析代码性能瓶颈 |
+
+### AI_REFERENCE.md 定位
+
+- **位置**: `./AI_REFERENCE.md`
+- **内容**: 核心接口定义、架构概览、配置系统、工具包索引、开发指引、关键文件索引
+- **目的**: 让 AI 无需扫描整个代码仓库即可快速开发
 
 ---
 <!-- TOC -->
@@ -95,7 +132,7 @@ zapp.WithCustomEnablePlugin(func(app core.IApp, plugins []core.PluginType) []cor
     if !app.GetConfig().HasFlag("my_plugin") {
         plugins = append(plugins, "my_plugin")
     }
-	return plugins
+    return plugins
 })
 ```
 
@@ -108,7 +145,7 @@ zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []
     if !app.GetConfig().HasFlag("api_service") {
         services = append(services, "api")
     }
-	return services
+    return services
 })
 ```
 
@@ -140,5 +177,4 @@ zapp.WithCustomEnableService(func(app core.IApp, services []core.ServiceType) []
 
 ## 退出
 
-`app.Exit() 或收到退出信号` > 关闭`BaseContext` > 停止内存释放任务 > 关闭服务 > 关闭 filter > 关闭插件 > 释放组件资源 > `结束之前调用app.Run()的阻塞` 
-
+`app.Exit() 或收到退出信号` > 关闭`BaseContext` > 停止内存释放任务 > 关闭服务 > 关闭 filter > 关闭插件 > 释放组件资源 > `结束之前调用app.Run()的阻塞`
