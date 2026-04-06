@@ -148,52 +148,236 @@ type ConfigWatchKeyCallback func(isInit bool, oldData, newData []byte)
 
 ## 4. 配置系统
 
+> 详细说明见 `config/readme.md`
+
 ### 4.1 配置加载优先级
 
 ```
-命令行指定配置文件 > WithViper > WithConfig > WithFiles > 默认配置文件
+命令行 -c 指定文件 > WithViper > WithConfig > WithFiles > WithApollo > 默认配置文件
 ```
 
-默认配置文件路径: `./configs/default.yaml`, `./configs/default.yml`, `./configs/default.toml`, `./configs/default.json`
+- 使用命令 `-t` 测试配置是否正确
+- 多个配置文件存在同配置分片会智能合并
+- 默认配置文件(按优先级自动加载一个): `./configs/default.yaml` > `./configs/default.yml` > `./configs/default.toml` > `./configs/default.json`
 
 ### 4.2 配置选项
 
 ```go
 // 位置: config/opts.go
-type Option func(o *Options)
 
-// 设置 viper 实例
-config.WithViper(vi *viper.Viper) Option
-
-// 设置配置结构
-config.WithConfig(conf *core.Config) Option
-
-// 设置配置文件
-config.WithFiles(files ...string) Option
-
-// 从 Apollo 加载配置
-config.WithApollo(conf *ApolloConfig) Option
-
-// 禁用 flag 解析
-config.WithoutFlag() Option
+config.WithViper(vi *viper.Viper) Option      // 设置 viper 实例
+config.WithConfig(conf *core.Config) Option   // 设置配置结构体
+config.WithFiles(files ...string) Option      // 设置配置文件
+config.WithApollo(conf *ApolloConfig) Option  // 从 Apollo 配置中心加载
+config.WithoutFlag() Option                   // 禁用 flag 解析
 ```
 
-### 4.3 Apollo 配置
+### 4.3 配置结构 Key 规则
 
-```go
-ApolloConfigKey = "apollo"                         // apollo 配置 key
-ApolloConfigClusterFromEnvKey = "ApolloCluster"    // 从环境变量加载集群名
-IncludeConfigFileKey = "include"                   // 包含配置文件 key
+| 类型 | 配置 Key 格式 | 示例 |
+|------|---------------|------|
+| 框架配置 | `frame` | `frame.debug: true` |
+| 插件配置 | `plugins.{pluginType}` | `plugins.my_plugin.foo: bar` |
+| 服务配置 | `services.{serviceType}` | `services.api.bind: :8080` |
+| 组件配置 | `components.{componentType}.{componentName}` | `components.cache.cache1.cacheDB: memory` |
+| 自定义配置 | 自定义分片名 | `myconfig.foo: bar` |
+
+### 4.4 框架配置示例 (所有字段可选)
+
+```yaml
+frame:
+    debug: true                                    # debug标志
+    Env: ''                                        # 环境名
+    FreeMemoryInterval: 120000                     # 清理内存间隔(ms), <=0 禁用
+    WaitServiceRunTime: 1000                       # 等待服务启动时间(ms)
+    ServiceUnstableObserveTime: 10000              # 服务不稳定观察时间(ms)
+    Flags: []                                      # flag, 忽略大小写, 如 ['a', 'B']
+    Labels:                                        # 标签, 忽略大小写
+        Foo: Bar
+    Log:
+        Level: 'debug'                             # 日志等级: debug/info/warn/error/dpanic/panic/fatal
+        TraceLevel: 'debug'                        # 附加到trace的等级
+        Json: false                                # 启用json编码器
+        WriteToStream: true                        # 输出到屏幕
+        WriteToFile: false                         # 输出到文件
+        Name: ''                                   # 日志文件名, 自动附加 .log
+        AppendPid: false                           # 文件名附加进程号
+        Path: './log'                              # 日志路径
+        FileMaxSize: 32                            # 日志最大尺寸(M)
+        FileMaxBackupsNum: 3                       # 备份数量, 0=永久
+        FileMaxDurableTime: 7                      # 保存天数, 0=永久
+        Compress: false                            # 压缩历史日志
+        TimeFormat: '2006-01-02 15:04:05'          # 时间格式
+        Color: true                                # 彩色日志等级
+        CapitalLevel: false                        # 大写日志等级
+        DevelopmentMode: true                      # 开发者模式
+        ShowFileAndLinenumMinLevel: 'debug'        # 显示文件行号的最小等级
+        ShowStacktraceLevel: 'error'               # 显示调用链的等级
+        MillisDuration: true                       # Duration转为毫秒
+    PrintConfig: true                              # 初始化时打印配置
 ```
 
-### 4.4 配置观察使用
+### 4.5 插件/服务/组件配置示例
+
+```yaml
+plugins:                    # 插件配置
+    my_plugin:              # 插件类型
+        Foo: Bar
+
+services:                   # 服务配置
+    api:                    # 服务类型
+        Bind: :8080
+    grpc:
+        Bind: :3000
+
+components:                 # 组件配置
+    cache:                  # 组件类型
+        cacheName1:         # 组件名(支持多实例)
+            CacheDB: memory
+        cacheName2:
+            CacheDB: redis
+
+myconfig:                   # 自定义配置分片
+    Foo: Bar
+```
+
+### 4.6 引用配置文件
+
+```yaml
+include:
+    files: './1.toml,./2.toml'   # 相对路径, 引用文件不能再引用
+```
+
+### 4.7 Apollo 配置中心
+
+**最小配置**:
+```yaml
+apollo:
+    Address: "http://127.0.0.1:8080"
+    AppId: "your-appid"
+```
+
+**完整配置**:
+```yaml
+apollo:
+    Address: "http://127.0.0.1:8080"
+    AppId: "your-appid"
+    AccessKey: ""                           # 验证key
+    AuthBasicUser: ""                       # 基础认证用户名
+    AuthBasicPassword: ""                   # 基础认证密码
+    Cluster: "default"                      # 集群名
+    AlwaysLoadFromRemote: false             # 总是从远程获取
+    BackupFile: "./configs/backup.apollo"   # 本地备份文件
+    ApplicationDataType: "yaml"             # application命名空间数据类型: yaml/yml/toml/json
+    ApplicationParseKeys: []                # 额外解析的key
+    Namespaces: []                          # 其他命名空间
+    IgnoreNamespaceNotFound: false          # 忽略命名空间不存在
+```
+
+**Apollo 命名空间规则**:
+- 命名空间名作为配置顶级key, 其内容作为二级key
+- `application` 命名空间下的 `frame/components/plugins/filters/services` 作为顶级key并解析其值
+- 支持扁平化: 命名空间 `frame.json` 直接配置框架内容
+
+**示例 - Apollo 配置解析**:
+| 命名空间 | field | value |
+|----------|-------|-------|
+| namespace1 | key1 | value |
+| namespace1 | key2 | {"foo": "bar"} |
+
+解析为:
+```yaml
+namespace1:
+    key1: 'value'
+    key2: '{"foo": "bar"}'
+```
+
+### 4.8 配置观察 (推荐用法)
+
+**基础用法 - 观察原始数据**:
+```go
+// 可在变量定义时初始化
+var MyConfigWatch = zapp.WatchConfigKey("group_name", "key_name")
+
+func main() {
+    app := zapp.NewApp("test", apollo_provider.WithPlugin(true))
+    defer app.Exit()
+    
+    // 获取数据
+    y1 := MyConfigWatch.GetString()
+    y2 := MyConfigWatch.GetInt()
+    y3 := MyConfigWatch.GetBool()
+    
+    // 检查预期值
+    if MyConfigWatch.Expect("1") { ... }
+    
+    // 添加回调 (启动时立即触发一次)
+    MyConfigWatch.AddCallback(func(first bool, oldData, newData []byte) {
+        app.Info("回调", zap.Bool("first", first))
+    })
+    
+    app.Run()
+}
+```
+
+**推荐用法 - 泛型结构自动解析**:
+```go
+type MyConfig struct {
+    A int `json:"a"`
+}
+
+var MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("group_name", "generic_key")
+
+func main() {
+    app := zapp.NewApp("test", apollo_provider.WithPlugin(true))
+    defer app.Exit()
+    
+    for {
+        a := MyConfigWatch.Get()  // 直接获取结构体
+        app.Info("数据", a)
+        time.Sleep(time.Second)
+    }
+}
+```
+
+**特性**:
+- 一行代码接入配置中心
+- 自动监听配置变更
+- 开始watch失败会 Fatal 退出
+- 泛型方式解析失败会 Error 并忽略变更
+
+**Apollo 非properties命名空间**:
+```go
+// 命名空间为 watch 的 json 类型, key固定为 "content"
+var MyConfigWatch = zapp.WatchConfigJson[*MyConfig]("watch.json", "content")
+```
+
+### 4.9 用户匹配器 (灰度/白名单)
 
 ```go
-// 观察配置变化
-keyObj := config.WatchKey("groupName", "keyName")
-keyObj.AddCallback(func(isInit bool, oldData, newData []byte) {
-    // 处理配置变化
-})
+type UserMatcher struct {
+    Uids    []string  // 指定用户ID
+    Percent uint8     // 灰度比例 0~100
+    Tails   []string  // 用户尾号(后两位)
+}
+
+// 使用示例
+type MyConfig struct {
+    A string
+    zapp.UserMatcher            // 直接继承
+    Matcher2 zapp.UserMatcher   // 嵌入字段
+}
+
+func (u *UserMatcher) IsHit(userID string) bool  // 判断是否命中
+```
+
+**配置示例**:
+```json
+{
+    "Uids": ["111", "222"],
+    "Percent": 0,
+    "Tails": ["01", "02"]
+}
 ```
 
 ---
