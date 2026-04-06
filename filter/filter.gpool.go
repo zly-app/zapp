@@ -14,12 +14,9 @@ func init() {
 	RegisterFilterCreator("base.gpool", newGPoolFilter, newGPoolFilter)
 }
 
-var defGPoolFilter core.Filter
+var defGPoolFilter = &gPoolFilter{}
 
 func newGPoolFilter() core.Filter {
-	if defGPoolFilter == nil {
-		defGPoolFilter = &gPoolFilter{}
-	}
 	return defGPoolFilter
 }
 
