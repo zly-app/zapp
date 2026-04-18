@@ -34,6 +34,10 @@
 - **内容**: 核心接口定义、架构概览、配置系统、工具包索引、开发指引、关键文件索引
 - **目的**: 让 AI 无需扫描整个代码仓库即可快速开发
 
+### 构建新项目
+
+如需构建完整业务项目，推荐使用 [uapp](https://github.com/zly-app/uapp)，它封装了 zapp 并预置常用组件/插件和 Apollo 配置支持，且提供脚手架文档可按需求关键词快速定位工具。
+
 ---
 <!-- TOC -->
 
@@ -61,7 +65,9 @@
 
 # 开始
 
-推荐使用 [uapp](https://github.com/zly-app/uapp)
+推荐使用 [uapp](https://github.com/zly-app/uapp)，它封装了 zapp 并预置常用组件、插件（pprof/otlp/apollo_provider 等）和 Apollo 配置支持，且提供脚手架文档方便 AI 快速生成项目。
+
+直接使用 zapp：
 
 ```go
 app := zapp.NewApp("test")

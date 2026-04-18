@@ -8,7 +8,21 @@
 
 **zapp** 是一个 Go 语言应用框架，用于快速构建项目。提供组件化管理、插件系统、服务生命周期控制、配置热加载等能力。
 
+> **构建新项目建议使用 [uapp](https://github.com/zly-app/uapp)**：封装了 zapp 并预置常用组件/插件（pprof/otlp/apollo_provider 等）、Apollo 配置支持，且提供脚手架文档方便 AI 根据需求关键词快速定位工具并生成项目结构。
+
 **快速启动示例**:
+
+使用 uapp（推荐）:
+```go
+import "github.com/zly-app/uapp"
+
+app := uapp.NewApp("test")
+defer app.Exit()
+
+app.Run()
+```
+
+直接使用 zapp:
 ```go
 import "github.com/zly-app/zapp"
 
