@@ -1,5 +1,8 @@
 
+
 # 指标收集器
+
+[AI 详细文档](.ai/metrics.md)
 
 ```go
 app := zapp.NewApp("myapp") // 必须在 NewApp 之后才能调用 metrics 相关方法
