@@ -2,6 +2,34 @@
 
 zapp 框架的通用工具库，提供并发控制、panic 恢复、反射判断、通配符匹配、网络代理、OpenTelemetry 链路追踪等基础能力。
 
+## 需求速查
+
+> 根据你要做的事情，快速找到对应的工具。
+
+| 我要做什么 | 用什么 |
+|-----------|--------|
+| 并发执行多个函数并等待全部完成 | `Go.GoAndWait` |
+| 并发执行但稍后再等待 | `Go.GoRetWait` |
+| 并发查询并保持结果顺序 | `GoQuery` |
+| 捕获 panic 转为 error | `Recover.WrapCall` |
+| 判断 error 是否来自 panic | `Recover.IsRecoverError` |
+| 获取 panic 的调用栈 | `Recover.GetRecoverErrorDetail` |
+| 判断值是否为零值 | `Reflect.IsZero` |
+| 三元表达式 | `Ternary.Ternary` |
+| 返回第一个非零值 | `Ternary.Or` |
+| 通配符模糊匹配 | `Text.IsMatchWildcard` |
+| 匹配多个通配符模式之一 | `Text.IsMatchWildcardAny` |
+| 创建 SOCKS5 代理 | `NewSocks5Proxy` |
+| 创建 HTTP 代理 | `NewHttpProxy` |
+| context 中存取 Logger | `Ctx.SaveLogger` / `Ctx.GetLogger` |
+| 克隆 context 去掉超时 | `Ctx.CloneContext` |
+| 获取本机 IP / 实例名 | `GetInstance` / `GetLocalIPs` |
+| 创建 OpenTelemetry span | `Trace.StartSpan` / `Trace.CtxStart` |
+| span 传播到 HTTP Header | `Trace.SaveToHeaders` / `Trace.GetSpanWithHeaders` |
+| span 传播到 Map | `Trace.SaveToMap` / `Trace.GetSpanWithMap` |
+| 标记 span 为错误 | `Trace.MarkSpanAnError` / `Trace.CtxErrEvent` |
+| 获取 TraceID | `Trace.GetOTELTraceID` |
+
 ## 模块概览
 
 | 模块 | 全局变量 | 文件 | 说明 |
