@@ -13,6 +13,8 @@
 import "github.com/zly-app/zapp"
 
 app := zapp.NewApp("test")
+defer app.Exit()
+
 app.Run()
 ```
 
