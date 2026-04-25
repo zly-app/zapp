@@ -187,14 +187,12 @@ func (g *gpool) GoRetWait(fn ...func() error) func() error {
 
 	for _, f := range fn {
 		wg.Add(1)
-		go func(fn func() error) {
-			g.Go(fn, func(err error) {
-				defer wg.Done()
-				if err != nil {
-					errChan <- err
-				}
-			})
-		}(f)
+		g.Go(f, func(err error) {
+			defer wg.Done()
+			if err != nil {
+				errChan <- err
+			}
+		})
 	}
 
 	return func() error {

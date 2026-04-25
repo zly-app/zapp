@@ -13,33 +13,34 @@ type NoPool struct {
 
 func (n *NoPool) Go(fn func() error, callback func(err error)) {
 	n.wg.Add(1)
-	defer n.wg.Done()
-	err := fn()
-	if callback != nil {
-		callback(err)
-	}
+	go func() {
+		defer n.wg.Done()
+		err := utils.Recover.WrapCall(fn)
+		if callback != nil {
+			callback(err)
+		}
+	}()
 }
 
 func (n *NoPool) GoSync(fn func() error) (result error) {
-	n.wg.Add(1)
-	defer n.wg.Done()
-	return fn()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	n.Go(fn, func(err error) {
+		result = err
+		wg.Done()
+	})
+	wg.Wait()
+	return result
 }
 
 func (n *NoPool) TryGo(fn func() error, callback func(err error)) (ok bool) {
-	n.wg.Add(1)
-	defer n.wg.Done()
-	err := fn()
-	if callback != nil {
-		callback(err)
-	}
+	n.Go(fn, callback)
 	return true
 }
 
 func (n *NoPool) TryGoSync(fn func() error) (result error, ok bool) {
-	n.wg.Add(1)
-	defer n.wg.Done()
-	return fn(), true
+	result = n.GoSync(fn)
+	return result, true
 }
 
 func (n *NoPool) GoAndWait(fn ...func() error) error {
