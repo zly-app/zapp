@@ -22,6 +22,7 @@ type gpool struct {
 	workerQueue chan *worker  // 工人队列
 	jobQueue    chan *job     // 任务队列
 	stop        chan struct{} // 停止信号, 同步通道
+	done        chan struct{} // dispatch完成信号
 
 	wg        sync.WaitGroup
 	onceClose sync.Once
@@ -37,6 +38,7 @@ func NewGPool(conf *GPoolConfig) core.IGPool {
 		workerQueue: make(chan *worker, conf.ThreadCount),
 		jobQueue:    make(chan *job, conf.JobQueueSize),
 		stop:        make(chan struct{}),
+		done:        make(chan struct{}),
 	}
 
 	for i := 0; i < conf.ThreadCount; i++ {
@@ -88,14 +90,14 @@ func (g *gpool) dispatch() {
 	jobLen := len(g.jobQueue)
 	jobQueue := g.jobQueue
 	g.jobQueue = nil
-	
+
 	// 释放剩余的job
 	for i := 0; i < jobLen; i++ {
-		<-jobQueue
-		g.wg.Done()
+		j := <-jobQueue
+		j.callback(ErrGPoolClosed) // callback 内部已经调用了 g.wg.Done()，不需要再调
 	}
 
-	g.stop <- struct{}{}
+	close(g.done)
 }
 
 // 异步执行, 如果队列任务已满则阻塞等待直到有空位
@@ -219,7 +221,7 @@ func (g *gpool) Wait() {
 func (g *gpool) Close() {
 	g.onceClose.Do(func() {
 		close(g.stop)
-		<-g.stop
+		<-g.done
 	})
 }
 
