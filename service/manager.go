@@ -69,7 +69,8 @@ func (m *Manager) Start() error {
 			RunServiceFn:       s.Start,
 		})
 		if err != nil {
-			return err
+			// 带上服务类型：调用方只看到一句「服务启动失败」时，必须能定位到是哪个服务
+			return fmt.Errorf("服务 %s 启动失败: %w", serviceType, err)
 		}
 	}
 	return nil
