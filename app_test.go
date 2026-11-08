@@ -1,6 +1,8 @@
 package zapp
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/zly-app/zapp/core"
@@ -33,6 +35,20 @@ func (s *smokeService) Start() error            { s.started = true; return nil }
 func (s *smokeService) Close() error            { s.closed = true; return nil }
 
 func TestAppLifecycle(t *testing.T) {
+	// 分支一：未初始化时 Component() 必须 panic 且说清原因
+	func() {
+		defer func() {
+			r := recover()
+			if r == nil {
+				t.Fatal("未初始化时 Component() 应 panic")
+			}
+			if !strings.Contains(fmt.Sprint(r), "未初始化") {
+				t.Fatalf("panic 信息未说明原因: %v", r)
+			}
+		}()
+		Component()
+	}()
+
 	p := &smokePlugin{}
 	s := &smokeService{}
 	plugin.RegisterCreatorFunc("smoke-plugin", func(core.IApp) core.IPlugin { return p })
@@ -59,6 +75,13 @@ func TestAppLifecycle(t *testing.T) {
 
 	if a.GetComponent() == nil {
 		t.Fatal("组件未构建")
+	}
+	// 分支二：初始化后 Component() 读到的是同一个实例（不额外持有状态）
+	if Component() == nil {
+		t.Fatal("初始化后 Component() 返回 nil")
+	}
+	if Component() != a.GetComponent() {
+		t.Fatal("Component() 与 app.GetComponent() 不是同一实例")
 	}
 	if got, ok := a.GetPlugin("smoke-plugin"); !ok || got != p {
 		t.Fatalf("插件实例不可查: %v %v", got, ok)

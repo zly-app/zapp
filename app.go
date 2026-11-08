@@ -29,6 +29,21 @@ func App() core.IApp {
 	return defaultApp
 }
 
+// Component 返回当前进程 app 的组件集合
+//
+// 给「拿不到 core.IApp 句柄」的代码用的进程级读取入口（例如深层的工具函数）：
+// 首选仍是通过构造函数注入 app 或组件本身，本函数只是 App() 的便利包装，
+// 读的是同一个实例，不额外持有状态。
+//
+// 未初始化时直接 panic：此时几乎必然是初始化顺序搞反了，静默返回 nil 会把问题
+// 延后成一次空指针崩溃，更难定位。
+func Component() core.IComponent {
+	if defaultApp == nil {
+		log.Panic("zapp 未初始化：请先调用 zapp.NewApp 再取组件")
+	}
+	return defaultApp.GetComponent()
+}
+
 // App 是应用壳（Shell）：只做三件事 —— 装配模型、持有基础上下文、把 IApp 的方法委托给模型。
 //
 // 壳里不写任何业务规则与生命周期时序：时序在 lifecycle（业务层），
