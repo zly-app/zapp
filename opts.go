@@ -9,7 +9,6 @@
 package zapp
 
 import (
-	"fmt"
 
 	"go.uber.org/zap"
 
@@ -68,40 +67,6 @@ func newOption(opts ...Option) *option {
 		o(opt)
 	}
 	return opt
-}
-
-// 检查自定义启用插件
-func (o *option) CheckPlugins(app core.IApp) error {
-	for _, fn := range o.CustomEnablePluginsFn {
-		o.Plugins = fn(app, o.Plugins)
-	}
-
-	mm := make(map[core.PluginType]struct{}, len(o.Plugins))
-	for _, t := range o.Plugins {
-		l := len(mm)
-		mm[t] = struct{}{}
-		if len(mm) == l {
-			return fmt.Errorf("插件启用重复: %v", t)
-		}
-	}
-	return nil
-}
-
-// 检查自定义启用服务
-func (o *option) CheckServices(app core.IApp) error {
-	for _, fn := range o.CustomEnableServicesFn {
-		o.Services = fn(app, o.Services)
-	}
-
-	mm := make(map[core.ServiceType]struct{}, len(o.Services))
-	for _, t := range o.Services {
-		l := len(mm)
-		mm[t] = struct{}{}
-		if len(mm) == l {
-			return fmt.Errorf("服务启用重复: %v", t)
-		}
-	}
-	return nil
 }
 
 // 自定义配置

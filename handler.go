@@ -71,10 +71,3 @@ const (
 func AddHandler(t HandlerType, hs ...Handler) {
 	handler.AddHandler(t, hs...)
 }
-
-func (app *appCli) handler(t HandlerType) {
-	handler.Trigger(app, t)
-	for _, h := range app.opt.Handlers[t] {
-		h(app, t)
-	}
-}
